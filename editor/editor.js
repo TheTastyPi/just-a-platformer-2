@@ -934,7 +934,10 @@ function lvl2str(lvl) {
     let block = lvl[i];
     for (let prop in block) {
       if (prop === "type") continue;
-      if (
+      if (prop === "size" && block.size === 50) {
+        delete block[prop];
+        continue;
+      } else if (
         block[prop] === blockData[block.type].defaultBlock[prop] ||
         prop === "index"
       ) {
