@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html style="height: 100%;">
+  <head>
+    <title>just a level editor 2</title>
+    <link rel="icon" type="image/png" href="../pics/just-a-level-editor-2.png" />
+    <link rel="stylesheet" href="../style.css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="HandheldFriendly" content="true" />
+    <meta
+      name="description"
+      content="'just a level editor 2', a versatile level editor for the second minimalistic platformer, 'just a platformer 2', created by TheTastyPi."
+    />
+    <meta name="author" content="TheTastyPi" />
+  </head>
+  <body
+    onresize="adjustLevelSize()"
+    onload="init()"
+    style="
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #eeeeee;
+      font-family: monospace;
+    "
+  >
+    <div id="background" style="position: absolute; background: #ffffff;"></div>
+    <canvas id="display" style="position: absolute;"></canvas>
+    <canvas id="bgLayer" style="position: absolute;"></canvas>
+    <canvas id="grid" style="position: absolute; display: none;"></canvas>
+    <canvas id="selectLayer" style="position: absolute;"></canvas>
+    <div id="blockSelect" class="blockSelect">
+      <div v-for="(ids,groupName) in blocks" class="blockSect">
+        <div class="blockSectLabel">{{groupName}}</div>
+        <div v-for="id in ids" class="blockSelectLabel">
+          <canvas
+            v-bind:id="'blockSelect'+id"
+            width="50"
+            height="50"
+            v-on:click="changeBuildSelect(blockData[id].defaultBlock)"
+            v-bind:class="{blockSelected:selectType==id}"
+          ></canvas
+          ><br />
+          {{blockData[id].name}}
+        </div>
+      </div>
+    </div>
+    <div id="blockEdit" class="blockEdit" v-if="editor.editBlock !== undefined" onmouseleave="blurAll()">
+      <div class="propContainer">
+        <div v-for="prop in editOrder" class="blockProp">
+          <span style="width:50%">{{prop}}</span>
+          <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.stop>
+            <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
+              <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
+            </optgroup>
+          </select>
+          <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.stop></input>
+        </div>
+        <div v-if="Object.keys(editor.editBlockProp).length > 0" v-for="prop in editor.editBlockProp" class="blockProp">
+          <span style="width:50%">{{prop}}</span>
+          <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.stop>
+            <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
+              <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
+            </optgroup>
+          </select>
+          <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.stop></input>
+        </div>
+      </div>
+      <div>
+        <button onclick="confirmEditAll()">Confirm</button>
+        <button onclick="reselect()">Reset</button>
+      </div>
+    </div>
+    <div id="editOptions" class="editOptions">
+      <div>Building</div>
+      Size:<input v-model="editor.buildSelect.size" onchange="updateBuildDisp()" v-on:keydown.stop style="width:100px"></input>px<br>
+      <div>Grid & Snapping</div>
+      <button
+        v-bind:class="{buttonOn:grid.visible}"
+        class="optionButton hasTooltip"
+        onclick="gridDisp.visible = !gridDisp.visible;"
+        style="background-image: url(../pics/grid.png);"
+        data-tooltip="Toggle grid display"
+      ></button><br>
+      Size:<input v-model="editor.gridSize" onchange="updateGrid()" v-on:keydown.stop style="width:100px"></input>px<br>
+      <button
+        v-bind:class="{buttonOn:editor.snapOverride}"
+        class="optionButton hasTooltip"
+        onclick="editor.snapOverride = !editor.snapOverride"
+        style="background-image: url(../pics/noSnap.png);"
+        data-tooltip="Disable all snapping"
+      ></button>
+      <button
+        v-bind:class="{buttonOn:editor.gridSnap[0]}"
+        class="optionButton hasTooltip"
+        onclick="editor.gridSnap.splice(0,1,!editor.gridSnap[0])"
+        style="background-image: url(../pics/cornerSnap.png);"
+        data-tooltip="Toggle corner snapping"
+      ></button><br>
+      <button
+        v-bind:class="{buttonOn:editor.gridSnap[1]}"
+        class="optionButton hasTooltip"
+        onclick="editor.gridSnap.splice(1,1,!editor.gridSnap[1])"
+        style="background-image: url(../pics/edgeSnap.png);"
+        data-tooltip="Toggle edge snapping"
+      ></button>
+      <button
+        v-bind:class="{buttonOn:editor.gridSnap[2]}"
+        class="optionButton hasTooltip"
+        onclick="editor.gridSnap.splice(2,1,!editor.gridSnap[2])"
+        style="background-image: url(../pics/centerSnap.png);"
+        data-tooltip="Toggle center snapping"
+      ></button><br>
+      <div>Level Size</div>
+      {{editor.invertExpand?'Retract':'Expand'}} level by <input v-model="editor.expandAmt" onchange="editor.expandAmt = Math.round(editor.expandAmt)" v-on:keydown.stop style="width:100px"></input><br>
+      <button
+        class="optionButton"
+        onclick="changeLevelSize('up',editor.expandAmt*(editor.invertExpand?-1:1))"
+        v-bind:style="{backgroundImage: `url(../pics/${editor.invertExpand?'downArrow':'upArrow'}.png)`}"
+      ></button><br>
+      <button
+        class="optionButton"
+        onclick="changeLevelSize('left',editor.expandAmt*(editor.invertExpand?-1:1))"
+        v-bind:style="{backgroundImage: `url(../pics/${editor.invertExpand?'rightArrow':'leftArrow'}.png)`}"
+      ></button>
+      <button
+        class="optionButton hasTooltip"
+        onclick="editor.invertExpand = !editor.invertExpand"
+        v-bind:style="{backgroundImage: `url(../pics/${editor.invertExpand?'minus':'plus'}.png)`}"
+        data-tooltip="Toggle level size increase/decrease"
+      ></button>
+      <button
+        class="optionButton"
+        onclick="changeLevelSize('right',editor.expandAmt*(editor.invertExpand?-1:1))"
+        v-bind:style="{backgroundImage: `url(../pics/${editor.invertExpand?'leftArrow':'rightArrow'}.png)`}"
+      ></button><br>
+      <button
+        class="optionButton"
+        onclick="changeLevelSize('down',editor.expandAmt*(editor.invertExpand?-1:1))"
+        v-bind:style="{backgroundImage: `url(../pics/${editor.invertExpand?'upArrow':'downArrow'}.png)`}"
+      ></button>
+      <div>Miscellaneous</div>
+      <button
+        class="optionButton hasTooltip"
+        onclick="setSpawn(true)"
+        style="background-image: url(../pics/startPoint.png);"
+        data-tooltip="Set start point"
+      ></button>
+      <button
+        v-bind:class="{buttonOn:editor.godMode}"
+        class="optionButton hasTooltip"
+        onclick="editor.godMode = !editor.godMode"
+        style="background-image: url(../pics/godMode.png);"
+        data-tooltip="Toggle god mode (G)"
+      ></button>
+      <button
+        v-bind:class="{buttonOn:editor.showMenus}"
+        class="optionButton hasTooltip"
+        onclick="editor.showMenus = !editor.showMenus"
+        style="background-image: url(../pics/showMenus.png);"
+        data-tooltip="Toggle menus (M)"
+      ></button>
+    </div>
+    <div id="saveMenu" class="saveMenu">
+      <button
+        class="optionButton hasTooltip"
+        onclick="addSave()"
+        style="background-image: url(../pics/addSave.png);"
+        data-tooltip="Add save"
+      ></button>
+      <button
+        class="optionButton hasTooltip"
+        onclick="save()"
+        style="background-image: url(../pics/save.png);"
+        data-tooltip="Save"
+      ></button><br>
+      <button
+        class="optionButton hasTooltip"
+        onclick="importSave()"
+        style="background-image: url(../pics/importSave.png);"
+        data-tooltip="Import"
+      ></button>
+      <button
+        v-bind:class="{buttonOn:editor.autoSave}"
+        class="optionButton hasTooltip"
+        onclick="editor.autoSave = !editor.autoSave"
+        style="background-image: url(../pics/autosave.png);"
+        data-tooltip="Toggle autosave (every 5 sec)"
+      ></button>
+      <div>Saves</div>
+      <div v-for="name in editor.saveOrder" v-bind:style="{background: ((editor.currentSave === name) ? '#8888ff88' : '')}" style="margin-top: 5px; display:flex; align-items:center; justify-content: space-evenly">
+        <div>
+          <button
+            class="optionButton small hasTooltip"
+            v-on:click="moveSave(name,-1)"
+            style="background-image: url(../pics/upArrow.png);"
+            data-tooltip="Move up"
+          ></button><br>
+          <button
+            class="optionButton small hasTooltip"
+            v-on:click="moveSave(name,1)"
+            style="background-image: url(../pics/downArrow.png);"
+            data-tooltip="Move down"
+          ></button>
+        </div>
+        <div>
+          {{name}}<br>
+          <button
+            class="optionButton hasTooltip"
+            v-on:click="load(name)"
+            style="background-image: url(../pics/load.png);"
+            data-tooltip="Load"
+          ></button>
+          <button
+            class="optionButton hasTooltip"
+            v-on:click="exportSave(name)"
+            style="background-image: url(../pics/exportSave.png);"
+            data-tooltip="Export"
+          ></button><br>
+          <button
+            class="optionButton hasTooltip"
+            v-on:click="deleteSave(name)"
+            style="background-image: url(../pics/deleteSave.png);"
+            data-tooltip="Delete"
+          ></button>
+          <button
+            class="optionButton hasTooltip"
+            v-on:click="renameSave(name)"
+            style="background-image: url(../pics/renameSave.png);"
+            data-tooltip="Rename"
+          ></button>
+        </div>
+      </div>
+    </div>
+    <div
+      id="tooltip"
+      style="
+        position: absolute;
+        background: #00000088;
+        color: #ffffff;
+        display: none;
+        white-space: pre-wrap;
+        pointer-events: none;
+      "
+    ></div>
+    <textarea
+      style="
+        opacity: 0.01;
+        height: 0;
+        position: absolute;
+        z-index: -1;
+        display: none;
+      "
+      id="exportArea"
+    >export text</textarea>
+  </body>
+  <script src="../lz-string.min.js"></script>
+  <script src="../pixi-legacy.min.js"></script>
+  <script src="../vue.min.js"></script>
+  <script src="../base.js"></script>
+  <script src="../block.js"></script>
+  <script src="../control.js"></script>
+  <script src="../draw.js"></script>
+  <script src="editor.js"></script>
+</html>
