@@ -1018,6 +1018,7 @@ function load(name) {
     setLevel(str2lvl(save[0]));
     startState = str2pState(save[1]);
     respawn(true);
+    deselect();
     editor.currentSave = name;
   }
 }
