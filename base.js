@@ -371,7 +371,8 @@ function setLevel(lvlData) {
 function setSpawn(start = false) {
   if (start) {
     startState = deepCopy(player);
-  } else saveState = deepCopy(player);
+  }
+  saveState = deepCopy(player);
 }
 function respawn(start = false) {
   deathTimer = spawnDelay;
