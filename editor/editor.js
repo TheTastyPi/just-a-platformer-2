@@ -934,10 +934,7 @@ function lvl2str(lvl) {
     let block = lvl[i];
     for (let prop in block) {
       if (prop === "type") continue;
-      if (prop === "size" && block.size === 50) {
-        delete block[prop];
-        continue;
-      } else if (
+      if (
         block[prop] === blockData[block.type].defaultBlock[prop] ||
         prop === "index"
       ) {
@@ -1091,6 +1088,11 @@ function addTooltip(elem, text) {
   elem.addEventListener("mouseleave", function () {
     id("tooltip").style.display = "none";
   });
+}
+function blurAll() {
+  id("exportArea").style.display = "inline";
+  id("exportArea").focus();
+  id("exportArea").style.display = "none";
 }
 function init() {
   document.querySelectorAll(".hasTooltip").forEach(function (ele) {

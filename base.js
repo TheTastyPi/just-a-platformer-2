@@ -500,9 +500,3 @@ function deepCopy(inObject) {
 function dist(x1, y1, x2, y2) {
   return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
 }
-function blurAll() {
-  var tmp = document.createElement("input");
-  document.body.appendChild(tmp);
-  tmp.focus();
-  document.body.removeChild(tmp);
-}
