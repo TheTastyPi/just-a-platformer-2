@@ -75,7 +75,11 @@ function nextFrame(timeStamp) {
           if (player.isDead) break;
           let gridSpace = level[x]?.[y];
           if (gridSpace === undefined)
-            gridSpace = [new Block(0, x * maxBlockSize, y * maxBlockSize, 50)];
+            gridSpace = [{
+              ...blockData[0].defaultBlock,
+              x: x * maxBlockSize,
+              y: y * maxBlockSize
+            }];
           for (let i in gridSpace) {
             let block = gridSpace[i];
             let bx1 = block.x;
