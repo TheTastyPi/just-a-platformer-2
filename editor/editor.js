@@ -386,7 +386,7 @@ id("selectLayer").addEventListener("wheel", function (event) {
   }
 });
 function changeBuildSelect(block) {
-  editor.buildSelect = block;
+  editor.buildSelect = deepCopy(block);
   updateBuildDisp();
 }
 function updateBuildLocation(x, y) {
@@ -513,7 +513,7 @@ function select(selectRect, single = false, prev, build = false) {
           }
           if (single) {
             if (build) {
-              editor.buildSelect = deepCopy(block);
+              changeBuildSelect(block);
             } else editor.editSelect = [block];
             cycled = true;
             break;
