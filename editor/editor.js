@@ -1051,6 +1051,7 @@ function importSave() {
   storeSave();
 }
 function deleteSave(name) {
+  if (!confirm(`Are you sure you want to delete ${name}?`)) return;
   delete editor.saves[name];
   editor.saveOrder.splice(editor.saveOrder.indexOf(name), 1);
   if (editor.currentSave === name) editor.currentSave = undefined;
