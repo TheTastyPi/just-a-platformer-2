@@ -50,7 +50,8 @@ const propData = {
     (block) => level[0].length * maxBlockSize - block.size
   ],
   size: ["num", "s", () => 6.25, () => 50],
-  eventPriority: ["int", "ep"],
+  giveJump: ["bool", "j"],
+  eventPriority: ["int", "ep", () => 0, () => Infinity],
   strictPriority: ["bool", "sp"],
   invisible: ["bool", "v"],
   dynamic: ["bool", "d"],
@@ -84,6 +85,7 @@ var blockEdit = new Vue({
       "x",
       "y",
       "size",
+      "giveJump",
       "eventPriority",
       "strictPriority",
       "invisible"

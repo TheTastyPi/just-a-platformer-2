@@ -67,7 +67,7 @@ function nextFrame(timeStamp) {
       let topPush = 0;
       let bottomPush = 0;
       let friction = 50;
-      let eventList = [];
+      let eventList = [[], [], [], [], []];
       // everything the player is touching
       for (let x = gridUnit(px1) - 1; x <= gridUnit(px2); x++) {
         if (player.isDead) break;
@@ -83,8 +83,6 @@ function nextFrame(timeStamp) {
             let by1 = block.y;
             let by2 = by1 + block.size;
             if (!isColliding(player, block)) continue;
-            if (eventList[block.eventPriority] === undefined)
-              eventList[block.eventPriority] = [];
             let data = blockData[block.type];
             // solid block
             if (data.isSolid) {
@@ -109,92 +107,36 @@ function nextFrame(timeStamp) {
               if (isLeft && isTop) {
                 if (Math.abs(tx1 - ty1) < certaintyThreshold) continue;
                 if (tx1 < ty1) {
-                  hasLeft = true;
-                  if (player.xv > 0) continue;
-                  leftPush = Math.max(leftPush, bx2 - px1);
-                  eventList[block.eventPriority].push([
-                    block,
-                    data.touchEvent[0]
-                  ]);
-                  continue;
+                  isTop = false;
                 } else {
-                  hasTop = true;
-                  if (player.yv > 0) continue;
-                  topPush = Math.max(topPush, by2 - py1);
-                  eventList[block.eventPriority].push([
-                    block,
-                    data.touchEvent[2]
-                  ]);
-                  continue;
+                  isLeft = false;
                 }
               }
               // top right
               if (isRight && isTop) {
                 if (Math.abs(tx2 - ty1) < certaintyThreshold) continue;
                 if (tx2 < ty1) {
-                  hasRight = true;
-                  if (player.xv < 0) continue;
-                  rightPush = Math.max(rightPush, px2 - bx1);
-                  eventList[block.eventPriority].push([
-                    block,
-                    data.touchEvent[1]
-                  ]);
-                  continue;
+                  isTop = false;
                 } else {
-                  hasTop = true;
-                  if (player.yv > 0) continue;
-                  topPush = Math.max(topPush, by2 - py1);
-                  eventList[block.eventPriority].push([
-                    block,
-                    data.touchEvent[2]
-                  ]);
-                  continue;
+                  isRight = false;
                 }
               }
               // bottom left
               if (isLeft && isBottom) {
                 if (Math.abs(tx1 - ty2) < certaintyThreshold) continue;
                 if (tx1 < ty2) {
-                  hasLeft = true;
-                  if (player.xv > 0) continue;
-                  leftPush = Math.max(leftPush, bx2 - px1);
-                  eventList[block.eventPriority].push([
-                    block,
-                    data.touchEvent[0]
-                  ]);
-                  continue;
+                  isBottom = false;
                 } else {
-                  hasBottom = true;
-                  if (player.yv < 0) continue;
-                  bottomPush = Math.max(bottomPush, py2 - by1);
-                  eventList[block.eventPriority].push([
-                    block,
-                    data.touchEvent[3]
-                  ]);
-                  continue;
+                  isLeft = false;
                 }
               }
               // bottom right
               if (isRight && isBottom) {
                 if (Math.abs(tx2 - ty2) < certaintyThreshold) continue;
                 if (tx2 < ty2) {
-                  hasRight = true;
-                  if (player.xv < 0) continue;
-                  rightPush = Math.max(rightPush, px2 - bx1);
-                  eventList[block.eventPriority].push([
-                    block,
-                    data.touchEvent[1]
-                  ]);
-                  continue;
+                  isBottom = false;
                 } else {
-                  hasBottom = true;
-                  if (player.yv < 0) continue;
-                  bottomPush = Math.max(bottomPush, py2 - by1);
-                  eventList[block.eventPriority].push([
-                    block,
-                    data.touchEvent[3]
-                  ]);
-                  continue;
+                  isRight = false;
                 }
               }
               // left
@@ -202,10 +144,14 @@ function nextFrame(timeStamp) {
                 hasLeft = true;
                 if (player.xv > 0) continue;
                 leftPush = Math.max(leftPush, bx2 - px1);
-                eventList[block.eventPriority].push([
+                if (eventList[0][block.eventPriority] === undefined)
+                  eventList[0][block.eventPriority] = [];
+                eventList[0][block.eventPriority].push([
                   block,
                   data.touchEvent[0]
                 ]);
+                if (block.giveJump && player.xg && player.g < 0)
+                  player.currentJump = player.maxJump;
                 continue;
               }
               // right
@@ -213,10 +159,14 @@ function nextFrame(timeStamp) {
                 hasRight = true;
                 if (player.xv < 0) continue;
                 rightPush = Math.max(rightPush, px2 - bx1);
-                eventList[block.eventPriority].push([
+                if (eventList[1][block.eventPriority] === undefined)
+                  eventList[1][block.eventPriority] = [];
+                eventList[1][block.eventPriority].push([
                   block,
                   data.touchEvent[1]
                 ]);
+                if (block.giveJump && player.xg && player.g > 0)
+                  player.currentJump = player.maxJump;
                 continue;
               }
               // top
@@ -224,10 +174,14 @@ function nextFrame(timeStamp) {
                 hasTop = true;
                 if (player.yv > 0) continue;
                 topPush = Math.max(topPush, by2 - py1);
-                eventList[block.eventPriority].push([
+                if (eventList[2][block.eventPriority] === undefined)
+                  eventList[2][block.eventPriority] = [];
+                eventList[2][block.eventPriority].push([
                   block,
                   data.touchEvent[2]
                 ]);
+                if (block.giveJump && !player.xg && player.g < 0)
+                  player.currentJump = player.maxJump;
                 continue;
               }
               // bottom
@@ -235,14 +189,21 @@ function nextFrame(timeStamp) {
                 hasBottom = true;
                 if (player.yv < 0) continue;
                 bottomPush = Math.max(bottomPush, py2 - by1);
-                eventList[block.eventPriority].push([
+                if (eventList[3][block.eventPriority] === undefined)
+                  eventList[3][block.eventPriority] = [];
+                eventList[3][block.eventPriority].push([
                   block,
                   data.touchEvent[3]
                 ]);
+                if (block.giveJump && !player.xg && player.g > 0)
+                  player.currentJump = player.maxJump;
                 continue;
               }
             } else {
-              eventList[block.eventPriority].push([block, data.touchEvent]);
+              if (eventList[4][block.eventPriority] === undefined)
+                eventList[4][block.eventPriority] = [];
+              eventList[4][block.eventPriority].push([block, data.touchEvent]);
+              if (block.giveJump) player.currentJump = player.maxJump;
             }
           }
         }
@@ -274,23 +235,23 @@ function nextFrame(timeStamp) {
           player.ya = 0;
         }
         // touch events
-        for (let i = eventList.length - 1; i >= 0; i--) {
-          for (let j in eventList[i]) {
-            let block = eventList[i][j][0];
-            if (!isColliding(player, block) && !blockData[block.type].isSolid)
-              continue;
-            if (
-              !block.strictPriority ||
-              block.eventPriority === eventList.length - 1
-            )
-              eventList[i][j][1](block);
+        for (let k in eventList) {
+          for (let i = eventList[k].length - 1; i >= 0; i--) {
+            for (let j in eventList[k][i]) {
+              let block = eventList[k][i][j][0];
+              if (!isColliding(player, block) && !blockData[block.type].isSolid)
+                continue;
+              if (
+                !block.strictPriority ||
+                block.eventPriority === eventList[k].length - 1
+              )
+                eventList[k][i][j][1](block);
+            }
           }
         }
         if (editor?.godMode) player.isDead = false;
         // jumping
         if (player.xg) {
-          if ((player.g < 0 && leftPush > 0) || (player.g > 0 && rightPush > 0))
-            player.currentJump = player.maxJump;
           if (
             (control.left || control.right) &&
             player.currentJump > 0 &&
@@ -301,8 +262,6 @@ function nextFrame(timeStamp) {
             canJump = false;
           }
         } else {
-          if ((player.g < 0 && topPush > 0) || (player.g > 0 && bottomPush > 0))
-            player.currentJump = player.maxJump;
           if (
             (control.up || control.down) &&
             player.currentJump > 0 &&

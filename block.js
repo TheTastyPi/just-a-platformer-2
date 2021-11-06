@@ -5,6 +5,7 @@ class Block {
     x,
     y,
     size,
+    giveJump,
     eventPriority,
     strictPriority = false,
     ...props
@@ -13,6 +14,7 @@ class Block {
     this.x = x;
     this.y = y;
     this.size = size;
+    this.giveJump = giveJump;
     this.eventPriority = eventPriority;
     this.strictPriority = strictPriority;
     this.invisible = false;
@@ -52,7 +54,7 @@ class BlockType {
 new BlockType(
   "Solid Block",
   true,
-  { ...new Block(0, 0, 0, 50, 3), color: "#000000" },
+  { ...new Block(0, 0, 0, 50, true, 3), color: "#000000" },
   (block, app = display) => {
     let g = new PIXI.Graphics();
     g.beginFill(0xffffff);
@@ -71,7 +73,7 @@ new BlockType(
 new BlockType(
   "Death Block",
   true,
-  new Block(1, 0, 0, 50, 1, true),
+  new Block(1, 0, 0, 50, false, 1, true),
   (block, app = display) => {
     let g = new PIXI.Graphics();
     g.beginFill(0xff0000);
@@ -107,7 +109,7 @@ new BlockType(
 new BlockType(
   "Check Point",
   false,
-  { ...new Block(2, 0, 0, 50, 1), touchPriority: 1 },
+  new Block(2, 0, 0, 50, false, 1),
   (block, app = display) => {
     let g = new PIXI.Graphics();
     g.alpha = 0.5;
@@ -134,7 +136,7 @@ new BlockType(
 new BlockType(
   "Bounce Block",
   true,
-  { ...new Block(3, 0, 0, 50, 2, true), power: 500 },
+  { ...new Block(3, 0, 0, 50, false, 2, true), power: 500 },
   (block, app = display) => {
     let g = new PIXI.Graphics();
     g.beginFill(0xffff00);
