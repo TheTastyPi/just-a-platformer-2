@@ -1,7 +1,7 @@
 var editor = {
   mousePos: [0, 0],
   editMode: false,
-  buildSelect: new Block(0, 0, 0, 50),
+  buildSelect: deepCopy(blockData[0].defaultBlock),
   selectStart: [0, 0],
   moveStart: [0, 0],
   moveSelect: [0, 0],
@@ -53,6 +53,7 @@ const propData = {
   giveJump: ["bool", "j"],
   eventPriority: ["int", "ep", () => 0, () => Infinity],
   strictPriority: ["bool", "sp"],
+  floorLeniency: ["num", "fl", () => 0, () => 50],
   invisible: ["bool", "v"],
   dynamic: ["bool", "d"],
   pushable: ["bool", "u"],
@@ -92,6 +93,9 @@ var blockEdit = new Vue({
       //"dynamic",
       //"pushable",
       //"interactive"
+    ],
+    solidProps: [
+      "floorLeniency"
     ],
     propData: propData,
     inputType: {
