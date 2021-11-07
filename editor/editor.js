@@ -50,6 +50,7 @@ const propData = {
     (block) => level[0].length * maxBlockSize - block.size
   ],
   size: ["num", "s", () => 6.25, () => 50],
+  isSolid: ["bool", "so"],
   giveJump: ["bool", "j"],
   eventPriority: ["int", "ep", () => 0, () => Infinity],
   strictPriority: ["bool", "sp"],
@@ -86,16 +87,17 @@ var blockEdit = new Vue({
       "x",
       "y",
       "size",
+      "isSolid",
       "giveJump",
       "eventPriority",
       "strictPriority",
       "invisible"
       //"dynamic",
-      //"pushable",
       //"interactive"
     ],
-    solidProps: [
-      "floorLeniency"
+    solidProps: ["floorLeniency"],
+    dynamicProps: [
+      // pushable
     ],
     propData: propData,
     inputType: {
@@ -1129,6 +1131,6 @@ function init() {
   adjustLevelSize();
   updateGrid();
   respawn(true);
-  changeBuildSelect(new Block(0, 0, 0, 50));
+  changeBuildSelect(deepCopy(blockData[0].defaultBlock));
   window.requestAnimationFrame(nextFrame);
 }

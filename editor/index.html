@@ -59,6 +59,15 @@
           </select>
           <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.stop></input>
         </div>
+        <div v-for="prop in solidProps" class="blockProp" v-if="editor.editBlock.isSolid">
+          <span style="width:50%">{{prop}}</span>
+          <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.stop>
+            <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
+              <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
+            </optgroup>
+          </select>
+          <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.stop></input>
+        </div>
         <div v-if="Object.keys(editor.editBlockProp).length > 0" v-for="prop in editor.editBlockProp" class="blockProp">
           <span style="width:50%">{{prop}}</span>
           <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.stop>

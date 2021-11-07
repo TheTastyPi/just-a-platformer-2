@@ -22,3 +22,8 @@
 - Fixed a bug where event priority does not differentiate between directional events
 - Added the "giveJump" property to blocks, which determine whether they give you jumps when you touch them
 - Refactored the shit out of collision
+
+### 7 Nov. 2021
+
+- Made isSolid an editable property of blocks
+- Added floorLeniency property to blocks

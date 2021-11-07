@@ -75,21 +75,23 @@ function nextFrame(timeStamp) {
           if (player.isDead) break;
           let gridSpace = level[x]?.[y];
           if (gridSpace === undefined)
-            gridSpace = [{
-              ...blockData[0].defaultBlock,
-              x: x * maxBlockSize,
-              y: y * maxBlockSize
-            }];
+            gridSpace = [
+              {
+                ...blockData[0].defaultBlock,
+                x: x * maxBlockSize,
+                y: y * maxBlockSize
+              }
+            ];
           for (let i in gridSpace) {
             let block = gridSpace[i];
             let bx1 = block.x;
-            let bx2 = bx1 + block.size;
+            let bx2 = block.x + block.size;
             let by1 = block.y;
-            let by2 = by1 + block.size;
+            let by2 = block.y + block.size;
             if (!isColliding(player, block)) continue;
             let data = blockData[block.type];
             // solid block
-            if (data.isSolid) {
+            if (block.isSolid) {
               let tx1 = (px1 - bx2) / (player.xv * t + (player.xa * t * t) / 2);
               let tx2 = (px2 - bx1) / (player.xv * t + (player.xa * t * t) / 2);
               let ty1 = (py1 - by2) / (player.yv * t + (player.ya * t * t) / 2);
@@ -110,7 +112,15 @@ function nextFrame(timeStamp) {
               // top left
               if (isLeft && isTop) {
                 if (Math.abs(tx1 - ty1) < certaintyThreshold) continue;
-                if (tx1 < ty1) {
+                if (
+                  (tx1 < ty1 &&
+                    !(
+                      !player.xg &&
+                      player.g < 0 &&
+                      block.floorLeniency > by2 - py1
+                    )) ||
+                  (player.xg && player.g < 0 && block.floorLeniency > bx2 - px1)
+                ) {
                   isTop = false;
                 } else {
                   isLeft = false;
@@ -119,7 +129,15 @@ function nextFrame(timeStamp) {
               // top right
               if (isRight && isTop) {
                 if (Math.abs(tx2 - ty1) < certaintyThreshold) continue;
-                if (tx2 < ty1) {
+                if (
+                  (tx2 < ty1 &&
+                    !(
+                      !player.xg &&
+                      player.g < 0 &&
+                      block.floorLeniency > by2 - py1
+                    )) ||
+                  (player.xg && player.g > 0 && block.floorLeniency > px2 - bx1)
+                ) {
                   isTop = false;
                 } else {
                   isRight = false;
@@ -128,7 +146,15 @@ function nextFrame(timeStamp) {
               // bottom left
               if (isLeft && isBottom) {
                 if (Math.abs(tx1 - ty2) < certaintyThreshold) continue;
-                if (tx1 < ty2) {
+                if (
+                  (tx1 < ty2 &&
+                    !(
+                      !player.xg &&
+                      player.g > 0 &&
+                      block.floorLeniency > py2 - by1
+                    )) ||
+                  (player.xg && player.g < 0 && block.floorLeniency > bx2 - px1)
+                ) {
                   isBottom = false;
                 } else {
                   isLeft = false;
@@ -137,7 +163,15 @@ function nextFrame(timeStamp) {
               // bottom right
               if (isRight && isBottom) {
                 if (Math.abs(tx2 - ty2) < certaintyThreshold) continue;
-                if (tx2 < ty2) {
+                if (
+                  (tx2 < ty2 &&
+                    !(
+                      !player.xg &&
+                      player.g > 0 &&
+                      block.floorLeniency > py2 - by1
+                    )) ||
+                  (player.xg && player.g > 0 && block.floorLeniency > px2 - bx1)
+                ) {
                   isBottom = false;
                 } else {
                   isRight = false;
@@ -192,7 +226,7 @@ function nextFrame(timeStamp) {
               if (isBottom) {
                 hasBottom = true;
                 if (player.yv < 0) continue;
-                bottomPush = Math.max(bottomPush, py2 - by1);
+                bottomPush = Math.max(bottomPush, py2 - block.y);
                 if (eventList[3][block.eventPriority] === undefined)
                   eventList[3][block.eventPriority] = [];
                 eventList[3][block.eventPriority].push([
@@ -206,7 +240,10 @@ function nextFrame(timeStamp) {
             } else {
               if (eventList[4][block.eventPriority] === undefined)
                 eventList[4][block.eventPriority] = [];
-              eventList[4][block.eventPriority].push([block, data.touchEvent]);
+              eventList[4][block.eventPriority].push([
+                block,
+                data.touchEvent[4]
+              ]);
               if (block.giveJump) player.currentJump = player.maxJump;
             }
           }
@@ -243,8 +280,7 @@ function nextFrame(timeStamp) {
           for (let i = eventList[k].length - 1; i >= 0; i--) {
             for (let j in eventList[k][i]) {
               let block = eventList[k][i][j][0];
-              if (!isColliding(player, block) && !blockData[block.type].isSolid)
-                continue;
+              if (!isColliding(player, block) && !block.isSolid) continue;
               if (
                 !block.strictPriority ||
                 block.eventPriority === eventList[k].length - 1
@@ -280,10 +316,8 @@ function nextFrame(timeStamp) {
         if (player.xg) {
           player.xa = 1000 * player.g;
           player.ya = (control.down - control.up) * player.moveSpeed;
-          if (!control.up && player.yv < 0)
-            player.ya = Math.max(player.ya + friction, -player.yv);
-          if (!control.down && player.yv > 0)
-            player.ya = Math.min(player.ya - friction, -player.yv);
+          if (!control.up && player.yv < 0) player.ya = -player.yv * friction;
+          if (!control.down && player.yv > 0) player.ya = -player.yv * friction;
         } else {
           player.ya = 1000 * player.g;
           player.xa = (control.right - control.left) * player.moveSpeed;

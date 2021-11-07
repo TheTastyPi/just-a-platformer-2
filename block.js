@@ -5,42 +5,37 @@ class Block {
     x,
     y,
     size,
+    isSolid,
     giveJump,
     eventPriority,
-    strictPriority = false,
-    ...props
+    strictPriority = false
   ) {
     this.type = type;
     this.x = x;
     this.y = y;
     this.size = size;
+    this.isSolid = isSolid;
     this.giveJump = giveJump;
     this.eventPriority = eventPriority;
     this.strictPriority = strictPriority;
+    this.floorLeniency = 0;
     this.invisible = false;
     this.dynamic = false;
     this.pushable = false;
     this.interactive = false;
-    let propIndex = 0;
-    for (let i in blockData[type]?.props) {
-      this[i] = props[propIndex] ?? blockData[type].defaultBlock[i];
-      propIndex++;
-    }
   }
 }
 class BlockType {
   constructor(
     name,
-    isSolid,
     defaultBlock,
     getTexture,
-    touchEvent = isSolid ? [() => {}, () => {}, () => {}, () => {}] : () => {},
+    touchEvent = [() => {}, () => {}, () => {}, () => {}, () => {}],
     update = (block) => {},
     props = {}
   ) {
     this.id = blockData.length;
     this.name = name;
-    this.isSolid = isSolid;
     this.defaultBlock = defaultBlock;
     this.getTexture = getTexture;
     this.defaultTexture = getTexture(defaultBlock);
@@ -53,8 +48,7 @@ class BlockType {
 
 new BlockType(
   "Solid Block",
-  true,
-  { ...new Block(0, 0, 0, 50, true, 3), color: "#000000" },
+  { ...new Block(0, 0, 0, 50, true, true, 3), color: "#000000" },
   (block, app = display) => {
     let g = new PIXI.Graphics();
     g.beginFill(0xffffff);
@@ -62,7 +56,7 @@ new BlockType(
     g.endFill();
     return app.renderer.generateTexture(g);
   },
-  [() => {}, () => {}, () => {}, () => {}],
+  [() => {}, () => {}, () => {}, () => {}, () => {}],
   (block, sprite = getSprite(block)) => {
     sprite.tint = PIXI.utils.string2hex(block.color);
   },
@@ -72,8 +66,7 @@ new BlockType(
 );
 new BlockType(
   "Death Block",
-  true,
-  new Block(1, 0, 0, 50, false, 1, true),
+  new Block(1, 0, 0, 50, true, false, 1, true),
   (block, app = display) => {
     let g = new PIXI.Graphics();
     g.beginFill(0xff0000);
@@ -103,13 +96,13 @@ new BlockType(
     },
     () => {
       player.isDead = true;
-    }
+    },
+    () => {}
   ]
 );
 new BlockType(
   "Check Point",
-  false,
-  new Block(2, 0, 0, 50, false, 1),
+  new Block(2, 0, 0, 50, false, false, 1),
   (block, app = display) => {
     let g = new PIXI.Graphics();
     g.alpha = 0.5;
@@ -122,21 +115,26 @@ new BlockType(
     g.lineTo(45, 5);
     return app.renderer.generateTexture(g);
   },
-  () => {
-    if (control.shift && canSave) {
-      setSpawn();
-      canSave = false;
-      drawLevel();
+  [
+    () => {},
+    () => {},
+    () => {},
+    () => {},
+    () => {
+      if (control.shift && canSave) {
+        setSpawn();
+        canSave = false;
+        drawLevel();
+      }
     }
-  },
+  ],
   (block, sprite = getSprite(block)) => {
     sprite.tint = isColliding(saveState, block) ? 0xffffff : 0x888888;
   }
 );
 new BlockType(
   "Bounce Block",
-  true,
-  { ...new Block(3, 0, 0, 50, false, 2, true), power: 500 },
+  { ...new Block(3, 0, 0, 50, true, false, 2, true), power: 500 },
   (block, app = display) => {
     let g = new PIXI.Graphics();
     g.beginFill(0xffff00);
@@ -168,7 +166,8 @@ new BlockType(
     },
     (block) => {
       player.yv = -block.power;
-    }
+    },
+    () => {}
   ],
   () => {},
   {
