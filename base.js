@@ -109,72 +109,78 @@ function nextFrame(timeStamp) {
                 player.isDead = true;
                 break;
               }
-              // top left
-              if (isLeft && isTop) {
-                if (Math.abs(tx1 - ty1) < certaintyThreshold) continue;
-                if (
-                  (tx1 < ty1 &&
-                    !(
-                      !player.xg &&
-                      player.g < 0 &&
-                      block.floorLeniency > by2 - py1
-                    )) ||
-                  (player.xg && player.g < 0 && block.floorLeniency > bx2 - px1)
-                ) {
-                  isTop = false;
-                } else {
-                  isLeft = false;
+              if (
+                player.xg &&
+                player.g < 0 &&
+                block.floorLeniency >= bx2 - px1
+              ) {
+                isLeft = true;
+                isRight = false;
+                isTop = false;
+                isBottom = false;
+              } else if (
+                player.xg &&
+                player.g > 0 &&
+                block.floorLeniency >= px2 - bx1
+              ) {
+                isLeft = false;
+                isRight = true;
+                isTop = false;
+                isBottom = false;
+              } else if (
+                !player.xg &&
+                player.g < 0 &&
+                block.floorLeniency >= by2 - py1
+              ) {
+                isLeft = false;
+                isRight = false;
+                isTop = true;
+                isBottom = false;
+              } else if (
+                !player.xg &&
+                player.g > 0 &&
+                block.floorLeniency >= py2 - by1
+              ) {
+                isLeft = false;
+                isRight = false;
+                isTop = false;
+                isBottom = true;
+              } else {
+                // top left
+                if (isLeft && isTop) {
+                  if (Math.abs(tx1 - ty1) < certaintyThreshold) continue;
+                  if (tx1 < ty1) {
+                    isTop = false;
+                  } else {
+                    isLeft = false;
+                  }
                 }
-              }
-              // top right
-              if (isRight && isTop) {
-                if (Math.abs(tx2 - ty1) < certaintyThreshold) continue;
-                if (
-                  (tx2 < ty1 &&
-                    !(
-                      !player.xg &&
-                      player.g < 0 &&
-                      block.floorLeniency > by2 - py1
-                    )) ||
-                  (player.xg && player.g > 0 && block.floorLeniency > px2 - bx1)
-                ) {
-                  isTop = false;
-                } else {
-                  isRight = false;
+                // top right
+                if (isRight && isTop) {
+                  if (Math.abs(tx2 - ty1) < certaintyThreshold) continue;
+                  if (tx2 < ty1) {
+                    isTop = false;
+                  } else {
+                    isRight = false;
+                  }
                 }
-              }
-              // bottom left
-              if (isLeft && isBottom) {
-                if (Math.abs(tx1 - ty2) < certaintyThreshold) continue;
-                if (
-                  (tx1 < ty2 &&
-                    !(
-                      !player.xg &&
-                      player.g > 0 &&
-                      block.floorLeniency > py2 - by1
-                    )) ||
-                  (player.xg && player.g < 0 && block.floorLeniency > bx2 - px1)
-                ) {
-                  isBottom = false;
-                } else {
-                  isLeft = false;
+                // bottom left
+                if (isLeft && isBottom) {
+                  if (Math.abs(tx1 - ty2) < certaintyThreshold) continue;
+                  if (tx1 < ty2) {
+                    isBottom = false;
+                  } else {
+                    isLeft = false;
+                  }
                 }
-              }
-              // bottom right
-              if (isRight && isBottom) {
-                if (Math.abs(tx2 - ty2) < certaintyThreshold) continue;
-                if (
-                  (tx2 < ty2 &&
-                    !(
-                      !player.xg &&
-                      player.g > 0 &&
-                      block.floorLeniency > py2 - by1
-                    )) ||
-                  (player.xg && player.g > 0 && block.floorLeniency > px2 - bx1)
-                ) {
-                  isBottom = false;
-                } else {
-                  isRight = false;
+                // bottom right
+                if (isRight && isBottom) {
+                  if (Math.abs(tx2 - ty2) < certaintyThreshold) continue;
+                  if (tx2 < ty2) {
+                    isBottom = false;
+                  } else {
+                    isRight = false;
+                  }
                 }
               }
               // left
