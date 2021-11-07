@@ -1025,6 +1025,7 @@ function load(name) {
   if (save) {
     setLevel(str2lvl(save[0]));
     startState = str2pState(save[1]);
+    updateGrid();
     respawn(true);
     deselect();
     editor.currentSave = name;
