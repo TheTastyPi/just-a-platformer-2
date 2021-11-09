@@ -31,4 +31,4 @@
 ### 9 Nov. 2021
 
 - Changed the appearance of Death Block and Bounce Block
-- Now when you try to move blocks without have one selected, it'll automatically select a single block.
+- Now when you try to move blocks without having one selected, it'll automatically select a single block.
