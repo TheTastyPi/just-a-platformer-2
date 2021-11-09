@@ -27,3 +27,8 @@
 
 - Made isSolid an editable property of blocks
 - Added floorLeniency property to blocks
+
+### 9 Nov. 2021
+
+- Changed the appearance of Death Block and Bounce Block
+- Now when you try to move blocks without have one selected, it'll automatically select a single block.

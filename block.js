@@ -72,16 +72,11 @@ new BlockType(
     g.beginFill(0xff0000);
     g.drawRect(0, 0, 50, 50);
     g.endFill();
-    let drawX = (x, y) => {
-      g.moveTo(x + 5, y + 5);
-      g.lineTo(x + 45, y + 45);
-      g.moveTo(x + 5, y + 45);
-      g.lineTo(x + 45, y + 5);
-    };
-    g.lineStyle(5, 0xffffff);
-    drawX(2, 0);
     g.lineStyle(5, 0x000000);
-    drawX(-2, 0);
+    g.moveTo(5, 5);
+    g.lineTo(45, 45);
+    g.moveTo(5, 45);
+    g.lineTo(45, 5);
     return app.renderer.generateTexture(g);
   },
   [
@@ -140,18 +135,13 @@ new BlockType(
     g.beginFill(0xffff00);
     g.drawRect(0, 0, 50, 50);
     g.endFill();
-    let drawDia = (x, y) => {
-      g.moveTo(x + 5, y + 25);
-      g.lineTo(x + 25, y + 45);
-      g.lineTo(x + 45, y + 25);
-      g.lineTo(x + 25, y + 5);
-      g.lineTo(x + 5, y + 25);
-      g.lineTo(x + 25, y + 45);
-    };
-    g.lineStyle(5, 0xffffff);
-    drawDia(2, 0);
     g.lineStyle(5, 0x000000);
-    drawDia(-2, 0);
+    g.moveTo(5, 25);
+    g.lineTo(25, 45);
+    g.lineTo(45, 25);
+    g.lineTo(25, 5);
+    g.lineTo(5, 25);
+    g.lineTo(25, 45);
     return app.renderer.generateTexture(g);
   },
   [

@@ -216,6 +216,12 @@ id("selectLayer").addEventListener("mousedown", function (event) {
       break;
     case 2: // right
       editor.moveSelect = [0, 0];
+      if (editor.editSelect.length === 0) {
+        select(
+          { x: event.clientX - camx, y: event.clientY - camy, width: 0, height: 0 },
+          true
+        );
+      }
       editor.moveStart = [editor.selectBox.x, editor.selectBox.y];
       break;
     case 1: // middle
