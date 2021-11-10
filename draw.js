@@ -94,9 +94,9 @@ function adjustScreen(instant = false) {
       if (lvlyOffset < window.innerHeight - lvly)
         lvlyOffset = Math.floor(window.innerHeight - lvly);
     }
+    camx = (camx * (camDelay - 1) + lvlxOffset) / camDelay;
+    camy = (camy * (camDelay - 1) + lvlyOffset) / camDelay;
   }
-  camx = (camx * (camDelay - 1) + lvlxOffset) / camDelay;
-  camy = (camy * (camDelay - 1) + lvlyOffset) / camDelay;
   if (camx > lvlxOffset) {
     camx = Math.floor(camx);
   } else camx = Math.ceil(camx);
@@ -105,8 +105,8 @@ function adjustScreen(instant = false) {
   } else camy = Math.ceil(camy);
   if (Math.abs(camx - lvlxOffset) < 1 || instant) camx = lvlxOffset;
   if (Math.abs(camy - lvlyOffset) < 1 || instant) camy = lvlyOffset;
-  id("background").style.left = Math.max(0, camx) + "px";
-  id("background").style.top = Math.max(0, camy) + "px";
+  id("background").style.left = Math.min(Math.max(0, camx), camx+Math.max(0,level.length*maxBlockSize-window.innerWidth)) + "px";
+  id("background").style.top = Math.min(Math.max(0, camy), camy+Math.max(0,level[0].length*maxBlockSize-window.innerHeight)) + "px";
   levelLayer.x = camx;
   levelLayer.y = camy;
   if (editor !== undefined) {

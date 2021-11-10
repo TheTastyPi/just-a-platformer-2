@@ -200,10 +200,10 @@ id("selectLayer").addEventListener("mousedown", function (event) {
   let button = event.button;
   switch (button) {
     case 0: // left
-      if (event.ctrlKey || event.metaKey) {
+      if ((event.ctrlKey || event.metaKey) && !event.shiftKey) {
         player.x = event.clientX - camx - player.size / 2;
         player.y = event.clientY - camy - player.size / 2;
-      } else {
+      } else if (!(event.ctrlKey || event.metaKey) || !event.shiftKey) {
         if (editor.editMode) {
           editor.selectStart = [event.clientX - camx, event.clientY - camy];
           selectBox.visible = true;
@@ -215,14 +215,19 @@ id("selectLayer").addEventListener("mousedown", function (event) {
       }
       break;
     case 2: // right
-      editor.moveSelect = [0, 0];
-      if (editor.editSelect.length === 0) {
-        select(
-          { x: event.clientX - camx, y: event.clientY - camy, width: 0, height: 0 },
-          true
-        );
+      if (event.shiftKey && (event.ctrlKey || event.metaKey)) {
+        camFocused = true;
+        adjustScreen();
+      } else {
+        editor.moveSelect = [0, 0];
+        if (editor.editSelect.length === 0) {
+          select(
+            { x: event.clientX - camx, y: event.clientY - camy, width: 0, height: 0 },
+            true
+          );
+        }
+        editor.moveStart = [editor.selectBox.x, editor.selectBox.y];
       }
-      editor.moveStart = [editor.selectBox.x, editor.selectBox.y];
       break;
     case 1: // middle
       event.preventDefault();
@@ -247,9 +252,14 @@ id("selectLayer").addEventListener("mousedown", function (event) {
 document.addEventListener("mousemove", function (event) {
   editor.scaleStart = false;
   editor.mousePos = [event.clientX, event.clientY];
-  if (editor.editMode) {
-    switch (event.buttons) {
-      case 1: {
+  switch (event.buttons) {
+    case 1: {
+      if (event.shiftKey && (event.ctrlKey || event.metaKey)) {
+        camFocused = false;
+        camx += event.movementX;
+        camy += event.movementY;
+        adjustScreen();
+      } else if (editor.editMode) {
         let x = Math.min(editor.selectStart[0] + camx, event.clientX);
         let y = Math.min(editor.selectStart[1] + camy, event.clientY);
         let w = Math.abs(editor.selectStart[0] - event.clientX + camx);
@@ -259,9 +269,11 @@ document.addEventListener("mousemove", function (event) {
         selectBox.drawRect(x, y, w, h);
         selectBox.lineStyle(2, 0xffffff, 0.5, 0);
         selectBox.drawRect(x, y, w, h);
-        break;
       }
-      case 2:
+      break;
+    }
+    case 2:
+      if (editor.editMode) {
         editor.moveSelect[0] += event.movementX;
         editor.moveSelect[1] += event.movementY;
         let newBox = deepCopy(editor.selectBox);
@@ -279,12 +291,11 @@ document.addEventListener("mousemove", function (event) {
         editor.selectBox.y += dy;
         if (dx !== 0 || dy !== 0) editor.moveSelect = [0, 0];
         updateSelectDisp();
-        break;
-      default:
-    }
-  } else {
-    updateBuildLocation(event.clientX, event.clientY);
+      }
+      break;
+    default:
   }
+  if (!editor.editMode) updateBuildLocation(event.clientX, event.clientY);
   if (event.clientX < 200 && editor.showMenus) {
     if (id("editOptions").style.right === "100%") {
       id("editOptions").style.right = `calc(100% - 200px)`;
