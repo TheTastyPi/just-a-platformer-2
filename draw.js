@@ -10,8 +10,8 @@ function drawPlayer() {
   playerDisp.tint = PIXI.utils.rgb2hex([1 - ratio, 0, ratio]);
   if (editor?.godMode) playerDisp.tint = PIXI.utils.rgb2hex([1, 0, 1]);
   playerDisp.alpha = player.isDead ? 0.5 : 1;
-  playerDisp.x = player.x + camx;
-  playerDisp.y = player.y + camy;
+  playerDisp.x = player.x + camx / cams;
+  playerDisp.y = player.y + camy / cams;
 }
 var prevLevel = [];
 var prevSaveState = [];
@@ -70,17 +70,18 @@ var camxPrev = 0;
 var camyPrev = 0;
 var camx = 0;
 var camy = 0;
+var cams = 1;
 var camDelay = 10;
 var camFocused = true;
 function adjustScreen(instant = false) {
-  let lvlx = level.length * maxBlockSize;
-  let lvly = level[0].length * maxBlockSize;
+  let lvlx = level.length * maxBlockSize * cams;
+  let lvly = level[0].length * maxBlockSize * cams;
   if (camFocused) {
     lvlxOffset = Math.floor((window.innerWidth - lvlx) / 2);
     if (lvlxOffset < 0) {
       lvlxOffset =
         Math.floor(window.innerWidth / 2) -
-        Math.floor(player.x + player.size / 2);
+        Math.floor(player.x + player.size / 2) * cams;
       if (lvlxOffset > 0) lvlxOffset = 0;
       if (lvlxOffset < window.innerWidth - lvlx)
         lvlxOffset = Math.floor(window.innerWidth - lvlx);
@@ -89,7 +90,7 @@ function adjustScreen(instant = false) {
     if (lvlyOffset < 0) {
       lvlyOffset =
         Math.floor(window.innerHeight / 2) -
-        Math.floor(player.y + player.size / 2);
+        Math.floor(player.y + player.size / 2) * cams;
       if (lvlyOffset > 0) lvlyOffset = 0;
       if (lvlyOffset < window.innerHeight - lvly)
         lvlyOffset = Math.floor(window.innerHeight - lvly);
@@ -105,8 +106,16 @@ function adjustScreen(instant = false) {
   } else camy = Math.ceil(camy);
   if (Math.abs(camx - lvlxOffset) < 1 || instant) camx = lvlxOffset;
   if (Math.abs(camy - lvlyOffset) < 1 || instant) camy = lvlyOffset;
-  id("background").style.left = Math.min(Math.max(0, camx), camx+Math.max(0,level.length*maxBlockSize-window.innerWidth)) + "px";
-  id("background").style.top = Math.min(Math.max(0, camy), camy+Math.max(0,level[0].length*maxBlockSize-window.innerHeight)) + "px";
+  id("background").style.left =
+    Math.min(
+      Math.max(0, camx),
+      camx + Math.max(0, level.length * maxBlockSize - window.innerWidth)
+    ) + "px";
+  id("background").style.top =
+    Math.min(
+      Math.max(0, camy),
+      camy + Math.max(0, level[0].length * maxBlockSize - window.innerHeight)
+    ) + "px";
   levelLayer.x = camx;
   levelLayer.y = camy;
   if (editor !== undefined) {
@@ -115,33 +124,41 @@ function adjustScreen(instant = false) {
     updateSelectDisp();
   }
   for (
-    let x = Math.max(Math.min(gridUnit(-camx) - 1, gridUnit(-camxPrev)), 0);
+    let x = Math.max(
+      Math.min(gridUnit(-camx / cams), gridUnit(-camxPrev / cams)),
+      0
+    );
     x <=
     Math.min(
       Math.max(
-        gridUnit(-camx + window.innerWidth),
-        gridUnit(-camxPrev + window.innerWidth)
+        gridUnit((-camx + window.innerWidth) / cams),
+        gridUnit((-camxPrev + window.innerWidth) / cams)
       ),
       level.length - 1
     );
     x++
   ) {
     levelLayer.children[x].visible =
-      gridUnit(-camx) - 1 <= x && x <= gridUnit(-camx + window.innerWidth);
+      gridUnit(-camx / cams) - 1 <= x &&
+      x <= gridUnit((-camx + window.innerWidth) / cams);
     for (
-      let y = Math.max(Math.min(gridUnit(-camy), gridUnit(-camxPrev)), 0);
+      let y = Math.max(
+        Math.min(gridUnit(-camy / cams), gridUnit(-camyPrev / cams)),
+        0
+      );
       y <=
       Math.min(
         Math.max(
-          gridUnit(-camy + window.innerHeight),
-          gridUnit(-camyPrev + window.innerHeight)
+          gridUnit((-camy + window.innerHeight) / cams),
+          gridUnit((-camyPrev + window.innerHeight) / cams)
         ),
         level[0].length - 1
       );
       y++
     ) {
       levelLayer.children[x].children[y].visible =
-        gridUnit(-camy) - 1 <= y && y <= gridUnit(-camy + window.innerHeight);
+        gridUnit(-camy / cams) - 1 <= y &&
+        y <= gridUnit((-camy + window.innerHeight) / cams);
     }
   }
   camxPrev = camx;
@@ -151,7 +168,10 @@ function adjustScreen(instant = false) {
 function adjustLevelSize() {
   let w = Math.min(level.length * maxBlockSize, window.innerWidth);
   let h = Math.min(level[0].length * maxBlockSize, window.innerHeight);
-  id("background").style.width = w + "px";
-  id("background").style.height = h + "px";
+  id("background").style.width = w * cams + "px";
+  id("background").style.height = h * cams + "px";
+  playerLayer.scale.set(cams, cams);
+  levelLayer.scale.set(cams, cams);
+  selectLayer?.scale?.set(cams, cams);
   adjustScreen(true);
 }

@@ -37,3 +37,8 @@
 
 - Added ability to move camera with \[shift] \[ctrl] Ldrag
 - Refocus camera with \[shift] \[ctrl] RMB
+
+### 12 Nov. 2021
+
+- Added ability to zoom in/out with \[shift] \[ctrl] Scroll
+- Reset zoom with \[shift] \[ctrl] MMB

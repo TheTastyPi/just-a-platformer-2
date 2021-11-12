@@ -110,24 +110,19 @@ var blockEdit = new Vue({
     blocks: blockList
   }
 });
-var selectLayer = new PIXI.Application({
-  width: window.innerWidth,
-  height: window.innerHeight,
-  view: id("selectLayer"),
-  transparent: true,
-  resizeTo: window
-});
+var selectLayer = new PIXI.Container();
+display.stage.addChild(selectLayer);
 var gridDisp = new PIXI.Graphics();
 gridDisp.visible = false;
-selectLayer.stage.addChild(gridDisp);
+selectLayer.addChild(gridDisp);
 var buildDisp = new PIXI.Graphics();
-selectLayer.stage.addChild(buildDisp);
+selectLayer.addChild(buildDisp);
 var selectDisp = new PIXI.Graphics();
 selectDisp.visible = false;
-selectLayer.stage.addChild(selectDisp);
+selectLayer.addChild(selectDisp);
 var selectBox = new PIXI.Graphics();
 selectBox.visible = false;
-selectLayer.stage.addChild(selectBox);
+selectLayer.addChild(selectBox);
 var editOptions = new Vue({
   el: "#editOptions",
   data: {
@@ -196,20 +191,22 @@ document.addEventListener("keydown", function (event) {
     default:
   }
 });
-id("selectLayer").addEventListener("mousedown", function (event) {
+id("display").addEventListener("mousedown", function (event) {
+  let xPos = (event.clientX - camx) / cams;
+  let yPos = (event.clientY - camy) / cams;
   let button = event.button;
   switch (button) {
     case 0: // left
       if ((event.ctrlKey || event.metaKey) && !event.shiftKey) {
-        player.x = event.clientX - camx - player.size / 2;
-        player.y = event.clientY - camy - player.size / 2;
+        player.x = xPos - player.size / 2;
+        player.y = yPos - player.size / 2;
       } else if (!(event.ctrlKey || event.metaKey) || !event.shiftKey) {
         if (editor.editMode) {
-          editor.selectStart = [event.clientX - camx, event.clientY - camy];
+          editor.selectStart = [event.clientX, event.clientY];
           selectBox.visible = true;
           selectBox.clear();
         } else {
-          updateBuildLocation(event.clientX, event.clientY);
+          updateBuildLocation(xPos, yPos);
           addAction("addBlock", [addBlock(deepCopy(editor.buildSelect))]);
         }
       }
@@ -222,7 +219,12 @@ id("selectLayer").addEventListener("mousedown", function (event) {
         editor.moveSelect = [0, 0];
         if (editor.editSelect.length === 0) {
           select(
-            { x: event.clientX - camx, y: event.clientY - camy, width: 0, height: 0 },
+            {
+              x: xPos,
+              y: yPos,
+              width: 0,
+              height: 0
+            },
             true
           );
         }
@@ -231,11 +233,17 @@ id("selectLayer").addEventListener("mousedown", function (event) {
       break;
     case 1: // middle
       event.preventDefault();
+      if (event.shiftKey && (event.ctrlKey || event.metaKey)) {
+        cams = 1;
+        adjustLevelSize();
+        updateBuildLocation(xPos, yPos);
+        return;
+      }
       if (!editor.editMode) {
         select(
           {
-            x: event.clientX - camx,
-            y: event.clientY - camy,
+            x: xPos,
+            y: yPos,
             width: 0,
             height: 0
           },
@@ -250,6 +258,8 @@ id("selectLayer").addEventListener("mousedown", function (event) {
   }
 });
 document.addEventListener("mousemove", function (event) {
+  let xPos = (event.clientX - camx) / cams;
+  let yPos = (event.clientY - camy) / cams;
   editor.scaleStart = false;
   editor.mousePos = [event.clientX, event.clientY];
   switch (event.buttons) {
@@ -260,10 +270,10 @@ document.addEventListener("mousemove", function (event) {
         camy += event.movementY;
         adjustScreen();
       } else if (editor.editMode) {
-        let x = Math.min(editor.selectStart[0] + camx, event.clientX);
-        let y = Math.min(editor.selectStart[1] + camy, event.clientY);
-        let w = Math.abs(editor.selectStart[0] - event.clientX + camx);
-        let h = Math.abs(editor.selectStart[1] - event.clientY + camy);
+        let x = Math.min(editor.selectStart[0], event.clientX) / cams;
+        let y = Math.min(editor.selectStart[1], event.clientY) / cams;
+        let w = Math.abs(editor.selectStart[0] - event.clientX) / cams;
+        let h = Math.abs(editor.selectStart[1] - event.clientY) / cams;
         selectBox.clear();
         selectBox.lineStyle(2, 0x000000, 0.5, 1);
         selectBox.drawRect(x, y, w, h);
@@ -274,8 +284,8 @@ document.addEventListener("mousemove", function (event) {
     }
     case 2:
       if (editor.editMode) {
-        editor.moveSelect[0] += event.movementX;
-        editor.moveSelect[1] += event.movementY;
+        editor.moveSelect[0] += event.movementX / cams;
+        editor.moveSelect[1] += event.movementY / cams;
         let newBox = deepCopy(editor.selectBox);
         newBox.x += editor.moveSelect[0];
         newBox.y += editor.moveSelect[1];
@@ -295,7 +305,7 @@ document.addEventListener("mousemove", function (event) {
       break;
     default:
   }
-  if (!editor.editMode) updateBuildLocation(event.clientX, event.clientY);
+  if (!editor.editMode) updateBuildLocation(xPos, yPos);
   if (event.clientX < 200 && editor.showMenus) {
     if (id("editOptions").style.right === "100%") {
       id("editOptions").style.right = `calc(100% - 200px)`;
@@ -329,17 +339,19 @@ document.addEventListener("mousemove", function (event) {
     }
   }
 });
-id("selectLayer").addEventListener("mouseup", function (event) {
+id("display").addEventListener("mouseup", function (event) {
+  let xPos = (event.clientX - camx) / cams;
+  let yPos = (event.clientY - camy) / cams;
   let button = event.button;
   switch (button) {
     case 0: // left
       if (editor.editMode && !(event.ctrlKey || event.metaKey)) {
         let prev = editor.editSelect[0];
         if (!event.shiftKey) deselect();
-        let x = Math.min(editor.selectStart[0], event.clientX - camx);
-        let y = Math.min(editor.selectStart[1], event.clientY - camy);
-        let w = Math.abs(editor.selectStart[0] - event.clientX + camx);
-        let h = Math.abs(editor.selectStart[1] - event.clientY + camy);
+        let x = Math.min((editor.selectStart[0] - camx) / cams, xPos);
+        let y = Math.min((editor.selectStart[1] - camy) / cams, yPos);
+        let w = Math.abs(editor.selectStart[0] - event.clientX) / cams;
+        let h = Math.abs(editor.selectStart[1] - event.clientY) / cams;
         select(
           { x: x, y: y, width: w, height: h },
           w === 0 && h === 0 && !event.shiftKey,
@@ -363,25 +375,28 @@ id("selectLayer").addEventListener("mouseup", function (event) {
     default:
   }
 });
-id("selectLayer").addEventListener("contextmenu", function (event) {
+id("display").addEventListener("contextmenu", function (event) {
   event.preventDefault();
 });
-id("selectLayer").addEventListener("wheel", function (event) {
+id("display").addEventListener("wheel", function (event) {
+  let xPos = (event.clientX - camx) / cams;
+  let yPos = (event.clientY - camy) / cams;
   event.preventDefault();
   let factor = event.shiftKey ? 2 : 1.1;
   factor **= Math.sign(-event.deltaY);
+  if (event.shiftKey && (event.ctrlKey || event.metaKey)) {
+    cams *= 1.1 ** Math.sign(-event.deltaY);
+    adjustLevelSize();
+    updateBuildLocation((event.clientX - camx) / cams, (event.clientY - camy) / cams);
+    return;
+  }
   if (editor.selectBox.maxs * factor > 50) factor = 50 / editor.selectBox.maxs;
   if (editor.selectBox.mins * factor < 6.25)
     factor = 6.25 / editor.selectBox.mins;
   if (editor.editMode) {
     for (let i in editor.editSelect) {
       if (factor === 1) break;
-      scaleBlock(
-        editor.editSelect[i],
-        factor,
-        event.clientX - camx,
-        event.clientY - camy
-      );
+      scaleBlock(editor.editSelect[i], factor, xPos, yPos);
     }
     if (editor.editSelect.length > 0) {
       if (editor.scaleStart) {
@@ -397,15 +412,15 @@ id("selectLayer").addEventListener("wheel", function (event) {
           "scaleBlock",
           [...editor.editSelect],
           editor.totalScale,
-          event.clientX - camx,
-          event.clientY - camy
+          xPos,
+          yPos
         );
       }
     }
     updateSelectDisp();
   } else {
     scaleBlock(editor.buildSelect, factor, undefined, undefined, false);
-    updateBuildDisp();
+    updateBuildLocation(xPos, yPos);
   }
 });
 function changeBuildSelect(block) {
@@ -414,18 +429,17 @@ function changeBuildSelect(block) {
 }
 function updateBuildLocation(x, y) {
   editor.buildSelect.x = Math.min(
-    Math.max(x - camx - editor.buildSelect.size / 2, 0),
+    Math.max(x - editor.buildSelect.size / 2, 0),
     level.length * maxBlockSize - editor.buildSelect.size
   );
   editor.buildSelect.y = Math.min(
-    Math.max(y - camy - editor.buildSelect.size / 2, 0),
+    Math.max(y - editor.buildSelect.size / 2, 0),
     level[0].length * maxBlockSize - editor.buildSelect.size
   );
   let snapPos = getSnapPos(editor.buildSelect);
   editor.buildSelect.x = snapPos[0];
   editor.buildSelect.y = snapPos[1];
-  buildDisp.x = editor.buildSelect.x + camx;
-  buildDisp.y = editor.buildSelect.y + camy;
+  updateBuildDisp();
 }
 function updateBuildDisp() {
   let block = editor.buildSelect;
@@ -438,16 +452,8 @@ function updateBuildDisp() {
   buildDisp.drawRect(0, 0, block.size, block.size);
   buildDisp.lineStyle(2, 0xffffff, 0.5, 0);
   buildDisp.drawRect(0, 0, block.size, block.size);
-  editor.buildSelect.x = Math.min(
-    Math.max(event.clientX - camx - editor.buildSelect.size / 2, 0),
-    level.length * maxBlockSize - editor.buildSelect.size
-  );
-  editor.buildSelect.y = Math.min(
-    Math.max(event.clientY - camy - editor.buildSelect.size / 2, 0),
-    level.length * maxBlockSize - editor.buildSelect.size
-  );
-  buildDisp.x = editor.buildSelect.x + camx;
-  buildDisp.y = editor.buildSelect.y + camy;
+  buildDisp.x = editor.buildSelect.x + camx / cams;
+  buildDisp.y = editor.buildSelect.y + camy / cams;
 }
 function confirmPropEdit(block) {
   let newBlock = deepCopy(block);
@@ -616,8 +622,8 @@ function updateSelectDisp() {
   }
   editor.selectBox.width = editor.selectBox.maxx - editor.selectBox.x;
   editor.selectBox.height = editor.selectBox.maxy - editor.selectBox.y;
-  selectDisp.x = camx;
-  selectDisp.y = camy;
+  selectDisp.x = camx / cams;
+  selectDisp.y = camy / cams;
 }
 function copy() {
   if (editor.editSelect.length < 1) return;
