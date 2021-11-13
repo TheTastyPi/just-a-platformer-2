@@ -119,8 +119,8 @@ function adjustScreen(instant = false) {
   levelLayer.x = camx;
   levelLayer.y = camy;
   if (editor !== undefined) {
-    gridDisp.x = Math.max(camx % editor.gridSize, camx);
-    gridDisp.y = Math.max(camy % editor.gridSize, camy);
+    gridDisp.x = Math.max(camx/cams % editor.gridSize, camx/cams);
+    gridDisp.y = Math.max(camy/cams % editor.gridSize, camy/cams);
     updateSelectDisp();
   }
   for (
