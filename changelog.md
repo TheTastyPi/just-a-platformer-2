@@ -45,4 +45,4 @@
 
 ### 15 Nov. 2021
 
-- Added help menu, accessable by \[H].
+- Added help menu, accessible by \[H].
