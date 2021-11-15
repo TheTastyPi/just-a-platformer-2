@@ -103,3 +103,29 @@ body::after {
 .saveMenu > div {
   background: #ffffff88;
 }
+.helpMenu {
+  display: none;
+  background: #bbbbbbbb;
+  line-height: 1.5em;
+}
+.helpMenu > div {
+  text-align: center;
+}
+.helpMenu > div > div {
+  vertical-align: top;
+  text-align: left;
+}
+.key {
+  display: inline-block;
+  background: #ffffff;
+  min-width: 1.25em;
+  height: 1.25em;
+  text-align: center;
+  box-shadow: gray 0px 3px;
+}
+.centered {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}

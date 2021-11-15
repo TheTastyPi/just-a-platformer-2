@@ -42,3 +42,7 @@
 
 - Added ability to zoom in/out with \[shift] \[ctrl] Scroll
 - Reset zoom with \[shift] \[ctrl] MMB
+
+### 15 Nov. 2021
+
+- Added help menu, accessable by \[H].

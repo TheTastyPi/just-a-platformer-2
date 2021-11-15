@@ -188,6 +188,11 @@ document.addEventListener("keydown", function (event) {
     case "KeyM":
       editor.showMenus = !editor.showMenus;
       break;
+    case "KeyH":
+      if (id("helpMenu").style.display === "block") {
+        id("helpMenu").style.display = "none";
+      } else id("helpMenu").style.display = "block";
+      break;
     default:
   }
 });
@@ -390,10 +395,10 @@ id("display").addEventListener("wheel", function (event) {
     updateBuildLocation((event.clientX - camx) / cams, (event.clientY - camy) / cams);
     return;
   }
-  if (editor.selectBox.maxs * factor > 50) factor = 50 / editor.selectBox.maxs;
-  if (editor.selectBox.mins * factor < 6.25)
-    factor = 6.25 / editor.selectBox.mins;
   if (editor.editMode) {
+    if (editor.selectBox.maxs * factor > 50) factor = 50 / editor.selectBox.maxs;
+    if (editor.selectBox.mins * factor < 6.25)
+      factor = 6.25 / editor.selectBox.mins;
     for (let i in editor.editSelect) {
       if (factor === 1) break;
       scaleBlock(editor.editSelect[i], factor, xPos, yPos);
