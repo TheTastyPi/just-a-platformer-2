@@ -68,6 +68,6 @@
 - God mode now has infinite jump
 - Block edit menu now updates as you move or scale selected blocks
 
-### 3 Dec. 2021
+### 3 Dec. 2021 #2
 
 - Now when editing a block's type, the block is automatically set to the default block of the new type
