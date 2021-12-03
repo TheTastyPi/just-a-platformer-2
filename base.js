@@ -302,7 +302,7 @@ function doPhysics(obj, t, isPlayer) {
   if (isPlayer && ((hasLeft && hasRight) || (hasTop && hasBottom))) {
     obj.isDead = true;
   }
-  if (obj.invincible || editor?.invincible) obj.isDead = false;
+  if (obj.invincible || (isPlayer && editor?.invincible)) obj.isDead = false;
   // MOVEMENT & EVENTS
   if (!isDead && !obj.isDead) {
     // collision
@@ -353,7 +353,7 @@ function doPhysics(obj, t, isPlayer) {
         }
       }
     }
-    if (obj.invincible || editor?.invincible) {
+    if (obj.invincible || (isPlayer && editor?.invincible)) {
       obj.isDead = false;
       if (isPlayer) player.currentJump = 1;
     }
