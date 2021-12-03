@@ -230,7 +230,7 @@ function doPhysics(obj, t, isPlayer) {
             hasLeft = true;
             if (
               leftBlock === undefined ||
-              leftBlock.x + leftBlock.size > bx2 ||
+              leftBlock.x + leftBlock.size < bx2 ||
               (leftBlock.x + leftBlock.size === bx2 &&
                 block.eventPriority > leftBlock.eventPriority)
             )
@@ -246,7 +246,7 @@ function doPhysics(obj, t, isPlayer) {
             hasRight = true;
             if (
               rightBlock === undefined ||
-              rightBlock.x < bx1 ||
+              rightBlock.x > bx1 ||
               (rightBlock.x === bx1 &&
                 block.eventPriority > rightBlock.eventPriority)
             )
@@ -262,7 +262,7 @@ function doPhysics(obj, t, isPlayer) {
             hasTop = true;
             if (
               topBlock === undefined ||
-              topBlock.y + topBlock.size > by2 ||
+              topBlock.y + topBlock.size < by2 ||
               (topBlock.y + topBlock.size === by2 &&
                 block.eventPriority > topBlock.eventPriority)
             )
@@ -278,7 +278,7 @@ function doPhysics(obj, t, isPlayer) {
             hasBottom = true;
             if (
               bottomBlock === undefined ||
-              bottomBlock.y < by1 ||
+              bottomBlock.y > by1 ||
               (bottomBlock.y === by1 &&
                 block.eventPriority > bottomBlock.eventPriority)
             )
