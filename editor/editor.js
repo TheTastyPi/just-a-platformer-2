@@ -520,6 +520,10 @@ function confirmPropEdit(block) {
   let newBlock = deepCopy(block);
   let editBlock = editor.editBlock;
   for (let i in block) {
+    if (newBlock.type !== editBlock.type) {
+      newBlock = {...blockData[editBlock.type].defaultBlock, x:newBlock.x, y:newBlock.y, size:newBlock.size};
+      break;
+    }
     if (editBlock[i] !== "MIXED" && i !== "index") {
       if (parseFloat(editBlock[i]) == editBlock[i]) {
         let limIndex = 2;
