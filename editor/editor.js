@@ -36,8 +36,9 @@ var editor = {
   currentSave: undefined,
   autoSave: true,
   showTooltips: true,
-  godMode: false,
-  showMenus: true
+  invincible: false,
+  showMenus: true,
+  playMode: false
 };
 const propData = {
   // general
@@ -54,20 +55,38 @@ const propData = {
   giveJump: ["bool", "j"],
   eventPriority: ["int", "ep", () => 0, () => Infinity],
   strictPriority: ["bool", "sp"],
-  floorLeniency: ["num", "fl", () => 0, () => 50],
   invisible: ["bool", "v"],
-  dynamic: ["bool", "d"],
-  pushable: ["bool", "u"],
+  friction: ["bool", "fr"],
+  opacity: ["num", "o", () => 0, () => 1],
+  dynamic: ["bool", "dy"],
   interactive: ["bool", "i"],
+  // solid only
+  floorLeniency: ["num", "fl", () => 0, () => 50],
+  // dynamic props
+  xv: ["num", "xv"],
+  yv: ["num", "yv"],
+  xa: ["num", "xa"],
+  ya: ["num", "ya"],
+  g: ["num", "g"],
+  xg: ["bool", "xg"],
+  isDead: ["bool", "d"],
+  pushable: ["bool", "u"],
+  invincible: ["bool", "iv"],
   // special
   power: ["num", "p"],
-  color: ["color", "c"]
+  color: ["color", "c"],
+  maxSpeed: ["num", "mxs"],
+  leftSpeed: ["num", "lsp"],
+  rightSpeed: ["num", "rsp"],
+  topSpeed: ["num", "tsp"],
+  bottomSpeed: ["num", "bsp"]
 };
 const propAliasReverse = {};
 const blockList = {
   Special: [2],
   Basic: [0, 1],
-  Movement: [3]
+  Dynamic: [4, 5],
+  Movement: [3, 6, 7, 8]
 };
 var level =
   "NrDeCIBcE8AcFNwC4AMAacAPZAmArBtLngL5oQwLLrhFJ4pkVyKqHICMKj5UL17JBwZM+VNrVzdRlVjTr4ezcfOQBmab1kDJSNSK38JdNQHYCWYjKM1s9JWLkY7DQQBZNyp5aGfHOuy5VJEVrFWdOfEEcczDvQO53P20JQIMvAM5zQQ4o8ABnK0Nwn2FgjjMAOgtCoRxquMyhV11cmsiG4vjOFroOXOqMWoHSLqaynMSCjtGM1M4ANnqLPqnh5cb5oWzWtZnN204ADlNB3Zp1zrnDoROzvpGh-bGtidb0-1fe9WSbCObgh4HCkbjhfiU7GDghpgX8fFCkrCIcQkd0Qjs+nlavgDv8cHcVpxHtM6ldPqCCZMLs9rniMZw9qTZuS8Ut7gzqUzcfDvr5OSNuZDef1lk8uS9QcKsTSWTzylV2uLaXKch8QXTCejmeqVboYYKUYiDXpwWiYdE1XC7ObdEDjfpUU0zJqcRL-s7BM77by7W6fEDBJbkUgA+djaG+kG0RGpI6tjGQlGmgn9X67CmRABdNAATlzmaAA";
@@ -91,14 +110,14 @@ var blockEdit = new Vue({
       "giveJump",
       "eventPriority",
       "strictPriority",
-      "invisible"
-      //"dynamic",
+      "invisible",
+      "friction",
+      "opacity",
+      "dynamic"
       //"interactive"
     ],
     solidProps: ["floorLeniency"],
-    dynamicProps: [
-      // pushable
-    ],
+    dynamicProps: ["xv", "yv", "g", "xg", "pushable", "invincible"],
     propData: propData,
     inputType: {
       num: "text",
@@ -136,6 +155,12 @@ var saveMenu = new Vue({
     editor: editor
   }
 });
+var playDisp = new Vue({
+  el: "#playDisp",
+  data: {
+    editor: editor
+  }
+});
 var editing = false;
 document.addEventListener("keydown", function (event) {
   event.preventDefault();
@@ -156,6 +181,7 @@ document.addEventListener("keydown", function (event) {
       }
       break;
     case "KeyZ":
+      if (editor.playMode) return;
       if (event.ctrlKey || event.metaKey) {
         if (event.shiftKey) {
           redo();
@@ -163,6 +189,7 @@ document.addEventListener("keydown", function (event) {
       }
       break;
     case "KeyX":
+      if (editor.playMode) return;
       if (event.ctrlKey || event.metaKey) {
         copy();
         addAction("removeBlock", deepCopy(editor.editSelect));
@@ -173,17 +200,20 @@ document.addEventListener("keydown", function (event) {
       }
       break;
     case "KeyC":
+      if (editor.playMode) return;
       if (event.ctrlKey || event.metaKey) {
         copy();
       }
       break;
     case "KeyV":
+      if (editor.playMode) return;
       if (event.ctrlKey || event.metaKey) {
+        deselect();
         paste(editor.mousePos[0] - camx, editor.mousePos[1] - camy);
       }
       break;
     case "KeyG":
-      editor.godMode = !editor.godMode;
+      editor.invincible = !editor.invincible;
       break;
     case "KeyM":
       editor.showMenus = !editor.showMenus;
@@ -193,13 +223,19 @@ document.addEventListener("keydown", function (event) {
         id("helpMenu").style.display = "none";
       } else id("helpMenu").style.display = "block";
       break;
+    case "KeyP":
+      if (!mouseDown.includes(true)) togglePlayMode();
+      break;
     default:
   }
 });
+var mouseDown = [false, false, false];
 id("display").addEventListener("mousedown", function (event) {
+  if (editor.playMode) return;
+  let button = event.button;
+  mouseDown[button] = true;
   let xPos = (event.clientX - camx) / cams;
   let yPos = (event.clientY - camy) / cams;
-  let button = event.button;
   switch (button) {
     case 0: // left
       if ((event.ctrlKey || event.metaKey) && !event.shiftKey) {
@@ -263,6 +299,50 @@ id("display").addEventListener("mousedown", function (event) {
   }
 });
 document.addEventListener("mousemove", function (event) {
+  if (event.clientX < 200 && editor.showMenus && !editor.playMode) {
+    if (id("editOptions").style.right === "100%") {
+      id("editOptions").style.right = `calc(100% - 200px)`;
+    }
+  } else {
+    id("editOptions").style.right = "100%";
+  }
+  if (
+    event.clientX > window.innerWidth - 200 &&
+    editor.showMenus &&
+    !editor.playMode
+  ) {
+    if (id("saveMenu").style.left === "100%") {
+      id("saveMenu").style.left = `calc(100% - 200px)`;
+    }
+  } else {
+    id("saveMenu").style.left = "100%";
+  }
+  if (
+    event.clientY > window.innerHeight - 200 &&
+    editor.showMenus &&
+    !editor.playMode
+  ) {
+    if (editor.editMode) {
+      if (editor.editBlock !== undefined) {
+        if (id("blockEdit").style.top === "100%") {
+          id("blockEdit").style.top = `calc(100% - 200px)`;
+        }
+      }
+    } else {
+      if (id("blockSelect").style.top === "100%") {
+        id("blockSelect").style.top = `calc(100% - 200px)`;
+      }
+    }
+  } else {
+    id("blockSelect").style.top = "100%";
+    if (
+      editor.editBlock !== undefined &&
+      !id("blockEdit").contains(document.activeElement)
+    ) {
+      id("blockEdit").style.top = "100%";
+    }
+  }
+  if (editor.playMode) return;
   let xPos = (event.clientX - camx) / cams;
   let yPos = (event.clientY - camy) / cams;
   editor.scaleStart = false;
@@ -311,43 +391,13 @@ document.addEventListener("mousemove", function (event) {
     default:
   }
   if (!editor.editMode) updateBuildLocation(xPos, yPos);
-  if (event.clientX < 200 && editor.showMenus) {
-    if (id("editOptions").style.right === "100%") {
-      id("editOptions").style.right = `calc(100% - 200px)`;
-    }
-  } else {
-    id("editOptions").style.right = "100%";
-  }
-  if (event.clientX > window.innerWidth - 200 && editor.showMenus) {
-    if (id("saveMenu").style.left === "100%") {
-      id("saveMenu").style.left = `calc(100% - 200px)`;
-    }
-  } else {
-    id("saveMenu").style.left = "100%";
-  }
-  if (event.clientY > window.innerHeight - 200 && editor.showMenus) {
-    if (editor.editMode) {
-      if (editor.editBlock !== undefined) {
-        if (id("blockEdit").style.top === "100%") {
-          id("blockEdit").style.top = `calc(100% - 200px)`;
-        }
-      }
-    } else {
-      if (id("blockSelect").style.top === "100%") {
-        id("blockSelect").style.top = `calc(100% - 200px)`;
-      }
-    }
-  } else {
-    id("blockSelect").style.top = "100%";
-    if (editor.editBlock !== undefined) {
-      id("blockEdit").style.top = "100%";
-    }
-  }
 });
 id("display").addEventListener("mouseup", function (event) {
+  let button = event.button;
+  mouseDown[button] = false;
+  if (editor.playMode) return;
   let xPos = (event.clientX - camx) / cams;
   let yPos = (event.clientY - camy) / cams;
-  let button = event.button;
   switch (button) {
     case 0: // left
       if (editor.editMode && !(event.ctrlKey || event.metaKey)) {
@@ -373,6 +423,7 @@ id("display").addEventListener("mouseup", function (event) {
           editor.selectBox.x - editor.moveStart[0],
           editor.selectBox.y - editor.moveStart[1]
         );
+        reselect();
       }
       break;
     case 1: // middle
@@ -392,11 +443,15 @@ id("display").addEventListener("wheel", function (event) {
   if (event.shiftKey && (event.ctrlKey || event.metaKey)) {
     cams *= 1.1 ** Math.sign(-event.deltaY);
     adjustLevelSize();
-    updateBuildLocation((event.clientX - camx) / cams, (event.clientY - camy) / cams);
+    updateBuildLocation(
+      (event.clientX - camx) / cams,
+      (event.clientY - camy) / cams
+    );
     return;
   }
   if (editor.editMode) {
-    if (editor.selectBox.maxs * factor > 50) factor = 50 / editor.selectBox.maxs;
+    if (editor.selectBox.maxs * factor > 50)
+      factor = 50 / editor.selectBox.maxs;
     if (editor.selectBox.mins * factor < 6.25)
       factor = 6.25 / editor.selectBox.mins;
     for (let i in editor.editSelect) {
@@ -420,6 +475,7 @@ id("display").addEventListener("wheel", function (event) {
           xPos,
           yPos
         );
+        reselect();
       }
     }
     updateSelectDisp();
@@ -998,8 +1054,12 @@ function str2lvl(str) {
         .fill(0)
         .map((x) => Array(0))
     );
+  let dynBlocks = [];
   for (let i in blocks) {
     let block = blocks[i];
+    if (block.dynamic) {
+      dynBlocks.push(block);
+    }
     for (let prop in block) {
       if (
         propAliasReverse[prop] !== undefined &&
@@ -1012,9 +1072,13 @@ function str2lvl(str) {
     for (let prop in blockData[block.type].defaultBlock) {
       block[prop] ??= blockData[block.type].defaultBlock[prop];
     }
+    if (block.dynamic) {
+      dynBlocks.push(block);
+      continue;
+    }
     lvl[gridUnit(block.x)][gridUnit(block.y)].push(block);
   }
-  return lvl;
+  return [lvl, dynBlocks];
 }
 function pState2str(pState) {
   pState = deepCopy(pState);
@@ -1037,6 +1101,7 @@ function storeSave() {
 }
 function addSave() {
   let name = prompt("Please input save name.");
+  if (name === null) return;
   while (editor.saveOrder.includes(name))
     name = prompt("Name taken. Please input new save name.");
   editor.saveOrder.push(name);
@@ -1044,6 +1109,7 @@ function addSave() {
   save();
 }
 function save() {
+  if (editor.playMode) return;
   if (editor.currentSave !== undefined)
     editor.saves[editor.currentSave] = [lvl2str(level), pState2str(startState)];
   storeSave();
@@ -1051,12 +1117,16 @@ function save() {
 function load(name) {
   let save = editor.saves[name];
   if (save) {
-    setLevel(str2lvl(save[0]));
+    let saveData = str2lvl(save[0]);
+    setLevel(saveData[0]);
+    dynamicInit = saveData[1];
+    dynamicObjs = [];
     startState = str2pState(save[1]);
     updateGrid();
     respawn(true);
     deselect();
     editor.currentSave = name;
+    togglePlayMode();
   }
 }
 function exportSave(name) {
@@ -1132,6 +1202,22 @@ function blurAll() {
   id("exportArea").focus();
   id("exportArea").style.display = "none";
 }
+function togglePlayMode() {
+  editor.playMode = !editor.playMode;
+  if (editor.playMode) {
+    dynamicInit = deepCopy(dynamicObjs);
+    dynamicSave = deepCopy(dynamicObjs);
+    selectLayer.visible = false;
+    deselect();
+  } else {
+    let amt = dynamicObjs.length;
+    for (let i = 0; i < amt; i++) removeBlock(dynamicObjs[0]);
+    let newDynamicObjs = deepCopy(dynamicInit);
+    for (let i in newDynamicObjs) addBlock(newDynamicObjs[i]);
+    dynamicSave = deepCopy(dynamicInit);
+    selectLayer.visible = true;
+  }
+}
 function init() {
   document.querySelectorAll(".hasTooltip").forEach(function (ele) {
     addTooltip(ele, ele.dataset.tooltip);
@@ -1151,11 +1237,11 @@ function init() {
     let s = new PIXI.Sprite(
       blockData[i].getTexture(blockData[i].defaultBlock, btn)
     );
-    blockData[i].update(blockData[i].defaultBlock, s);
+    blockData[i].update(blockData[i].defaultBlock, s, btn);
     btn.stage.addChild(s);
   }
   for (let i in propData) propAliasReverse[propData[i][1]] = i;
-  setLevel(str2lvl(level));
+  setLevel(str2lvl(level)[0]);
   drawLevel(true);
   adjustLevelSize();
   updateGrid();

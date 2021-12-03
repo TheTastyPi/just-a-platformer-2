@@ -9,7 +9,6 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <meta name="HandheldFriendly" content="true" />
     <meta
       name="description"
       content="'just a level editor 2', a versatile level editor for the second minimalistic platformer, 'just a platformer 2', created by TheTastyPi."
@@ -45,7 +44,7 @@
         </div>
       </div>
     </div>
-    <div id="blockEdit" class="blockEdit" v-if="editor.editBlock !== undefined" onmouseleave="blurAll()">
+    <div id="blockEdit" class="blockEdit" v-if="editor.editBlock !== undefined">
       <div class="propContainer">
         <div v-for="prop in editOrder" class="blockProp">
           <span style="width:50%">{{prop}}</span>
@@ -57,6 +56,15 @@
           <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.stop></input>
         </div>
         <div v-for="prop in solidProps" class="blockProp" v-if="editor.editBlock.isSolid">
+          <span style="width:50%">{{prop}}</span>
+          <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.stop>
+            <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
+              <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
+            </optgroup>
+          </select>
+          <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.stop></input>
+        </div>
+        <div v-for="prop in dynamicProps" class="blockProp" v-if="editor.editBlock.dynamic">
           <span style="width:50%">{{prop}}</span>
           <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.stop>
             <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
@@ -161,13 +169,20 @@
         onclick="editor.godMode = !editor.godMode"
         style="background-image: url(../pics/godMode.png);"
         data-tooltip="Toggle god mode (G)"
-      ></button>
+      ></button><br>
       <button
         v-bind:class="{buttonOn:editor.showMenus}"
         class="optionButton hasTooltip"
         onclick="editor.showMenus = !editor.showMenus"
         style="background-image: url(../pics/showMenus.png);"
         data-tooltip="Toggle menus (M)"
+      ></button>
+      <button
+        v-bind:class="{buttonOn:editor.playMode}"
+        class="optionButton hasTooltip"
+        onclick="togglePlayMode()"
+        style="background-image: url(../pics/playMode.png);"
+        data-tooltip="Toggle play mode (P): Enable dynamic blocks, but disable editing"
       ></button>
     </div>
     <div id="saveMenu" class="saveMenu">
@@ -241,20 +256,24 @@
         </div>
       </div>
     </div>
+    <div id="playDisp" class="playDisp" v-bind:style="{left:editor.playMode?'calc(100% - 200px)':'100%'}">
+      PLAY MODE
+    </div>
     <div id="helpMenu" class="helpMenu centered">
       <div style="font-size: 20px; text-align: center; background:#ffffff88">CONTROLS</div><br>
       <div style="text-align: center; background:#ffffff88"">General</div>
       <div>
         <div style="display:inline-block;">
-          Open Trays: <span class=key>MouseToEdge</span><br>
+          Open Menus: <span class=key>MouseToEdge</span><br>
           Toggle Help Menu: <span class=key>H</span><br>
           Teleport Player: <span class=key>Ctrl</span> <span class=key>LClick</span><br>
           Move Camera: <span class=key>Shift</span> <span class=key>Ctrl</span> <span class=key>LDrag</span><br>
           Zoom Camera: <span class=key>Shift</span> <span class=key>Ctrl</span> <span class=key>Scroll</span><br>
           Undo Action: <span class=key>Ctrl</span> <span class=key>Z</span><br>
+          Toggle Play Mode: <span class=key>P</span><br>
         </div>
         <div style="display:inline-block;">
-          Toggle Trays: <span class=key>M</span><br>
+          Toggle Menus: <span class=key>M</span><br>
           Switch Mode (Build/Edit): <span class=key>E</span><br>
           Toggle God Mode: <span class=key>G</span><br>
           Focus Camera: <span class=key>Shift</span> <span class=key>Ctrl</span> <span class=key>RClick</span><br>

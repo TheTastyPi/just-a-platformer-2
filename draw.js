@@ -8,7 +8,7 @@ function drawPlayer() {
   if (player.maxJumps === Infinity) ratio = 1;
   if (player.maxJumps === 0) ratio = 0;
   playerDisp.tint = PIXI.utils.rgb2hex([1 - ratio, 0, ratio]);
-  if (editor?.godMode) playerDisp.tint = PIXI.utils.rgb2hex([1, 0, 1]);
+  if (editor?.invincible) playerDisp.tint = PIXI.utils.rgb2hex([1, 0, 1]);
   playerDisp.alpha = player.isDead ? 0.5 : 1;
   playerDisp.x = player.x + camx / cams;
   playerDisp.y = player.y + camy / cams;
@@ -48,14 +48,17 @@ function drawLevel(clear = false) {
             );
           }
           s.visible = !block.invisible;
+          s.alpha = block.opacity;
         }
         if (
           prevBlock === undefined ||
           !arraysEqual(block, prevBlock) ||
+          [8].includes(block.type) ||
           (block.type === 2 && !arraysEqual(prevSaveState, saveState))
         ) {
           blockData[block.type].update(block);
           getSprite(block).visible = !block.invisible;
+          getSprite(block).alpha = block.opacity;
         }
       }
     }
@@ -119,8 +122,8 @@ function adjustScreen(instant = false) {
   levelLayer.x = camx;
   levelLayer.y = camy;
   if (editor !== undefined) {
-    gridDisp.x = Math.max(camx/cams % editor.gridSize, camx/cams);
-    gridDisp.y = Math.max(camy/cams % editor.gridSize, camy/cams);
+    gridDisp.x = Math.max((camx / cams) % editor.gridSize, camx / cams);
+    gridDisp.y = Math.max((camy / cams) % editor.gridSize, camy / cams);
     updateSelectDisp();
   }
   for (

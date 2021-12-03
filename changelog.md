@@ -46,3 +46,24 @@
 ### 15 Nov. 2021
 
 - Added help menu, accessible by \[H].
+
+## 3 Dec. 2021
+
+- Added 5 new blocks
+  - Pushable Block
+  - Unpushable Block
+  - Ice Block
+  - Water Block
+  - Conveyor Block
+- Added "dynamic" property to blocks
+  - Added several properties for dynamic blocks
+    - xv, yv, g, xg, pushable, invincible
+  - Added Play Mode: Dynamic blocks are active, but you can't edit
+- Added "opacity" property to blocks
+- Added "friction" property to blocks
+- Added three frames of coyote time
+- The physics now runs at a constant time interval
+- The block edit menu no longer closes if you have an input element in focus
+- Setting start point now also saves the level
+- God mode now has infinite jump
+- Block edit menu now updates as you move or scale selected blocks
