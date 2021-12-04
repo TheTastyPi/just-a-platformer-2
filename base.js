@@ -521,7 +521,8 @@ function addBlock(block) {
   return block;
 }
 function removeBlock(block) {
-  getSprite(block).destroy();
+  let s = getSprite(block);
+  s.destroy({ texture: s.texture !== blockData[block.type].defaultTexture });
   if (block.dynamic) dynamicObjs.splice(dynamicObjs.indexOf(block), 1);
   let gridSpace = level[gridUnit(block.x)][gridUnit(block.y)];
   for (let i = parseInt(block.index) + 1; i < gridSpace.length; i++) {

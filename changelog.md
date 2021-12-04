@@ -76,6 +76,10 @@
 
 - Fixed a bug where adding dynamic blocks couldn't be undo after activating play mode
 
-### 4 Dec. 2021
+### 4 Dec. 2021 #2
 
 - Added a button that toggles animations
+
+### 4 Dec. 2021 #3
+
+- Animations are now much less laggy

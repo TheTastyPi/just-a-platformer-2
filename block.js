@@ -349,6 +349,7 @@ new BlockType(
     () => {}
   ],
   (block, sprite = getSprite(block), app) => {
+    sprite.texture.destroy(true);
     sprite.texture = blockData[block.type].getTexture(block, app);
   },
   {
