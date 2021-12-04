@@ -75,3 +75,7 @@
 ### 4 Dec. 2021
 
 - Fixed a bug where adding dynamic blocks couldn't be undo after activating play mode
+
+### 4 Dec. 2021
+
+- Added a button that toggles animations
