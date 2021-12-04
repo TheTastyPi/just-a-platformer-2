@@ -62,7 +62,7 @@ function nextFrame(timeStamp) {
         }
       }
     }
-    drawLevel();
+    if (editor.doAnimation ?? true) drawLevel();
     drawPlayer();
     adjustScreen();
   } else {

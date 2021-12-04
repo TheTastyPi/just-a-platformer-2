@@ -169,20 +169,27 @@
         onclick="editor.godMode = !editor.godMode"
         style="background-image: url(../pics/godMode.png);"
         data-tooltip="Toggle god mode (G)"
-      ></button><br>
+      ></button>
       <button
         v-bind:class="{buttonOn:editor.showMenus}"
         class="optionButton hasTooltip"
         onclick="editor.showMenus = !editor.showMenus"
         style="background-image: url(../pics/showMenus.png);"
         data-tooltip="Toggle menus (M)"
-      ></button>
+      ></button><br>
       <button
         v-bind:class="{buttonOn:editor.playMode}"
         class="optionButton hasTooltip"
         onclick="togglePlayMode()"
         style="background-image: url(../pics/playMode.png);"
         data-tooltip="Toggle play mode (P): Enable dynamic blocks, but disable editing"
+      ></button>
+      <button
+        v-bind:class="{buttonOn:editor.doAnimation}"
+        class="optionButton hasTooltip"
+        onclick="editor.doAnimation = !editor.doAnimation"
+        style="background-image: url(../pics/doAnimation.png);"
+        data-tooltip="Toggle animations"
       ></button>
     </div>
     <div id="saveMenu" class="saveMenu">

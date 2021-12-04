@@ -38,7 +38,8 @@ var editor = {
   showTooltips: true,
   invincible: false,
   showMenus: true,
-  playMode: false
+  playMode: false,
+  doAnimation: true
 };
 const propData = {
   // general
