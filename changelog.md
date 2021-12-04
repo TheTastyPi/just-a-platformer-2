@@ -82,4 +82,4 @@
 
 ### 4 Dec. 2021 #3
 
-- Animations are now much less laggy
+- Animations no longer cause memory leak
