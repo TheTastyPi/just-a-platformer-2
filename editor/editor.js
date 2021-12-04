@@ -248,7 +248,9 @@ id("display").addEventListener("mousedown", function (event) {
           selectBox.clear();
         } else {
           updateBuildLocation(xPos, yPos);
-          addAction("addBlock", [addBlock(deepCopy(editor.buildSelect))]);
+          addAction("addBlock", [
+            deepCopy(addBlock(deepCopy(editor.buildSelect)))
+          ]);
         }
       }
       break;
@@ -521,7 +523,12 @@ function confirmPropEdit(block) {
   let editBlock = editor.editBlock;
   for (let i in block) {
     if (newBlock.type !== editBlock.type) {
-      newBlock = {...blockData[editBlock.type].defaultBlock, x:newBlock.x, y:newBlock.y, size:newBlock.size};
+      newBlock = {
+        ...blockData[editBlock.type].defaultBlock,
+        x: newBlock.x,
+        y: newBlock.y,
+        size: newBlock.size
+      };
       break;
     }
     if (editBlock[i] !== "MIXED" && i !== "index") {
@@ -707,7 +714,7 @@ function paste(x, y) {
     editor.editSelect.push(block);
     added.push(block);
   }
-  addAction("addBlock", added);
+  addAction("addBlock", deepCopy(added));
   updateSelectDisp();
 }
 function changeGridSize(size) {

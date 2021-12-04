@@ -71,3 +71,7 @@
 ### 3 Dec. 2021 #2
 
 - Now when editing a block's type, the block is automatically set to the default block of the new type
+
+### 4 Dec. 2021
+
+- Fixed a bug where adding dynamic blocks couldn't be undo after activating play mode
