@@ -83,3 +83,16 @@
 ### 4 Dec. 2021 #3
 
 - Animations no longer cause memory leak
+
+## 9 Dec. 2021
+
+- Added 2 blocks
+  - Gravity Field
+  - Speed Field
+- Added "temporary" property to the two blocks above
+  - This means the effects of the object is only in effect when touching the object
+- Fixed a bug where copying and pasting blocks with custom textures caused the game to crash
+- Fixed a bug where property limits just, didn't work
+- Fixed a bug where respawning after deleting saved dynamic blocks caused them to reappear
+- Fixed a bug where the background incorrectly scales when zooming in/out
+- Added an easter egg

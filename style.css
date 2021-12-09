@@ -21,20 +21,22 @@ body::after {
   transition: 0.5s;
 }
 .blockSectLabel {
-  min-width: 100%;
+  width: 100%;
 }
 .blockSect {
   height: 100%;
-  display: flex;
-  flex-flow: wrap;
-  justify-content: space-evenly;
   margin-right: 5px;
   background: #ffffff88;
-  min-width: 275px;
+}
+.blockSelectGroup {
+  display: flex;
+  height: 90%;
+  align-items: center;
 }
 .blockSelectLabel {
-  width: 50px;
   margin-right: 5px;
+  word-spacing: 1000px;
+  min-width: 100px;
 }
 .blockSelected {
   box-shadow: 0 0 0 4px red;

@@ -31,16 +31,18 @@
     <div id="blockSelect" class="blockSelect">
       <div v-for="(ids,groupName) in blocks" class="blockSect">
         <div class="blockSectLabel">{{groupName}}</div>
-        <div v-for="id in ids" class="blockSelectLabel">
-          <canvas
-            v-bind:id="'blockSelect'+id"
-            width="50"
-            height="50"
-            v-on:click="changeBuildSelect(blockData[id].defaultBlock)"
-            v-bind:class="{blockSelected:selectType==id}"
-          ></canvas
-          ><br />
-          {{blockData[id].name}}
+        <div class="blockSelectGroup">
+          <div v-for="id in ids" class="blockSelectLabel">
+            <canvas
+              v-bind:id="'blockSelect'+id"
+              width="50"
+              height="50"
+              v-on:click="changeBuildSelect(blockData[id].defaultBlock)"
+              v-bind:class="{blockSelected:selectType==id}"
+            ></canvas
+            ><br />
+            {{blockData[id].name}}
+          </div>
         </div>
       </div>
     </div>

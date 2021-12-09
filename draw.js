@@ -112,12 +112,13 @@ function adjustScreen(instant = false) {
   id("background").style.left =
     Math.min(
       Math.max(0, camx),
-      camx + Math.max(0, level.length * maxBlockSize - window.innerWidth)
+      camx + Math.max(0, level.length * maxBlockSize * cams - window.innerWidth)
     ) + "px";
   id("background").style.top =
     Math.min(
       Math.max(0, camy),
-      camy + Math.max(0, level[0].length * maxBlockSize - window.innerHeight)
+      camy +
+        Math.max(0, level[0].length * maxBlockSize * cams - window.innerHeight)
     ) + "px";
   levelLayer.x = camx;
   levelLayer.y = camy;
@@ -169,10 +170,10 @@ function adjustScreen(instant = false) {
   drawPlayer();
 }
 function adjustLevelSize() {
-  let w = Math.min(level.length * maxBlockSize, window.innerWidth);
-  let h = Math.min(level[0].length * maxBlockSize, window.innerHeight);
-  id("background").style.width = w * cams + "px";
-  id("background").style.height = h * cams + "px";
+  let w = Math.min(level.length * maxBlockSize * cams, window.innerWidth);
+  let h = Math.min(level[0].length * maxBlockSize * cams, window.innerHeight);
+  id("background").style.width = w + "px";
+  id("background").style.height = h + "px";
   playerLayer.scale.set(cams, cams);
   levelLayer.scale.set(cams, cams);
   selectLayer?.scale?.set(cams, cams);

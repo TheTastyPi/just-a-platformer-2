@@ -57,8 +57,8 @@ const propData = {
   eventPriority: ["int", "ep", () => 0, () => Infinity],
   strictPriority: ["bool", "sp"],
   invisible: ["bool", "v"],
-  friction: ["bool", "fr"],
   opacity: ["num", "o", () => 0, () => 1],
+  friction: ["bool", "fr"],
   dynamic: ["bool", "dy"],
   interactive: ["bool", "i"],
   // solid only
@@ -80,14 +80,21 @@ const propData = {
   leftSpeed: ["num", "lsp"],
   rightSpeed: ["num", "rsp"],
   topSpeed: ["num", "tsp"],
-  bottomSpeed: ["num", "bsp"]
+  bottomSpeed: ["num", "bsp"],
+  newg: ["num", "nwg"],
+  newxg: ["bool", "nwxg"],
+  dirOnly: ["bool", "dirO"],
+  magOnly: ["bool", "magO"],
+  temporary: ["bool", "tmp"],
+  newSpeed: ["num", "nwsp"]
 };
 const propAliasReverse = {};
 const blockList = {
   Special: [2],
   Basic: [0, 1],
   Dynamic: [4, 5],
-  Movement: [3, 6, 7, 8]
+  Movement: [3, 6, 7, 8],
+  Status: [9, 10]
 };
 var level =
   "NrDeCIBcE8AcFNwC4AMAacAPZAmArBtLngL5oQwLLrhFJ4pkVyKqHICMKj5UL17JBwZM+VNrVzdRlVjTr4ezcfOQBmab1kDJSNSK38JdNQHYCWYjKM1s9JWLkY7DQQBZNyp5aGfHOuy5VJEVrFWdOfEEcczDvQO53P20JQIMvAM5zQQ4o8ABnK0Nwn2FgjjMAOgtCoRxquMyhV11cmsiG4vjOFroOXOqMWoHSLqaynMSCjtGM1M4ANnqLPqnh5cb5oWzWtZnN204ADlNB3Zp1zrnDoROzvpGh-bGtidb0-1fe9WSbCObgh4HCkbjhfiU7GDghpgX8fFCkrCIcQkd0Qjs+nlavgDv8cHcVpxHtM6ldPqCCZMLs9rniMZw9qTZuS8Ut7gzqUzcfDvr5OSNuZDef1lk8uS9QcKsTSWTzylV2uLaXKch8QXTCejmeqVboYYKUYiDXpwWiYdE1XC7ObdEDjfpUU0zJqcRL-s7BM77by7W6fEDBJbkUgA+djaG+kG0RGpI6tjGQlGmgn9X67CmRABdNAATlzmaAA";
@@ -112,8 +119,8 @@ var blockEdit = new Vue({
       "eventPriority",
       "strictPriority",
       "invisible",
-      "friction",
       "opacity",
+      "friction",
       "dynamic"
       //"interactive"
     ],
@@ -179,6 +186,8 @@ document.addEventListener("keydown", function (event) {
           removeBlock(editor.editSelect[i]);
         }
         deselect();
+        dynamicSave = deepCopy(dynamicObjs);
+        dynamicInit = deepCopy(dynamicObjs);
       }
       break;
     case "KeyZ":
@@ -536,7 +545,7 @@ function confirmPropEdit(block) {
       if (parseFloat(editBlock[i]) == editBlock[i]) {
         let limIndex = 2;
         let propLimit = propData[i];
-        if (propLimit === undefined) {
+        if (propLimit[limIndex] === undefined && blockData[block.type].props[i] !== undefined) {
           propLimit = blockData[block.type].props[i];
           limIndex = 0;
         }
@@ -941,12 +950,8 @@ function doAction(action) {
       reselect();
       break;
     case "removeBlock":
-      for (let i in action[1]) {
-        removeBlock(action[1][i]);
-        if (editor.editSelect.includes(action[1][i]))
-          editor.editSelect.splice(editor.editSelect.indexOf(action[1][i]), 1);
-      }
-      reselect();
+      for (let i in action[1]) removeBlock(action[1][i]);
+      deselect();
       break;
     case "moveBlock":
       for (let i in action[1]) moveBlock(action[1][i], action[2], action[3]);
@@ -979,12 +984,8 @@ function doAction(action) {
 function undoAction(action) {
   switch (action[0]) {
     case "addBlock":
-      for (let i in action[1]) {
-        removeBlock(action[1][i]);
-        if (editor.editSelect.includes(action[1][i]))
-          editor.editSelect.splice(editor.editSelect.indexOf(action[1][i]), 1);
-      }
-      reselect();
+      for (let i in action[1]) removeBlock(action[1][i]);
+      deselect();
       break;
     case "removeBlock":
       for (let i in action[1]) addBlock(action[1][i]);

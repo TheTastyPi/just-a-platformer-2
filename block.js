@@ -20,11 +20,11 @@ class Block {
     this.strictPriority = strictPriority;
     this.invisible = false;
     this.opacity = 1;
+    this.friction = true;
     this.dynamic = false;
     this.interactive = false;
     // solid only
     this.floorLeniency = 0;
-    this.friction = true;
     // dynamic props
     this.xv = 0;
     this.yv = 0;
@@ -126,7 +126,7 @@ new BlockType(
     () => {},
     () => {},
     () => {},
-    (obj, block, isPlayer) => {
+    (obj, block, tempObj, isPlayer) => {
       if (isPlayer && control.shift && canSave) {
         setSpawn();
         canSave = false;
@@ -349,7 +349,8 @@ new BlockType(
     () => {}
   ],
   (block, sprite = getSprite(block), app) => {
-    sprite.texture.destroy(true);
+    if (sprite.texture !== blockData[block.type].defaultTexture)
+      sprite.texture.destroy(true);
     sprite.texture = blockData[block.type].getTexture(block, app);
   },
   {
@@ -357,5 +358,231 @@ new BlockType(
     rightSpeed: [() => -2000, () => 2000],
     topSpeed: [() => -2000, () => 2000],
     bottomSpeed: [() => -2000, () => 2000]
+  }
+);
+new BlockType(
+  "Gravity Field",
+  {
+    ...new Block(9, 0, 0, 50, false, false, 1),
+    newg: 1,
+    newxg: false,
+    dirOnly: false,
+    magOnly: false,
+    temporary: false
+  },
+  (block, app = display) => {
+    let g = new PIXI.Graphics();
+    g.alpha = 0.5;
+    let color;
+    let factor = Math.min(Math.abs(block.newg), 1);
+    let level = Math.max(Math.floor(Math.abs(block.newg)), 1);
+    if (block.dirOnly) {
+      factor = 1;
+      level = 1;
+    }
+    if (block.newxg) {
+      if (block.newg < 0) {
+        color = PIXI.utils.rgb2hex([
+          0.5,
+          0.5 + 0.5 * factor,
+          0.5 + 0.5 * factor
+        ]);
+      } else
+        color = PIXI.utils.rgb2hex([
+          0.5 + 0.5 * factor,
+          0.5 + 0.5 * factor,
+          0.5
+        ]);
+    } else {
+      if (block.newg < 0) {
+        color = PIXI.utils.rgb2hex([0.5 + 0.5 * factor, 0.5, 0.5]);
+      } else color = PIXI.utils.rgb2hex([0.5, 0.5, 0.5 + 0.5 * factor]);
+    }
+    if (block.magOnly)
+      color = PIXI.utils.rgb2hex([0.5 + 0.5 * factor, 0.5, 0.5 + 0.5 * factor]);
+    if (block.newg === 0 || (block.dirOnly && block.magOnly)) color = 0x888888;
+    g.beginFill(color);
+    g.drawRect(0, 0, 50, 50);
+    g.endFill();
+    g.lineStyle({
+      width: 2,
+      color: PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2))
+    });
+    let f = (fxn, x, y, w = 0, h = 0) => {
+      if (block.newg > 0) {
+        x = 50 - x - w;
+      }
+      if (!block.newxg) {
+        let temp = x;
+        x = y;
+        y = temp;
+      }
+      g[fxn](x, y, w, h);
+    };
+    if (block.dirOnly && block.magOnly) {
+      g.moveTo(5, 5); // b
+      g.lineTo(5, 45);
+      g.lineTo(15, 35);
+      g.lineTo(5, 25);
+      g.lineTo(15, 15);
+      g.lineTo(5, 5);
+      g.moveTo(15, 45); // r
+      g.lineTo(15, 5);
+      g.lineTo(25, 15);
+      g.lineTo(15, 25);
+      g.lineTo(25, 45);
+      g.moveTo(25, 5); // u
+      g.lineTo(25, 35);
+      g.lineTo(30, 45);
+      g.lineTo(35, 35);
+      g.lineTo(35, 5);
+      g.lineTo(35, 45); // h
+      g.moveTo(35, 25);
+      g.lineTo(45, 25);
+      g.moveTo(45, 5);
+      g.lineTo(45, 45);
+    } else if (block.magOnly) {
+      if (block.newg !== 0) {
+        g.drawRect(20, 35, 10, 10);
+        for (let i = 0; i < 2 + level; i++) {
+          let x = 25 - ((1 + level) * 5) / 2 + 5 * i;
+          g.moveTo(x, x <= 15 || x >= 35 ? 45 : 30);
+          g.lineTo(x, 5 + 15 * (1 - factor));
+        }
+      } else {
+        g.drawCircle(25, 25, 15);
+      }
+      if (!block.temporary) {
+        g.moveTo(35, 10);
+        g.lineTo(45, 10);
+        g.moveTo(40, 5);
+        g.lineTo(40, 15);
+      }
+    } else {
+      if (block.newg !== 0) {
+        if (!block.dirOnly) {
+          f("drawRect", 35, 20, 10, 10);
+          f("moveTo", 30, 25);
+          f("lineTo", 5 + 15 * (1 - factor), 25);
+        } else g.drawRect(20, 20, 10, 10);
+        for (let i = 0; i < level; i++) {
+          f("moveTo", 15 + 15 * (1 - factor) + i * 5, 17.5);
+          f("lineTo", 5 + 15 * (1 - factor) + i * 5, 25);
+          f("lineTo", 15 + 15 * (1 - factor) + i * 5, 32.5);
+        }
+      } else {
+        g.drawCircle(25, 25, 15);
+        f("moveTo", 25, 10);
+        f("lineTo", 25, 40);
+      }
+      if (!block.temporary) {
+        g.moveTo(35, 10);
+        g.lineTo(45, 10);
+        g.moveTo(40, 5);
+        g.lineTo(40, 15);
+      }
+    }
+    return app.renderer.generateTexture(g);
+  },
+  [
+    () => {},
+    () => {},
+    () => {},
+    () => {},
+    (obj, block, tempObj) => {
+      if (block.dirOnly && block.magOnly) return; // bruh
+      if (!block.temporary) {
+        if (block.dirOnly) {
+          obj.g = Math.sign(block.newg) * Math.abs(obj.g);
+        } else if (block.magOnly) {
+          obj.g = Math.sign(obj.g) * Math.abs(block.newg);
+        } else obj.g = block.newg;
+        if (!block.magOnly) obj.xg = block.newxg;
+      }
+      if (block.dirOnly) {
+        tempObj.g = Math.sign(block.newg) * Math.abs(obj.g);
+      } else if (block.magOnly) {
+        tempObj.g = Math.sign(obj.g) * Math.abs(block.newg);
+      } else tempObj.g = block.newg;
+      if (!block.magOnly) tempObj.xg = block.newxg;
+    }
+  ],
+  (block, sprite = getSprite(block), app) => {
+    if (sprite.texture !== blockData[block.type].defaultTexture)
+      sprite.texture.destroy(true);
+    sprite.texture = blockData[block.type].getTexture(block, app);
+  },
+  {
+    newg: [() => -5, () => 5],
+    newxg: [],
+    dirOnly: [],
+    magOnly: [],
+    temporary: []
+  }
+);
+new BlockType(
+  "Speed Field",
+  {
+    ...new Block(10, 0, 0, 50, false, false, 1),
+    newSpeed: 1,
+    temporary: false
+  },
+  (block, app = display) => {
+    let g = new PIXI.Graphics();
+    g.alpha = 0.5;
+    let factor = Math.min(block.newSpeed / 2, 1);
+    let level = Math.max(Math.floor(block.newSpeed) + 1, 1);
+    let color = PIXI.utils.rgb2hex([0.5, 0.5 + 0.5 * factor, 0.5]);
+    g.beginFill(color);
+    g.drawRect(0, 0, 50, 50);
+    g.endFill();
+    g.lineStyle({
+      width: 2,
+      color: PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2))
+    });
+    if (block.newSpeed !== 0) {
+      for (let i = 0; i < level; i++) {
+        g.moveTo(5 + (i * 40) / level, 5);
+        g.lineTo(5 + ((i + 1) * 40) / level, 25);
+        g.lineTo(5 + (i * 40) / level, 45);
+      }
+    } else {
+      g.moveTo(5, 5);
+      g.lineTo(25, 25);
+      g.lineTo(5, 45);
+      g.moveTo(35, 5);
+      g.lineTo(35, 45);
+      g.moveTo(45, 5);
+      g.lineTo(45, 45);
+    }
+    if (!block.temporary) {
+      g.moveTo(35, 10);
+      g.lineTo(45, 10);
+      g.moveTo(40, 5);
+      g.lineTo(40, 15);
+    }
+    return app.renderer.generateTexture(g);
+  },
+  [
+    () => {},
+    () => {},
+    () => {},
+    () => {},
+    (obj, block, tempObj, isPlayer) => {
+      if (!isPlayer) return;
+      if (!block.temporary) {
+        obj.moveSpeed = block.newSpeed;
+      }
+      tempObj.moveSpeed = block.newSpeed;
+    }
+  ],
+  (block, sprite = getSprite(block), app) => {
+    if (sprite.texture !== blockData[block.type].defaultTexture)
+      sprite.texture.destroy(true);
+    sprite.texture = blockData[block.type].getTexture(block, app);
+  },
+  {
+    newSpeed: [() => 0, () => 10],
+    temporary: []
   }
 );

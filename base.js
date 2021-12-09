@@ -12,7 +12,7 @@ var defaultPlayer = {
   xg: false,
   maxJump: 1,
   currentJump: 1,
-  moveSpeed: 200,
+  moveSpeed: 1,
   friction: true,
   gameSpeed: 1
 };
@@ -340,6 +340,7 @@ function doPhysics(obj, t, isPlayer) {
       }
     }
     // touch events
+    let tempObj = deepCopy(obj);
     for (let k in eventList) {
       for (let i = eventList[k].length - 1; i >= 0; i--) {
         for (let j in eventList[k][i]) {
@@ -349,11 +350,11 @@ function doPhysics(obj, t, isPlayer) {
             !block.strictPriority ||
             block.eventPriority === eventList[k].length - 1
           )
-            eventList[k][i][j][1](obj, block, isPlayer);
+            eventList[k][i][j][1](obj, block, tempObj, isPlayer);
         }
       }
     }
-    if (obj.invincible || (isPlayer && editor?.invincible)) {
+    if (tempObj.invincible || (isPlayer && editor?.invincible)) {
       obj.isDead = false;
       if (isPlayer) player.currentJump = 1;
     }
@@ -376,49 +377,49 @@ function doPhysics(obj, t, isPlayer) {
     // change acceleration
     let dxv =
       obj.xv -
-      (obj.g < 0 ? topBlock?.xv ?? 0 : 0) -
-      (obj.g > 0 ? bottomBlock?.xv ?? 0 : 0);
+      (tempObj.g < 0 ? topBlock?.xv ?? 0 : 0) -
+      (tempObj.g > 0 ? bottomBlock?.xv ?? 0 : 0);
     let dyv =
       obj.yv -
-      (obj.g < 0 ? leftBlock?.xy ?? 0 : 0) -
-      (obj.g > 0 ? rightBlock?.xy ?? 0 : 0);
-    if (obj.xg) {
-      obj.xa += 1000 * obj.g;
+      (tempObj.g < 0 ? leftBlock?.xy ?? 0 : 0) -
+      (tempObj.g > 0 ? rightBlock?.xy ?? 0 : 0);
+    if (tempObj.xg) {
+      obj.xa += 1000 * tempObj.g;
       if (isPlayer) {
-        player.ya += (control.down - control.up) * player.moveSpeed;
+        player.ya += (control.down - control.up) * tempObj.moveSpeed * 200;
       }
       let fricAcc = -dyv * obj.friction * friction;
       if (Math.sign(obj.ya) !== Math.sign(dyv) && !topBlock && !bottomBlock)
         obj.ya += fricAcc;
     } else {
-      obj.ya += 1000 * obj.g;
+      obj.ya += 1000 * tempObj.g;
       if (isPlayer) {
-        player.xa += (control.right - control.left) * player.moveSpeed;
+        player.xa += (control.right - control.left) * tempObj.moveSpeed * 200;
       }
       let fricAcc = -dxv * obj.friction * friction;
       if (Math.sign(obj.xa) !== Math.sign(dxv) && !leftBlock && !rightBlock)
         obj.xa += fricAcc;
     }
     // change velocity
-    obj.xv += obj.xa * t * (!obj.xg * 74 + 1);
-    obj.yv += obj.ya * t * (obj.xg * 74 + 1);
+    obj.xv += obj.xa * t * (!tempObj.xg * 74 + 1);
+    obj.yv += obj.ya * t * (tempObj.xg * 74 + 1);
     if (
       Math.abs(dxv) > Math.abs(obj.xa) &&
       Math.sign(dxv) === Math.sign(obj.xa)
     )
       obj.xv =
         obj.xa +
-        (obj.g < 0 ? topBlock?.xv ?? 0 : 0) +
-        (obj.g > 0 ? bottomBlock?.xv ?? 0 : 0);
+        (tempObj.g < 0 ? topBlock?.xv ?? 0 : 0) +
+        (tempObj.g > 0 ? bottomBlock?.xv ?? 0 : 0);
     if (
       Math.abs(dyv) > Math.abs(obj.ya) &&
       Math.sign(dyv) === Math.sign(obj.ya)
     )
       obj.yv =
         obj.ya +
-        (obj.g < 0 ? leftBlock?.yv ?? 0 : 0) +
-        (obj.g > 0 ? rightBlock?.yv ?? 0 : 0);
-    if (obj.xg) {
+        (tempObj.g < 0 ? leftBlock?.yv ?? 0 : 0) +
+        (tempObj.g > 0 ? rightBlock?.yv ?? 0 : 0);
+    if (tempObj.xg) {
       if (Math.abs(dyv) < 0.1) obj.yv -= dyv;
     } else {
       if (Math.abs(dxv) < 0.1) obj.xv -= dxv;
@@ -481,7 +482,15 @@ function gridUnit(n) {
 }
 function createSprite(block) {
   let t;
-  if (arraysEqual(blockData[block.type].defaultBlock, block)) {
+  let defBlock = blockData[block.type].defaultBlock;
+  if (
+    arraysEqual(defBlock, {
+      ...block,
+      x: defBlock.x,
+      y: defBlock.y,
+      size: defBlock.size
+    })
+  ) {
     t = blockData[block.type].defaultTexture;
   } else t = blockData[block.type].getTexture(block);
   let s = new PIXI.Sprite(t);
