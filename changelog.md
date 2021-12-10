@@ -102,4 +102,4 @@
 - Major performance upgrade
 - Fixed a bug where the god mode button doesn't work
 - Fixed a bug where dynamic objects disappear after respawning
-- Fixed a bug where dynamic blocks behaves weirdly after changing level size
+- Fixed a bug where dynamic objects behaves weirdly after changing level size
