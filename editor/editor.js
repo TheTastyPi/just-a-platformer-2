@@ -261,6 +261,10 @@ id("display").addEventListener("mousedown", function (event) {
           addAction("addBlock", [
             deepCopy(addBlock(deepCopy(editor.buildSelect)))
           ]);
+          if (editor.buildSelect.dynamic) {
+            dynamicSave = deepCopy(dynamicObjs);
+            dynamicInit = deepCopy(dynamicObjs);
+          }
         }
       }
       break;
@@ -871,6 +875,8 @@ function changeLevelSize(dir, num, action = true) {
       );
       saveState.x += maxBlockSize * num;
       player.x += maxBlockSize * num;
+      dynamicSave = deepCopy(dynamicObjs);
+      dynamicInit = deepCopy(dynamicObjs);
       break;
     }
     case "right": {
@@ -912,6 +918,8 @@ function changeLevelSize(dir, num, action = true) {
       );
       saveState.y += maxBlockSize * num;
       player.y += maxBlockSize * num;
+      dynamicSave = deepCopy(dynamicObjs);
+      dynamicInit = deepCopy(dynamicObjs);
       break;
     }
     case "down": {

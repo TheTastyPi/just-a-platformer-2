@@ -96,3 +96,10 @@
 - Fixed a bug where respawning after deleting saved dynamic blocks caused them to reappear
 - Fixed a bug where the background incorrectly scales when zooming in/out
 - Added an easter egg
+
+### 10 Dec. 2021
+
+- Major performance upgrade
+- Fixed a bug where the god mode button doesn't work
+- Fixed a bug where dynamic objects disappear after respawning
+- Fixed a bug where dynamic blocks behaves weirdly after changing level size

@@ -482,15 +482,15 @@ function gridUnit(n) {
 }
 function createSprite(block) {
   let t;
-  let defBlock = blockData[block.type].defaultBlock;
-  if (
-    arraysEqual(defBlock, {
-      ...block,
-      x: defBlock.x,
-      y: defBlock.y,
-      size: defBlock.size
-    })
-  ) {
+  let isDefault = true;
+  for (let i in blockData[block.type].textureFactor) {
+    let prop = blockData[block.type].textureFactor[i];
+    if (block[prop] !== blockData[block.type].defaultBlock[prop]) {
+      isDefault = false;
+      break;
+    }
+  }
+  if (isDefault) {
     t = blockData[block.type].defaultTexture;
   } else t = blockData[block.type].getTexture(block);
   let s = new PIXI.Sprite(t);

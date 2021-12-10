@@ -43,7 +43,8 @@ class BlockType {
     getTexture,
     touchEvent = [() => {}, () => {}, () => {}, () => {}, () => {}],
     update = (block) => {},
-    props = {}
+    props = {},
+    textureFactor = []
   ) {
     this.id = blockData.length;
     this.name = name;
@@ -53,6 +54,7 @@ class BlockType {
     this.update = update;
     this.touchEvent = touchEvent;
     this.props = props;
+    this.textureFactor = textureFactor;
     blockData.push(this);
   }
 }
@@ -518,7 +520,8 @@ new BlockType(
     dirOnly: [],
     magOnly: [],
     temporary: []
-  }
+  },
+  ["newg", "newxg", "dirOnly", "magOnly", "temporary"]
 );
 new BlockType(
   "Speed Field",
@@ -584,5 +587,6 @@ new BlockType(
   {
     newSpeed: [() => 0, () => 10],
     temporary: []
-  }
+  },
+  ["newSpeed", "temporary"]
 );
