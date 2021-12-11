@@ -103,3 +103,10 @@
 - Fixed a bug where the god mode button doesn't work
 - Fixed a bug where dynamic objects disappear after respawning
 - Fixed a bug where dynamic objects behaves weirdly after changing level size
+
+## 11 Dec. 2021
+
+- Added Text Field
+- Removed strictPriority, since there wasn't much use for it
+- The UI has been changed significantly
+- Added a text field to the default level

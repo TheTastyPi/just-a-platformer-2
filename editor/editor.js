@@ -55,7 +55,6 @@ const propData = {
   isSolid: ["bool", "so"],
   giveJump: ["bool", "j"],
   eventPriority: ["int", "ep", () => 0, () => Infinity],
-  strictPriority: ["bool", "sp"],
   invisible: ["bool", "v"],
   opacity: ["num", "o", () => 0, () => 1],
   friction: ["bool", "fr"],
@@ -86,18 +85,19 @@ const propData = {
   dirOnly: ["bool", "dirO"],
   magOnly: ["bool", "magO"],
   temporary: ["bool", "tmp"],
-  newSpeed: ["num", "nwsp"]
+  newSpeed: ["num", "nwsp"],
+  text: ["str", "txt"]
 };
 const propAliasReverse = {};
 const blockList = {
-  Special: [2],
+  Special: [2, 11],
   Basic: [0, 1],
   Dynamic: [4, 5],
   Movement: [3, 6, 7, 8],
   Status: [9, 10]
 };
 var level =
-  "NrDeCIBcE8AcFNwC4AMAacAPZAmArBtLngL5oQwLLrhFJ4pkVyKqHICMKj5UL17JBwZM+VNrVzdRlVjTr4ezcfOQBmab1kDJSNSK38JdNQHYCWYjKM1s9JWLkY7DQQBZNyp5aGfHOuy5VJEVrFWdOfEEcczDvQO53P20JQIMvAM5zQQ4o8ABnK0Nwn2FgjjMAOgtCoRxquMyhV11cmsiG4vjOFroOXOqMWoHSLqaynMSCjtGM1M4ANnqLPqnh5cb5oWzWtZnN204ADlNB3Zp1zrnDoROzvpGh-bGtidb0-1fe9WSbCObgh4HCkbjhfiU7GDghpgX8fFCkrCIcQkd0Qjs+nlavgDv8cHcVpxHtM6ldPqCCZMLs9rniMZw9qTZuS8Ut7gzqUzcfDvr5OSNuZDef1lk8uS9QcKsTSWTzylV2uLaXKch8QXTCejmeqVboYYKUYiDXpwWiYdE1XC7ObdEDjfpUU0zJqcRL-s7BM77by7W6fEDBJbkUgA+djaG+kG0RGpI6tjGQlGmgn9X67CmRABdNAATlzmaAA";
+'NrDeCIBcE8AcFNwC4AMAacAPZAmArBtLngL5oQwLLrhFJ4pkVyKqHICMKj5UL17JBwZM+VNrVzdRlVjTr4ezcfOQBmab1kDJSNSK38JdNQHYCWYjKM1s9JWLkY7DQQBZNyp5aGfHOuy5VJEVrFWdOfEEcczDvQO53P20JQIMvAM5zQQ4o8ABnK0Nwn2FgjjMAOgtCoRxquMyhV11cmsiG4vjOFroOXOqMWoHSLqaynMSCjtGM1M4ANnqLPqnh5cb5oWzWtZnN204ADlNB3Zp1zrnDoROzvpGh-bGtidb0-1fe9WSbCObgh4HCkbjhfiU7GDghpgUZ+v8oYJ9DRIJhIMhwAAFABO8Hy+QABMAABIAXQJkAA9gTKQgAHYUgAW8AJzIANrACQBbeB0gCuAEJwAcEVM6ECRT5Qi9QTs+nlavhJZC7itOI9pnUrp9QarJhdntcEXLOHstbMdQilvdTQbzcriOUzSMHSFvkINZcLSCEe62k97TLfeUqu1A0apX6Pj6pSaQrEg5HoeDum7ASmmjDXTDotG-j4c7oJYm7Mjs3GlSX1HGzN786X3cWI3YgYI8xDkK3zq6u3126ne1JYR2kIO0z2xT9hwPJ3oRKS0ABOJekoA';
 var blockSelect = new Vue({
   el: "#blockSelect",
   data: {
@@ -117,7 +117,6 @@ var blockEdit = new Vue({
       "isSolid",
       "giveJump",
       "eventPriority",
-      "strictPriority",
       "invisible",
       "opacity",
       "friction",
@@ -130,6 +129,7 @@ var blockEdit = new Vue({
     inputType: {
       num: "text",
       int: "text",
+      str: "textarea",
       bool: "checkbox",
       blockType: "select",
       color: "color"
@@ -178,6 +178,7 @@ document.addEventListener("keydown", function (event) {
       editor.editMode = !editor.editMode;
       buildDisp.visible = !editor.editMode;
       selectDisp.visible = editor.editMode;
+      updateMenus();
       break;
     case "Backspace":
       if (editor.editMode) {
@@ -227,6 +228,7 @@ document.addEventListener("keydown", function (event) {
       break;
     case "KeyM":
       editor.showMenus = !editor.showMenus;
+      updateMenus();
       break;
     case "KeyH":
       if (id("helpMenu").style.display === "block") {
@@ -315,54 +317,11 @@ id("display").addEventListener("mousedown", function (event) {
   }
 });
 document.addEventListener("mousemove", function (event) {
-  if (event.clientX < 200 && editor.showMenus && !editor.playMode) {
-    if (id("editOptions").style.right === "100%") {
-      id("editOptions").style.right = `calc(100% - 200px)`;
-    }
-  } else {
-    id("editOptions").style.right = "100%";
-  }
-  if (
-    event.clientX > window.innerWidth - 200 &&
-    editor.showMenus &&
-    !editor.playMode
-  ) {
-    if (id("saveMenu").style.left === "100%") {
-      id("saveMenu").style.left = `calc(100% - 200px)`;
-    }
-  } else {
-    id("saveMenu").style.left = "100%";
-  }
-  if (
-    event.clientY > window.innerHeight - 200 &&
-    editor.showMenus &&
-    !editor.playMode
-  ) {
-    if (editor.editMode) {
-      if (editor.editBlock !== undefined) {
-        if (id("blockEdit").style.top === "100%") {
-          id("blockEdit").style.top = `calc(100% - 200px)`;
-        }
-      }
-    } else {
-      if (id("blockSelect").style.top === "100%") {
-        id("blockSelect").style.top = `calc(100% - 200px)`;
-      }
-    }
-  } else {
-    id("blockSelect").style.top = "100%";
-    if (
-      editor.editBlock !== undefined &&
-      !id("blockEdit").contains(document.activeElement)
-    ) {
-      id("blockEdit").style.top = "100%";
-    }
-  }
   if (editor.playMode) return;
   let xPos = (event.clientX - camx) / cams;
   let yPos = (event.clientY - camy) / cams;
-  editor.scaleStart = false;
   editor.mousePos = [event.clientX, event.clientY];
+  editor.scaleStart = false;
   switch (event.buttons) {
     case 1: {
       if (event.shiftKey && (event.ctrlKey || event.metaKey)) {
@@ -549,7 +508,10 @@ function confirmPropEdit(block) {
       if (parseFloat(editBlock[i]) == editBlock[i]) {
         let limIndex = 2;
         let propLimit = propData[i];
-        if (propLimit[limIndex] === undefined && blockData[block.type].props[i] !== undefined) {
+        if (
+          propLimit[limIndex] === undefined &&
+          blockData[block.type].props[i] !== undefined
+        ) {
           propLimit = blockData[block.type].props[i];
           limIndex = 0;
         }
@@ -1237,6 +1199,25 @@ function togglePlayMode() {
     for (let i in newDynamicObjs) addBlock(newDynamicObjs[i]);
     dynamicSave = deepCopy(dynamicInit);
     selectLayer.visible = true;
+  }
+  updateMenus();
+}
+function updateMenus() {
+  if (editor.showMenus && !editor.playMode) {
+    id("editOptions").style.display = `block`;
+    id("saveMenu").style.display = `block`;
+    if (editor.editMode) {
+      id("blockEdit").style.display = "block";
+      id("blockSelect").style.display = "none";
+    } else {
+      id("blockSelect").style.display = "flex";
+      id("blockEdit").style.display = "none";
+    }
+  } else {
+    id("editOptions").style.display = "none";
+    id("saveMenu").style.display = "none";
+    id("blockSelect").style.display = "none";
+    id("blockEdit").style.display = "none";
   }
 }
 function init() {

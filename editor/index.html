@@ -28,6 +28,7 @@
   >
     <div id="background" style="position: absolute; background: #ffffff;"></div>
     <canvas id="display" style="position: absolute;"></canvas>
+    <div id="textBlockText" class="textBlockText"></div>
     <div id="blockSelect" class="blockSelect">
       <div v-for="(ids,groupName) in blocks" class="blockSect">
         <div class="blockSectLabel">{{groupName}}</div>
@@ -46,48 +47,57 @@
         </div>
       </div>
     </div>
-    <div id="blockEdit" class="blockEdit" v-if="editor.editBlock !== undefined">
-      <div class="propContainer">
-        <div v-for="prop in editOrder" class="blockProp">
-          <span style="width:50%">{{prop}}</span>
-          <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.stop>
-            <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
-              <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
-            </optgroup>
-          </select>
-          <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.stop></input>
+    <div id="blockEdit" class="blockEdit">
+      <div id="blockEditMenu" class="blockEditMenu" v-if="editor.editBlock !== undefined">
+        <div class="propContainer">
+          <div v-for="prop in editOrder" class="blockProp">
+            <span style="width:50%">{{prop}}</span>
+            <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.stop>
+              <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
+                <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
+              </optgroup>
+            </select>
+            <textarea v-else-if="inputType[propData[prop][0]] == 'textarea'"style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.stop></textarea>
+            <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.stop></input>
+          </div>
+          <div v-for="prop in solidProps" class="blockProp" v-if="editor.editBlock.isSolid">
+            <span style="width:50%">{{prop}}</span>
+            <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.stop>
+              <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
+                <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
+              </optgroup>
+            </select>
+            <textarea v-else-if="inputType[propData[prop][0]] == 'textarea'"style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.stop></textarea>
+            <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.stop></input>
+          </div>
+          <div v-for="prop in dynamicProps" class="blockProp" v-if="editor.editBlock.dynamic">
+            <span style="width:50%">{{prop}}</span>
+            <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.stop>
+              <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
+                <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
+              </optgroup>
+            </select>
+            <textarea v-else-if="inputType[propData[prop][0]] == 'textarea'"style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.stop></textarea>
+            <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.stop></input>
+          </div>
+          <div v-if="Object.keys(editor.editBlockProp).length > 0" v-for="prop in editor.editBlockProp" class="blockProp">
+            <span style="width:50%">{{prop}}</span>
+            <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.stop>
+              <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
+                <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
+              </optgroup>
+            </select>
+            <textarea v-else-if="inputType[propData[prop][0]] == 'textarea'"style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.stop></textarea>
+            <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.stop></input>
+          </div>
         </div>
-        <div v-for="prop in solidProps" class="blockProp" v-if="editor.editBlock.isSolid">
-          <span style="width:50%">{{prop}}</span>
-          <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.stop>
-            <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
-              <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
-            </optgroup>
-          </select>
-          <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.stop></input>
-        </div>
-        <div v-for="prop in dynamicProps" class="blockProp" v-if="editor.editBlock.dynamic">
-          <span style="width:50%">{{prop}}</span>
-          <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.stop>
-            <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
-              <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
-            </optgroup>
-          </select>
-          <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.stop></input>
-        </div>
-        <div v-if="Object.keys(editor.editBlockProp).length > 0" v-for="prop in editor.editBlockProp" class="blockProp">
-          <span style="width:50%">{{prop}}</span>
-          <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.stop>
-            <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
-              <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
-            </optgroup>
-          </select>
-          <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.stop></input>
+        <div>
+          <button onclick="confirmEditAll()">Confirm</button>
+          <button onclick="reselect()">Reset</button>
         </div>
       </div>
-      <div>
-        <button onclick="confirmEditAll()">Confirm</button>
-        <button onclick="reselect()">Reset</button>
+      <div v-if="editor.editBlock === undefined">
+        <span class="centered noEditText">Select blocks to edit</span>
       </div>
     </div>
     <div id="editOptions" class="editOptions">
@@ -175,7 +185,7 @@
       <button
         v-bind:class="{buttonOn:editor.showMenus}"
         class="optionButton hasTooltip"
-        onclick="editor.showMenus = !editor.showMenus"
+        onclick="editor.showMenus = !editor.showMenus; updateMenus();"
         style="background-image: url(../pics/showMenus.png);"
         data-tooltip="Toggle menus (M)"
       ></button><br>
@@ -265,7 +275,7 @@
         </div>
       </div>
     </div>
-    <div id="playDisp" class="playDisp" v-bind:style="{left:editor.playMode?'calc(100% - 200px)':'100%'}">
+    <div id="playDisp" class="playDisp" v-bind:style="{display:editor.playMode?'block':'none'}">
       PLAY MODE
     </div>
     <div id="helpMenu" class="helpMenu centered">
@@ -273,13 +283,12 @@
       <div style="text-align: center; background:#ffffff88"">General</div>
       <div>
         <div style="display:inline-block;">
-          Open Menus: <span class=key>MouseToEdge</span><br>
           Toggle Help Menu: <span class=key>H</span><br>
+          Toggle Play Mode: <span class=key>P</span><br>
           Teleport Player: <span class=key>Ctrl</span> <span class=key>LClick</span><br>
           Move Camera: <span class=key>Shift</span> <span class=key>Ctrl</span> <span class=key>LDrag</span><br>
           Zoom Camera: <span class=key>Shift</span> <span class=key>Ctrl</span> <span class=key>Scroll</span><br>
           Undo Action: <span class=key>Ctrl</span> <span class=key>Z</span><br>
-          Toggle Play Mode: <span class=key>P</span><br>
         </div>
         <div style="display:inline-block;">
           Toggle Menus: <span class=key>M</span><br>

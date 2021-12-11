@@ -14,7 +14,8 @@ var defaultPlayer = {
   currentJump: 1,
   moveSpeed: 1,
   friction: true,
-  gameSpeed: 1
+  gameSpeed: 1,
+  displayingText: false
 };
 var player = deepCopy(defaultPlayer);
 var dynamicInit = [];
@@ -91,6 +92,7 @@ function doPhysics(obj, t, isPlayer) {
   obj.xa = 0;
   obj.ya = 0;
   let eventList = [[], [], [], [], []];
+  let topPriority = [0, 0, 0, 0, 0];
   for (let x = gridUnit(px1) - 1; x <= gridUnit(px2); x++) {
     if (isDead || obj.isDead) break;
     for (let y = gridUnit(py1) - 1; y <= gridUnit(py2); y++) {
@@ -236,9 +238,12 @@ function doPhysics(obj, t, isPlayer) {
             )
               leftBlock = block;
             if (block === player) continue;
-            if (eventList[0][block.eventPriority] === undefined)
-              eventList[0][block.eventPriority] = [];
-            eventList[0][block.eventPriority].push([block, data.touchEvent[0]]);
+            if (block.eventPriority > topPriority[0]) {
+              eventList[0] = [];
+              topPriority[0] = block.eventPriority;
+            }
+            if (block.eventPriority === topPriority[0])
+              eventList[0].push([block, data.touchEvent[0]]);
             continue;
           }
           // right
@@ -252,9 +257,12 @@ function doPhysics(obj, t, isPlayer) {
             )
               rightBlock = block;
             if (block === player) continue;
-            if (eventList[1][block.eventPriority] === undefined)
-              eventList[1][block.eventPriority] = [];
-            eventList[1][block.eventPriority].push([block, data.touchEvent[1]]);
+            if (block.eventPriority > topPriority[1]) {
+              eventList[1] = [];
+              topPriority[1] = block.eventPriority;
+            }
+            if (block.eventPriority === topPriority[1])
+              eventList[1].push([block, data.touchEvent[1]]);
             continue;
           }
           // top
@@ -268,9 +276,12 @@ function doPhysics(obj, t, isPlayer) {
             )
               topBlock = block;
             if (block === player) continue;
-            if (eventList[2][block.eventPriority] === undefined)
-              eventList[2][block.eventPriority] = [];
-            eventList[2][block.eventPriority].push([block, data.touchEvent[2]]);
+            if (block.eventPriority > topPriority[2]) {
+              eventList[2] = [];
+              topPriority[2] = block.eventPriority;
+            }
+            if (block.eventPriority === topPriority[2])
+              eventList[2].push([block, data.touchEvent[2]]);
             continue;
           }
           // bottom
@@ -284,15 +295,21 @@ function doPhysics(obj, t, isPlayer) {
             )
               bottomBlock = block;
             if (block === player) continue;
-            if (eventList[3][block.eventPriority] === undefined)
-              eventList[3][block.eventPriority] = [];
-            eventList[3][block.eventPriority].push([block, data.touchEvent[3]]);
+            if (block.eventPriority > topPriority[3]) {
+              eventList[3] = [];
+              topPriority[3] = block.eventPriority;
+            }
+            if (block.eventPriority === topPriority[3])
+              eventList[3].push([block, data.touchEvent[3]]);
             continue;
           }
         } else {
-          if (eventList[4][block.eventPriority] === undefined)
-            eventList[4][block.eventPriority] = [];
-          eventList[4][block.eventPriority].push([block, data.touchEvent[4]]);
+          if (block.eventPriority > topPriority[4]) {
+            eventList[4] = [];
+            topPriority[4] = block.eventPriority;
+          }
+          if (block.eventPriority === topPriority[4])
+            eventList[4].push([block, data.touchEvent[4]]);
           if (isPlayer && block.giveJump) giveJump = true;
         }
       }
@@ -341,18 +358,18 @@ function doPhysics(obj, t, isPlayer) {
     }
     // touch events
     let tempObj = deepCopy(obj);
-    for (let k in eventList) {
-      for (let i = eventList[k].length - 1; i >= 0; i--) {
-        for (let j in eventList[k][i]) {
-          let block = eventList[k][i][j][0];
-          if (!isColliding(obj, block) && !block.isSolid) continue;
-          if (
-            !block.strictPriority ||
-            block.eventPriority === eventList[k].length - 1
-          )
-            eventList[k][i][j][1](obj, block, tempObj, isPlayer);
-        }
+    for (let i in eventList) {
+      for (let j in eventList[i]) {
+        let block = eventList[i][j][0];
+        if (!isColliding(obj, block) && !block.isSolid) continue;
+        eventList[i][j][1](obj, block, tempObj, isPlayer);
       }
+    }
+    if (isPlayer) {
+      let s = id("textBlockText").style;
+      if (tempObj.displayingText) {
+        s.display = "inline-block";
+      } else s.display = "";
     }
     if (tempObj.invincible || (isPlayer && editor?.invincible)) {
       obj.isDead = false;

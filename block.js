@@ -1,15 +1,6 @@
 var blockData = [];
 class Block {
-  constructor(
-    type,
-    x,
-    y,
-    size,
-    isSolid,
-    giveJump,
-    eventPriority,
-    strictPriority = false
-  ) {
+  constructor(type, x, y, size, isSolid, giveJump, eventPriority) {
     this.type = type;
     this.x = x;
     this.y = y;
@@ -17,7 +8,6 @@ class Block {
     this.isSolid = isSolid;
     this.giveJump = giveJump;
     this.eventPriority = eventPriority;
-    this.strictPriority = strictPriority;
     this.invisible = false;
     this.opacity = 1;
     this.friction = true;
@@ -79,7 +69,7 @@ new BlockType(
 );
 new BlockType(
   "Death Block",
-  new Block(1, 0, 0, 50, true, false, 1, true),
+  new Block(1, 0, 0, 50, true, false, 1),
   (block, app = display) => {
     let g = new PIXI.Graphics();
     g.beginFill(0xff0000);
@@ -142,7 +132,7 @@ new BlockType(
 );
 new BlockType(
   "Bounce Block",
-  { ...new Block(3, 0, 0, 50, true, false, 2, true), power: 500 },
+  { ...new Block(3, 0, 0, 50, true, false, 2), power: 500 },
   (block, app = display) => {
     let g = new PIXI.Graphics();
     g.beginFill(0xffff00);
@@ -589,4 +579,67 @@ new BlockType(
     temporary: []
   },
   ["newSpeed", "temporary"]
+);
+new BlockType(
+  "Text Field",
+  {
+    ...new Block(11, 0, 0, 50, false, false, 1),
+    text: "text"
+  },
+  (block, app = display) => {
+    let g = new PIXI.Graphics();
+    g.alpha = 0.5;
+    let color = 0x000088;
+    g.beginFill(color);
+    g.drawRect(0, 0, 50, 50);
+    g.endFill();
+    g.lineStyle({
+      width: 2,
+      color: 0x000044
+    });
+    g.moveTo(10, 15);
+    g.lineTo(10, 10);
+    g.lineTo(40, 10);
+    g.lineTo(40, 15);
+    g.moveTo(25, 10);
+    g.lineTo(25, 40);
+    g.moveTo(20, 40);
+    g.lineTo(30, 40);
+    return app.renderer.generateTexture(g);
+  },
+  [
+    () => {},
+    () => {},
+    () => {},
+    () => {},
+    (obj, block, tempObj, isPlayer) => {
+      if (isPlayer && !tempObj.displayingText) {
+        tempObj.displayingText = true;
+        id("textBlockText").innerText = block.text;
+        let t = id("textBlockText").style;
+        let w = id("textBlockText").clientWidth;
+        let h = id("textBlockText").clientHeight;
+        t.left =
+          Math.max(
+            Math.min(
+              block.x + camx + (block.size - w) / 2,
+              window.innerWidth - w
+            ),
+            0
+          ) + "px";
+        t.top =
+          Math.max(
+            Math.min(
+              block.y + camy + (block.size - h) / 2,
+              window.innerHeight - h
+            ),
+            0
+          ) + "px";
+      }
+    }
+  ],
+  () => {},
+  {
+    text: []
+  }
 );
