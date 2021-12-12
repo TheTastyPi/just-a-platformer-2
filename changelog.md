@@ -119,4 +119,4 @@
 - Fixed a bug where the start position doesn't move along with level expansion
 - Fixed a bug where removing dynamic blocks by retracting level size causes the game to crash upon entering play mode
 - Fixed a bug where blocks can be positioned out-of-bound after retracting level size
-- You can now undo using \[ctrl] \[Y] instead of \[ctrl] \[shift] \[Z] (happy?)
+- You can now redo using \[ctrl] \[Y] instead of \[ctrl] \[shift] \[Z] (happy?)
