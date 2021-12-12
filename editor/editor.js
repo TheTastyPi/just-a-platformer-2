@@ -199,7 +199,7 @@ document.addEventListener("keydown", function (event) {
         } else undo();
       }
       break;
-    case "KeyY": // fuck you guys
+    case "KeyY":
       if (event.ctrlKey || event.metaKey) redo();
       break;
     case "KeyX":
