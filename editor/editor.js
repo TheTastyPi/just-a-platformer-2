@@ -97,7 +97,7 @@ const blockList = {
   Status: [9, 10]
 };
 var level =
-'NrDeCIBcE8AcFNwC4AMAacAPZAmArBtLngL5oQwLLrhFJ4pkVyKqHICMKj5UL17JBwZM+VNrVzdRlVjTr4ezcfOQBmab1kDJSNSK38JdNQHYCWYjKM1s9JWLkY7DQQBZNyp5aGfHOuy5VJEVrFWdOfEEcczDvQO53P20JQIMvAM5zQQ4o8ABnK0Nwn2FgjjMAOgtCoRxquMyhV11cmsiG4vjOFroOXOqMWoHSLqaynMSCjtGM1M4ANnqLPqnh5cb5oWzWtZnN204ADlNB3Zp1zrnDoROzvpGh-bGtidb0-1fe9WSbCObgh4HCkbjhfiU7GDghpgUZ+v8oYJ9DRIJhIMhwAAFABO8Hy+QABMAABIAXQJkAA9gTKQgAHYUgAW8AJzIANrACQBbeB0gCuAEJwAcEVM6ECRT5Qi9QTs+nlavhJZC7itOI9pnUrp9QarJhdntcEXLOHstbMdQilvdTQbzcriOUzSMHSFvkINZcLSCEe62k97TLfeUqu1A0apX6Pj6pSaQrEg5HoeDum7ASmmjDXTDotG-j4c7oJYm7Mjs3GlSX1HGzN786X3cWI3YgYI8xDkK3zq6u3126ne1JYR2kIO0z2xT9hwPJ3oRKS0ABOJekoA';
+  "NrDeCIBcE8AcFNwC4AMAacAPZAmArBtLngL5oQwLLrhFJ4pkVyKqHICMKj5UL17JBwZM+VNrVzdRlVjTr4ezcfOQBmab1kDJSNSK38JdNQHYCWYjKM1s9JWLkY7DQQBZNyp5aGfHOuy5VJEVrFWdOfEEcczDvQO53P20JQIMvAM5zQQ4o8ABnK0Nwn2FgjjMAOgtCoRxquMyhV11cmsiG4vjOFroOXOqMWoHSLqaynMSCjtGM1M4ANnqLPqnh5cb5oWzWtZnN204ADlNB3Zp1zrnDoROzvpGh-bGtidb0-1fe9WSbCObgh4HCkbjhfiU7GDghpgUZ+v8oYJ9DRIJhIMhwAAFABO8Hy+QABMAABIAXQJkAA9gTKQgAHYUgAW8AJzIANrACQBbeB0gCuAEJwAcEVM6ECRT5Qi9QTs+nlavhJZC7itOI9pnUrp9QarJhdntcEXLOHstbMdQilvdTQbzcriOUzSMHSFvkINZcLSCEe62k97TLfeUqu1A0apX6Pj6pSaQrEg5HoeDum7ASmmjDXTDotG-j4c7oJYm7Mjs3GlSX1HGzN786X3cWI3YgYI8xDkK3zq6u3126ne1JYR2kIO0z2xT9hwPJ3oRKS0ABOJekoA";
 var blockSelect = new Vue({
   el: "#blockSelect",
   data: {
@@ -198,6 +198,9 @@ document.addEventListener("keydown", function (event) {
           redo();
         } else undo();
       }
+      break;
+    case "KeyY": // fuck you guys
+      if (event.ctrlKey || event.metaKey) redo();
       break;
     case "KeyX":
       if (editor.playMode) return;
@@ -825,8 +828,19 @@ function changeLevelSize(dir, num, action = true) {
         x.map((y) =>
           y.map((b) => {
             removed.push(deepCopy(b));
+            if (b.dynamic) {
+              dynamicObjs.splice(dynamicObjs.indexOf(b), 1);
+            }
           })
         )
+      );
+      level[0].map((y) =>
+        y.map((b) => {
+          if (b.x < propData.x[2](b)) {
+            removed.push(deepCopy(b));
+            removeBlock(b);
+          }
+        })
       );
       level.map((x) =>
         x.map((y) =>
@@ -835,6 +849,7 @@ function changeLevelSize(dir, num, action = true) {
           })
         )
       );
+      startState.x += maxBlockSize * num;
       saveState.x += maxBlockSize * num;
       player.x += maxBlockSize * num;
       dynamicSave = deepCopy(dynamicObjs);
@@ -854,8 +869,19 @@ function changeLevelSize(dir, num, action = true) {
         x.map((y) =>
           y.map((b) => {
             removed.push(deepCopy(b));
+            if (b.dynamic) {
+              dynamicObjs.splice(dynamicObjs.indexOf(b), 1);
+            }
           })
         )
+      );
+      level[level.length - 1].map((y) =>
+        y.map((b) => {
+          if (b.x > propData.x[3](b)) {
+            removed.push(deepCopy(b));
+            removeBlock(b);
+          }
+        })
       );
       break;
     }
@@ -868,8 +894,19 @@ function changeLevelSize(dir, num, action = true) {
         x.splice(0, -num, ...deepCopy(add)).map((y) =>
           y.map((b) => {
             removed.push(deepCopy(b));
+            if (b.dynamic) {
+              dynamicObjs.splice(dynamicObjs.indexOf(b), 1);
+            }
           })
         )
+      );
+      level.map((x) =>
+        x[0].map((b) => {
+          if (b.y < propData.y[2](b)) {
+            removed.push(deepCopy(b));
+            removeBlock(b);
+          }
+        })
       );
       level.map((x) =>
         x.map((y) =>
@@ -878,6 +915,7 @@ function changeLevelSize(dir, num, action = true) {
           })
         )
       );
+      startState.y += maxBlockSize * num;
       saveState.y += maxBlockSize * num;
       player.y += maxBlockSize * num;
       dynamicSave = deepCopy(dynamicObjs);
@@ -893,8 +931,19 @@ function changeLevelSize(dir, num, action = true) {
         x.splice(prevY + Math.min(num, 0), -num, ...deepCopy(add)).map((y) =>
           y.map((b) => {
             removed.push(deepCopy(b));
+            if (b.dynamic) {
+              dynamicObjs.splice(dynamicObjs.indexOf(b), 1);
+            }
           })
         )
+      );
+      level.map((x) =>
+        x[x.length - 1].map((b) => {
+          if (b.y > propData.y[3](b)) {
+            removed.push(deepCopy(b));
+            removeBlock(b);
+          }
+        })
       );
       break;
     }
@@ -915,12 +964,23 @@ function addAction(type, ...values) {
 function doAction(action) {
   switch (action[0]) {
     case "addBlock":
-      for (let i in action[1]) addBlock(action[1][i]);
-      editor.editSelect.push(...action[1]);
+      let blocks = deepCopy(action[1]);
+      for (let i in blocks) addBlock(blocks[i]);
+      editor.editSelect.push(...blocks);
       reselect();
       break;
     case "removeBlock":
-      for (let i in action[1]) removeBlock(action[1][i]);
+      for (let i in action[1]) {
+        removeBlock(action[1][i]);
+        for (let j in action[1]) {
+          if (
+            gridUnit(action[1][i].x) === gridUnit(action[1][j].x) &&
+            gridUnit(action[1][i].y) === gridUnit(action[1][j].y) &&
+            action[1][i].index < action[1][j].index
+          )
+            action[1][j].index--;
+        }
+      }
       deselect();
       break;
     case "moveBlock":
@@ -954,12 +1014,23 @@ function doAction(action) {
 function undoAction(action) {
   switch (action[0]) {
     case "addBlock":
-      for (let i in action[1]) removeBlock(action[1][i]);
+      for (let i in action[1]) {
+        removeBlock(action[1][i]);
+        for (let j in action[1]) {
+          if (
+            gridUnit(action[1][i].x) === gridUnit(action[1][j].x) &&
+            gridUnit(action[1][i].y) === gridUnit(action[1][j].y) &&
+            action[1][i].index < action[1][j].index
+          )
+            action[1][j].index--;
+        }
+      }
       deselect();
       break;
     case "removeBlock":
-      for (let i in action[1]) addBlock(action[1][i]);
-      editor.editSelect.push(...action[1]);
+      let blocks = deepCopy(action[1]);
+      for (let i in blocks) addBlock(blocks[i]);
+      editor.editSelect.push(...blocks);
       reselect();
       break;
     case "moveBlock":

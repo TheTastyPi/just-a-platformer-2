@@ -110,3 +110,13 @@
 - Removed strictPriority, since there wasn't much use for it
 - The UI has been changed significantly
 - Added a text field to the default level
+
+### 12 Dec. 2021
+
+- Check Points now display "SHFT" when the player collides with them
+- Fixed a bug where undoing a paste involving multiple blocks in the same grid space caused the game to crash
+- Fixed a bug where, after undoing and redoing the placement of a dynamic block and entering and exiting play mode, undoing the placement again causes the game to crash
+- Fixed a bug where the start position doesn't move along with level expansion
+- Fixed a bug where removing dynamic blocks by retracting level size causes the game to crash upon entering play mode
+- Fixed a bug where blocks can be positioned out-of-bound after retracting level size
+- You can now undo using \[ctrl] \[Y] instead of \[ctrl] \[shift] \[Z] (happy?)

@@ -107,10 +107,37 @@ new BlockType(
     g.beginFill(0x00ffff);
     g.drawRect(0, 0, 50, 50);
     g.endFill();
-    g.lineStyle(5, 0x008888);
-    g.moveTo(5, 25);
-    g.lineTo(25, 45);
-    g.lineTo(45, 5);
+    if (
+      isColliding(player, block) &&
+      !isColliding(saveState, block) &&
+      app === display
+    ) {
+      g.lineStyle(2, 0x008888); // s
+      g.moveTo(5, 45);
+      g.lineTo(13, 31.66);
+      g.lineTo(5, 18.33);
+      g.lineTo(13, 5);
+      g.moveTo(17, 5); // h
+      g.lineTo(17, 45);
+      g.moveTo(17, 25);
+      g.lineTo(23, 25);
+      g.moveTo(23, 5);
+      g.lineTo(23, 45);
+      g.moveTo(27, 45); // f
+      g.lineTo(27, 5);
+      g.lineTo(33, 5);
+      g.moveTo(27, 25);
+      g.lineTo(33, 25);
+      g.moveTo(37, 5); // t
+      g.lineTo(45, 5);
+      g.moveTo(41, 5);
+      g.lineTo(41, 45);
+    } else {
+      g.lineStyle(5, 0x008888);
+      g.moveTo(5, 25);
+      g.lineTo(25, 45);
+      g.lineTo(45, 5);
+    }
     return app.renderer.generateTexture(g);
   },
   [
@@ -126,8 +153,16 @@ new BlockType(
       }
     }
   ],
-  (block, sprite = getSprite(block)) => {
+  (block, sprite = getSprite(block), app) => {
     sprite.tint = isColliding(saveState, block) ? 0xffffff : 0x888888;
+    if (canSave) {
+      if (sprite.texture !== blockData[block.type].defaultTexture)
+        sprite.texture.destroy(true);
+      sprite.texture = blockData[block.type].getTexture(block, app);
+    } else if (sprite.texture !== blockData[block.type].defaultTexture) {
+      sprite.texture.destroy(true);
+      sprite.texture = blockData[block.type].defaultTexture;
+    }
   }
 );
 new BlockType(

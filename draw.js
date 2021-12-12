@@ -53,8 +53,7 @@ function drawLevel(clear = false) {
         if (
           prevBlock === undefined ||
           !arraysEqual(block, prevBlock) ||
-          [8].includes(block.type) ||
-          (block.type === 2 && !arraysEqual(prevSaveState, saveState))
+          [2, 8].includes(block.type)
         ) {
           blockData[block.type].update(block);
           getSprite(block).visible = !block.invisible;
