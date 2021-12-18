@@ -723,6 +723,7 @@ new BlockType(
       let cos = dx / d;
       let sin = dy / d;
       let theta = Math.asin(sin);
+      if (cos < 0) theta = Math.PI - theta;
       g.moveTo(25 - 20 * cos, 25 - 20 * sin);
       g.lineTo(25 + 20 * cos, 25 + 20 * sin);
       for (let i = 0; i < level; i++) {
