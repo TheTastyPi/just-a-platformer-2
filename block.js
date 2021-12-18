@@ -674,7 +674,7 @@ new BlockType(
     newyv: 0,
     xOnly: false,
     yOnly: false,
-    accelerate: false
+    addVel: false
   },
   (block, app = display) => {
     let g = new PIXI.Graphics();
