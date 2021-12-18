@@ -36,7 +36,7 @@ display.stage.addChild(levelLayer);
 var canJump = true;
 var lastFrame = 0;
 var simReruns = 20;
-var timeLimit = 1000;
+var timeLimit = 100;
 var CThreshold = 1;
 var VCThreshold = 1;
 var spawnDelay = 333;
@@ -55,15 +55,33 @@ function nextFrame(timeStamp) {
     while (dt >= interval) {
       dt -= interval;
       for (let i = 0; i < simReruns; i++) {
-        doPhysics(player, interval / 1000 / simReruns, true);
+        let newPlayer = deepCopy(player);
+        doPhysics(newPlayer, interval / 1000 / simReruns, true);
         if (editor?.playMode ?? true) {
+          let newDynObjs = deepCopy(dynamicObjs);
+          for (let j in newDynObjs)
+            doPhysics(newDynObjs[j], interval / 1000 / simReruns, false);
           for (let j in dynamicObjs) {
-            doPhysics(dynamicObjs[j], interval / 1000 / simReruns, false);
+            if (newDynObjs[j].isDead) {
+              removeBlock(dynamicObjs[j]);
+            } else {
+              moveBlock(
+                dynamicObjs[j],
+                newDynObjs[j].x - dynamicObjs[j].x,
+                newDynObjs[j].y - dynamicObjs[j].y
+              );
+              let newIndex = dynamicObjs[j].index;
+              Object.assign(dynamicObjs[j], newDynObjs[j]);
+              dynamicObjs[j].index = newIndex;
+            }
           }
         }
+        if (player.isDead) {
+          if (deathTimer < 0) respawn();
+        } else Object.assign(player, newPlayer);
       }
     }
-    if (editor.doAnimation ?? true) drawLevel();
+    if (editor?.doAnimation ?? true) drawLevel();
     drawPlayer();
     adjustScreen();
   } else {
@@ -139,7 +157,9 @@ function doPhysics(obj, t, isPlayer) {
             obj.xv < VCThreshold ||
             block.xv < VCThreshold ||
             obj.yv < VCThreshold ||
-            block.yv < VCThreshold;
+            block.yv < VCThreshold ||
+            Math.abs(obj.xv - block.xv) < VCThreshold ||
+            Math.abs(obj.yv - block.xv) < VCThreshold;
           if (VUncertainty) {
             dxv = 1;
             dyv = 1;
@@ -316,40 +336,47 @@ function doPhysics(obj, t, isPlayer) {
     }
   }
   // inside block
-  if (isPlayer && ((hasLeft && hasRight) || (hasTop && hasBottom))) {
+  if (
+    isPlayer &&
+    (((leftBlock?.xv > 0 || rightBlock?.xv < 0) &&
+      leftBlock?.crushPlayer &&
+      rightBlock?.crushPlayer) ||
+      ((topBlock?.yv > 0 || bottomBlock?.yv < 0) &&
+        topBlock?.crushPlayer &&
+        bottomBlock?.crushPlayer))
+  ) {
     obj.isDead = true;
   }
   if (obj.invincible || (isPlayer && editor?.invincible)) obj.isDead = false;
+  friction = obj.friction && friction;
   // MOVEMENT & EVENTS
   if (!isDead && !obj.isDead) {
     // collision
-    let leftPush = leftBlock?.x + leftBlock?.size - px1 ?? 0;
-    let rightPush = rightBlock?.x - px2 ?? 0;
-    let topPush = topBlock?.y + topBlock?.size - py1 ?? 0;
-    let bottomPush = bottomBlock?.y - py2 ?? 0;
+    let leftPush = leftBlock?.x + leftBlock?.size - px1;
+    let rightPush = rightBlock?.x - px2;
+    let topPush = topBlock?.y + topBlock?.size - py1;
+    let bottomPush = bottomBlock?.y - py2;
     if (isNaN(leftPush)) leftPush = 0;
     if (isNaN(rightPush)) rightPush = 0;
     if (isNaN(topPush)) topPush = 0;
     if (isNaN(bottomPush)) bottomPush = 0;
-    if (isPlayer) {
-      obj.x += leftPush + rightPush;
-      obj.y += topPush + bottomPush;
-    } else moveBlock(obj, leftPush + rightPush, topPush + bottomPush);
+    obj.x += (leftPush + rightPush) / 2;
+    obj.y += (topPush + bottomPush) / 2;
     if (isPlayer) {
       if (
-        (leftBlock?.giveJump && player.xg && player.g < 0) ||
-        (rightBlock?.giveJump && player.xg && player.g > 0) ||
-        (topBlock?.giveJump && !player.xg && player.g < 0) ||
-        (bottomBlock?.giveJump && !player.xg && player.g > 0) ||
+        (leftBlock?.giveJump && obj.xg && obj.g < 0) ||
+        (rightBlock?.giveJump && obj.xg && obj.g > 0) ||
+        (topBlock?.giveJump && !obj.xg && obj.g < 0) ||
+        (bottomBlock?.giveJump && !obj.xg && obj.g > 0) ||
         giveJump
       ) {
-        player.currentJump = player.maxJump;
+        obj.currentJump = obj.maxJump;
         coyoteTimer = coyoteTime;
       } else {
         coyoteTimer -= t * 1000;
         if (coyoteTimer <= 0) {
-          player.currentJump = Math.max(
-            Math.min(player.maxJump - 1, player.currentJump),
+          obj.currentJump = Math.max(
+            Math.min(obj.maxJump - 1, obj.currentJump),
             0
           );
           coyoteTimer = 0;
@@ -373,49 +400,75 @@ function doPhysics(obj, t, isPlayer) {
     }
     if (tempObj.invincible || (isPlayer && editor?.invincible)) {
       obj.isDead = false;
-      if (isPlayer) player.currentJump = 1;
+      if (isPlayer) obj.currentJump = 1;
     }
     // jumping
-    if (isPlayer && player.currentJump > 0 && canJump) {
-      if (player.xg) {
+    if (isPlayer && obj.currentJump > 0 && canJump) {
+      if (obj.xg) {
         if (control.left || control.right) {
-          player.xv = Math.sign(player.g) * -375;
-          player.currentJump--;
+          obj.xv = Math.sign(obj.g) * -375;
+          obj.currentJump--;
           canJump = false;
         }
       } else {
         if (control.up || control.down) {
-          player.yv = Math.sign(player.g) * -375;
-          player.currentJump--;
+          obj.yv = Math.sign(obj.g) * -375;
+          obj.currentJump--;
           canJump = false;
         }
       }
     }
     // change acceleration
-    let dxv =
-      obj.xv -
-      (tempObj.g < 0 ? topBlock?.xv ?? 0 : 0) -
-      (tempObj.g > 0 ? bottomBlock?.xv ?? 0 : 0);
-    let dyv =
-      obj.yv -
-      (tempObj.g < 0 ? leftBlock?.xy ?? 0 : 0) -
-      (tempObj.g > 0 ? rightBlock?.xy ?? 0 : 0);
+    let dtv = tempObj.g < 0 ? topBlock?.xv ?? 0 : 0;
+    if (dtv !== 0 && topBlock?.g > 0 && !topBlock.xg) {
+      if (topBlock === player && (control.left || control.right)) {
+        dtv = -topBlock.xv;
+      }
+    }
+    let dbv = tempObj.g > 0 ? bottomBlock?.xv ?? 0 : 0;
+    if (dbv !== 0 && bottomBlock?.g < 0 && !bottomBlock.xg) {
+      if (bottomBlock === player && (control.left || control.right)) {
+        dbv = -bottomBlock.xv;
+      }
+    }
+    let dlv = tempObj.g < 0 ? leftBlock?.yv ?? 0 : 0;
+    if (dlv !== 0 && leftBlock?.g > 0 && leftBlock.xg) {
+      if (topBlock === player && (control.up || control.down)) {
+        dlv = -leftBlock.yv;
+      }
+    }
+    let drv = tempObj.g > 0 ? rightBlock?.yv ?? 0 : 0;
+    if (drv !== 0 && rightBlock?.g < 0 && rightBlock.xg) {
+      if (rightBlock === player && (control.up || control.down)) {
+        drv = -rightBlock.yv;
+      }
+    }
+    if (topBlock?.type === 8) dtv += topBlock.bottomSpeed;
+    if (bottomBlock?.type === 8) dbv += bottomBlock.topSpeed;
+    if (leftBlock?.type === 8) dlv += leftBlock.rightSpeed;
+    if (rightBlock?.type === 8) drv += rightBlock.leftSpeed;
+    if (obj.type === 8) {
+      if (topBlock) dtv -= obj.topSpeed;
+      if (bottomBlock) dbv -= obj.bottomSpeed;
+      if (leftBlock) dlv -= obj.leftSpeed;
+      if (rightBlock) drv -= obj.rightSpeed;
+    }
+    let dxv = obj.xv - dtv - dbv;
+    let dyv = obj.yv - dlv - drv;
     if (tempObj.xg) {
       obj.xa += 1000 * tempObj.g;
-      if (isPlayer) {
-        player.ya += (control.down - control.up) * tempObj.moveSpeed * 200;
-      }
-      let fricAcc = -dyv * obj.friction * friction;
-      if (Math.sign(obj.ya) !== Math.sign(dyv) && !topBlock && !bottomBlock)
-        obj.ya += fricAcc;
+      if (isPlayer)
+        dyv -= (control.down - control.up) * tempObj.moveSpeed * 200;
+      if (isPlayer && (control.up || control.down)) friction = true;
+      let fricAcc = -dyv * friction;
+      if (!(topBlock?.yv > 0) && !(bottomBlock?.yv < 0)) obj.ya += fricAcc;
     } else {
       obj.ya += 1000 * tempObj.g;
-      if (isPlayer) {
-        player.xa += (control.right - control.left) * tempObj.moveSpeed * 200;
-      }
-      let fricAcc = -dxv * obj.friction * friction;
-      if (Math.sign(obj.xa) !== Math.sign(dxv) && !leftBlock && !rightBlock)
-        obj.xa += fricAcc;
+      if (isPlayer)
+        dxv -= (control.right - control.left) * tempObj.moveSpeed * 200;
+      if (isPlayer && (control.right || control.left)) friction = true;
+      let fricAcc = -dxv * friction;
+      if (!(leftBlock?.xv > 0) && !(rightBlock?.xv < 0)) obj.xa += fricAcc;
     }
     // change velocity
     obj.xv += obj.xa * t * (!tempObj.xg * 74 + 1);
@@ -441,30 +494,30 @@ function doPhysics(obj, t, isPlayer) {
     } else {
       if (Math.abs(dxv) < 0.1) obj.xv -= dxv;
     }
-    if (leftBlock) obj.xv = Math.max(obj.xv, leftBlock.xv);
-    if (rightBlock) obj.xv = Math.min(obj.xv, rightBlock.xv);
-    if (leftBlock && rightBlock) obj.xv = (leftBlock.xv + rightBlock.xv) / 2;
-    if (topBlock) obj.yv = Math.max(obj.yv, topBlock.yv);
-    if (bottomBlock) obj.yv = Math.min(obj.yv, bottomBlock.yv);
-    if (topBlock && bottomBlock) obj.yv = (topBlock.yv + bottomBlock.yv) / 2;
-    // change position
-    if (isPlayer) {
-      obj.x += obj.xv * t + (obj.xa * t * t) / 2;
-      obj.y += obj.yv * t + (obj.ya * t * t) / 2;
-    } else
-      moveBlock(
-        obj,
-        obj.xv * t + (obj.xa * t * t) / 2,
-        obj.yv * t + (obj.ya * t * t) / 2
-      );
-  } else {
-    if (isPlayer) {
-      deathTimer -= t * 1000;
-      if (deathTimer < 0) respawn();
-    } else {
-      removeBlock(obj);
+    if (leftBlock) {
+      if (leftBlock.dynamic || leftBlock === player) {
+        obj.xv = Math.max(obj.xv, (obj.xv + leftBlock.xv) / 2);
+      } else obj.xv = Math.max(obj.xv, leftBlock.xv);
     }
-  }
+    if (rightBlock) {
+      if (rightBlock.dynamic || rightBlock === player) {
+        obj.xv = Math.min(obj.xv, (obj.xv + rightBlock.xv) / 2);
+      } else obj.xv = Math.min(obj.xv, rightBlock.xv);
+    }
+    if (topBlock) {
+      if (topBlock.dynamic || topBlock === player) {
+        obj.yv = Math.max(obj.yv, (obj.yv + topBlock.yv) / 2);
+      } else obj.yv = Math.max(obj.yv, topBlock.yv);
+    }
+    if (bottomBlock) {
+      if (bottomBlock.dynamic || bottomBlock === player) {
+        obj.yv = Math.min(obj.yv, (obj.yv + bottomBlock.yv) / 2);
+      } else obj.yv = Math.min(obj.yv, bottomBlock.yv);
+    }
+    // change position
+    obj.x += obj.xv * t + (obj.xa * t * t) / 2;
+    obj.y += obj.yv * t + (obj.ya * t * t) / 2;
+  } else if (isPlayer) deathTimer -= t * 1000;
 }
 function setLevel(lvlData) {
   level = lvlData;
@@ -495,7 +548,7 @@ function respawn(start = false) {
   drawLevel();
 }
 function gridUnit(n) {
-  return Math.floor(n / maxBlockSize);
+  return Math.max(0, Math.floor(n / maxBlockSize));
 }
 function createSprite(block) {
   let t;

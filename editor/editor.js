@@ -71,6 +71,7 @@ const propData = {
   xg: ["bool", "xg"],
   isDead: ["bool", "d"],
   pushable: ["bool", "u"],
+  crushPlayer: ["bool", "csh"],
   invincible: ["bool", "iv"],
   // special
   power: ["num", "p"],
@@ -86,14 +87,19 @@ const propData = {
   magOnly: ["bool", "magO"],
   temporary: ["bool", "tmp"],
   newSpeed: ["num", "nwsp"],
-  text: ["str", "txt"]
+  text: ["str", "txt"],
+  newxv: ["num", "nxv"],
+  newyv: ["num", "nyv"],
+  xOnly: ["bool", "xO"],
+  yOnly: ["bool", "yO"],
+  addVel: ["bool", "aV"]
 };
 const propAliasReverse = {};
 const blockList = {
   Special: [2, 11],
   Basic: [0, 1],
   Dynamic: [4, 5],
-  Movement: [3, 6, 7, 8],
+  Movement: [3, 6, 7, 8, 12],
   Status: [9, 10]
 };
 var level =
@@ -124,7 +130,15 @@ var blockEdit = new Vue({
       //"interactive"
     ],
     solidProps: ["floorLeniency"],
-    dynamicProps: ["xv", "yv", "g", "xg", "pushable", "invincible"],
+    dynamicProps: [
+      "xv",
+      "yv",
+      "g",
+      "xg",
+      "pushable",
+      "crushPlayer",
+      "invincible"
+    ],
     propData: propData,
     inputType: {
       num: "text",

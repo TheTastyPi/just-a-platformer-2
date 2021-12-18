@@ -23,6 +23,7 @@ class Block {
     this.g = 1;
     this.xg = false;
     this.pushable = false;
+    this.crushPlayer = true;
     this.invincible = false;
   }
 }
@@ -360,21 +361,7 @@ new BlockType(
       new PIXI.Rectangle(0, 0, 50, 50)
     );
   },
-  [
-    (obj, block) => {
-      obj.ya = block.rightSpeed;
-    },
-    (obj, block) => {
-      obj.ya = block.leftSpeed;
-    },
-    (obj, block) => {
-      obj.xa = block.bottomSpeed;
-    },
-    (obj, block) => {
-      obj.xa = block.topSpeed;
-    },
-    () => {}
-  ],
+  [() => {}, () => {}, () => {}, () => {}, () => {}],
   (block, sprite = getSprite(block), app) => {
     if (sprite.texture !== blockData[block.type].defaultTexture)
       sprite.texture.destroy(true);
@@ -677,4 +664,119 @@ new BlockType(
   {
     text: []
   }
+);
+new BlockType(
+  "Force Field",
+  {
+    ...new Block(12, 0, 0, 50, false, false, 1),
+    friction: false,
+    newxv: 200,
+    newyv: 0,
+    xOnly: false,
+    yOnly: false,
+    accelerate: false
+  },
+  (block, app = display) => {
+    let g = new PIXI.Graphics();
+    g.alpha = 0.5;
+    let dx = block.newxv;
+    let dy = block.newyv;
+    if (block.xOnly) dy = 0;
+    if (block.yOnly) dx = 0;
+    let d = dist(0, 0, dx, dy);
+    let factor = Math.min(d / 200, 1);
+    let level = Math.max(Math.floor(d / 200), 1);
+    let color = PIXI.utils.rgb2hex([
+      0.5 + 0.5 * factor,
+      0.5 + 0.5 * factor,
+      0.5
+    ]);
+    if (block.addVel)
+      color = PIXI.utils.rgb2hex([0.5, 0.5 + 0.5 * factor, 0.5 + 0.5 * factor]);
+    g.beginFill(color);
+    g.drawRect(0, 0, 50, 50);
+    g.endFill();
+    g.lineStyle({
+      width: 2,
+      color: PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2))
+    });
+    if (block.xOnly && block.yOnly) {
+      g.moveTo(5, 25); // -\(
+      g.lineTo(10, 25);
+      g.lineTo(15, 45);
+      g.moveTo(20, 5);
+      g.lineTo(15, 25);
+      g.lineTo(20, 45);
+      g.moveTo(45, 25); // )/-
+      g.lineTo(40, 25);
+      g.lineTo(35, 45);
+      g.moveTo(30, 5);
+      g.lineTo(35, 25);
+      g.lineTo(30, 45);
+      g.moveTo(20, 15); // ''/
+      g.lineTo(22.5, 25);
+      g.moveTo(25, 15);
+      g.lineTo(27.5, 25);
+      g.moveTo(25, 45);
+      g.lineTo(30, 25);
+    } else {
+      let cos = dx / d;
+      let sin = dy / d;
+      let theta = Math.asin(sin);
+      g.moveTo(25 - 20 * cos, 25 - 20 * sin);
+      g.lineTo(25 + 20 * cos, 25 + 20 * sin);
+      for (let i = 0; i < level; i++) {
+        g.moveTo(
+          25 + (20 - i * 5) * cos - Math.cos(theta + Math.PI / 4) * 10,
+          25 + (20 - i * 5) * sin - Math.sin(theta + Math.PI / 4) * 10
+        );
+        g.lineTo(25 + (20 - i * 5) * cos, 25 + (20 - i * 5) * sin);
+        g.lineTo(
+          25 + (20 - i * 5) * cos - Math.cos(theta - Math.PI / 4) * 10,
+          25 + (20 - i * 5) * sin - Math.sin(theta - Math.PI / 4) * 10
+        );
+      }
+      if (block.xOnly) {
+        g.moveTo(5, 5);
+        g.lineTo(15, 15);
+        g.moveTo(5, 15);
+        g.lineTo(15, 5);
+      } else if (block.yOnly) {
+        g.moveTo(5, 5);
+        g.lineTo(10, 10);
+        g.lineTo(15, 5);
+        g.moveTo(10, 10);
+        g.lineTo(10, 15);
+      }
+    }
+    return app.renderer.generateTexture(g);
+  },
+  [
+    () => {},
+    () => {},
+    () => {},
+    () => {},
+    (obj, block, tempObj) => {
+      if (block.addVel) {
+        if (!block.yOnly) obj.xa = block.newxv;
+        if (!block.xOnly) obj.ya = block.newyv;
+      } else {
+        if (!block.yOnly) obj.xv = block.newxv;
+        if (!block.xOnly) obj.yv = block.newyv;
+      }
+    }
+  ],
+  (block, sprite = getSprite(block), app) => {
+    if (sprite.texture !== blockData[block.type].defaultTexture)
+      sprite.texture.destroy(true);
+    sprite.texture = blockData[block.type].getTexture(block, app);
+  },
+  {
+    newxv: [() => -1000, () => 1000],
+    newyv: [() => -1000, () => 1000],
+    xOnly: [],
+    yOnly: [],
+    addVel: []
+  },
+  ["newSpeed", "temporary"]
 );

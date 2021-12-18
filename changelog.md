@@ -120,3 +120,15 @@
 - Fixed a bug where removing dynamic blocks by retracting level size causes the game to crash upon entering play mode
 - Fixed a bug where blocks can be positioned out-of-bound after retracting level size
 - You can now redo using \[ctrl] \[Y] instead of \[ctrl] \[shift] \[Z] (happy?)
+
+### ?? Dec. 2021
+
+- Significantly changed dynamic block handling
+  - This fixed several issues with velocity handling on collision
+  - May break some levels, sorry :(
+- Added the "crushPlayer" property to dynamic blocks
+- You can no longer get crushed by stationary blocks
+- Fixed a bug where friction didn't work with xg as true
+- Fixed a bug where the player or a dynamic obj can gain infinite acceleration
+- Dynamic conveyor blocks are now more dynamic
+- Added Force Field
