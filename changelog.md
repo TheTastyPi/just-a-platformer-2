@@ -121,7 +121,7 @@
 - Fixed a bug where blocks can be positioned out-of-bound after retracting level size
 - You can now redo using \[ctrl] \[Y] instead of \[ctrl] \[shift] \[Z] (happy?)
 
-### ?? Dec. 2021
+### 18 Dec. 2021
 
 - Significantly changed dynamic block handling
   - This fixed several issues with velocity handling on collision
