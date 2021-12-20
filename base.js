@@ -365,12 +365,21 @@ function doPhysics(obj, t, isPlayer) {
     if (isNaN(bottomPush)) bottomPush = 0;
     obj.x += (leftPush + rightPush) / 2;
     obj.y += (topPush + bottomPush) / 2;
+    // touch events
+    let tempObj = deepCopy(obj);
+    for (let i in eventList) {
+      for (let j in eventList[i]) {
+        let block = eventList[i][j][0];
+        if (!isColliding(obj, block) && !block.isSolid) continue;
+        eventList[i][j][1](obj, block, tempObj, isPlayer);
+      }
+    }
     if (isPlayer) {
       if (
-        (leftBlock?.giveJump && obj.xg && obj.g < 0) ||
-        (rightBlock?.giveJump && obj.xg && obj.g > 0) ||
-        (topBlock?.giveJump && !obj.xg && obj.g < 0) ||
-        (bottomBlock?.giveJump && !obj.xg && obj.g > 0) ||
+        (leftBlock?.giveJump && tempObj.xg && tempObj.g < 0) ||
+        (rightBlock?.giveJump && tempObj.xg && tempObj.g > 0) ||
+        (topBlock?.giveJump && !tempObj.xg && tempObj.g < 0) ||
+        (bottomBlock?.giveJump && !tempObj.xg && tempObj.g > 0) ||
         giveJump
       ) {
         obj.currentJump = obj.maxJump;
@@ -386,15 +395,6 @@ function doPhysics(obj, t, isPlayer) {
         }
       }
     }
-    // touch events
-    let tempObj = deepCopy(obj);
-    for (let i in eventList) {
-      for (let j in eventList[i]) {
-        let block = eventList[i][j][0];
-        if (!isColliding(obj, block) && !block.isSolid) continue;
-        eventList[i][j][1](obj, block, tempObj, isPlayer);
-      }
-    }
     if (isPlayer) {
       let s = id("textBlockText").style;
       if (tempObj.displayingText) {
@@ -406,16 +406,16 @@ function doPhysics(obj, t, isPlayer) {
       if (isPlayer) obj.currentJump = 1;
     }
     // jumping
-    if (isPlayer && obj.currentJump > 0 && canJump) {
-      if (obj.xg) {
+    if (isPlayer && tempObj.currentJump > 0 && canJump) {
+      if (tempObj.xg) {
         if (control.left || control.right) {
-          obj.xv = Math.sign(obj.g) * -375;
+          obj.xv = Math.sign(tempObj.g) * -375;
           obj.currentJump--;
           canJump = false;
         }
       } else {
         if (control.up || control.down) {
-          obj.yv = Math.sign(obj.g) * -375;
+          obj.yv = Math.sign(tempObj.g) * -375;
           obj.currentJump--;
           canJump = false;
         }
