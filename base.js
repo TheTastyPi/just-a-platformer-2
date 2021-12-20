@@ -48,8 +48,11 @@ var dt = 0;
 var interval = 1000 / 60;
 var coyoteTime = 1000 / 20;
 var coyoteTimer = 1000 / 20;
+var logfps = false;
 function nextFrame(timeStamp) {
   dt += (timeStamp - lastFrame) * player.gameSpeed;
+  if (logfps && timeStamp % 1000 > 900)
+    console.log(1000 / (timeStamp - lastFrame));
   lastFrame = timeStamp;
   if (dt < timeLimit) {
     while (dt >= interval) {
@@ -570,10 +573,6 @@ function createSprite(block) {
   s.height = block.size;
   return s;
 }
-function getSprite(block) {
-  return levelLayer.children[gridUnit(block.x)].children[gridUnit(block.y)]
-    .children[block.index];
-}
 function isColliding(blockA, blockB) {
   let aw = blockA.width ?? blockA.size;
   let ah = blockA.height ?? blockA.size;
@@ -592,7 +591,8 @@ function isColliding(blockA, blockB) {
 function addBlock(block) {
   block.index = level[gridUnit(block.x)][gridUnit(block.y)].push(block) - 1;
   let s = createSprite(block);
-  levelLayer.children[gridUnit(s.x)].children[gridUnit(s.y)].addChild(s);
+  levelLayer.addChild(s);
+  block.sprite = s;
   blockData[block.type].update(block);
   s.visible = !block.invisible;
   s.alpha = block.opacity;
@@ -600,7 +600,7 @@ function addBlock(block) {
   return block;
 }
 function removeBlock(block) {
-  let s = getSprite(block);
+  let s = block.sprite;
   s.destroy({ texture: s.texture !== blockData[block.type].defaultTexture });
   if (block.dynamic) dynamicObjs.splice(dynamicObjs.indexOf(block), 1);
   let gridSpace = level[gridUnit(block.x)][gridUnit(block.y)];
@@ -617,15 +617,15 @@ function scaleBlock(block, factor, focusX, focusY, draw = true) {
     moveBlock(block, dx * (1 - factor), dy * (1 - factor));
   }
   if (draw) {
-    getSprite(block).width = block.size;
-    getSprite(block).height = block.size;
+    block.sprite.width = block.size;
+    block.sprite.height = block.size;
   }
 }
 function moveBlock(block, dx, dy) {
   let gx = gridUnit(block.x);
   let gy = gridUnit(block.y);
   let gridSpace = level[gx][gy];
-  let sprite = getSprite(block);
+  let sprite = block.sprite;
   block.x += dx;
   block.y += dy;
   if (block.x < 0 || block.x > level.length * maxBlockSize - block.size) {
@@ -652,10 +652,6 @@ function moveBlock(block, dx, dy) {
       gridSpace[i].index--;
     }
     gridSpace.splice(block.index, 1);
-    levelLayer.children[gx].children[gy].removeChildAt(parseInt(block.index));
-    levelLayer.children[gridUnit(block.x)].children[gridUnit(block.y)].addChild(
-      sprite
-    );
     block.index = newGridSpace.push(block) - 1;
   }
 }
@@ -673,7 +669,7 @@ function arraysEqual(a, b) {
 }
 function deepCopy(inObject) {
   let outObject, value, key;
-  if (typeof inObject !== "object" || inObject === null) {
+  if (typeof inObject !== "object" || inObject === null || inObject.isSprite) {
     return inObject;
   }
   outObject = Array.isArray(inObject) ? [] : {};

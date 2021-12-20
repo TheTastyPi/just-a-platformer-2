@@ -132,3 +132,8 @@
 - Fixed a bug where the player or a dynamic obj can gain infinite acceleration
 - Dynamic conveyor blocks are now more dynamic
 - Added Force Field
+
+### 20 Dec. 2021
+
+- Optimizations
+- Added the ability to place multiple grid-aligned blocks at once using \[shift] LDrag

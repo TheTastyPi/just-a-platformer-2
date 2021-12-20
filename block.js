@@ -61,7 +61,7 @@ new BlockType(
     return app.renderer.generateTexture(g);
   },
   [() => {}, () => {}, () => {}, () => {}, () => {}],
-  (block, sprite = getSprite(block)) => {
+  (block, sprite = block.sprite) => {
     sprite.tint = PIXI.utils.string2hex(block.color);
   },
   {
@@ -154,7 +154,7 @@ new BlockType(
       }
     }
   ],
-  (block, sprite = getSprite(block), app) => {
+  (block, sprite = block.sprite, app) => {
     sprite.tint = isColliding(saveState, block) ? 0xffffff : 0x888888;
     if (canSave) {
       if (sprite.texture !== blockData[block.type].defaultTexture)
@@ -362,7 +362,7 @@ new BlockType(
     );
   },
   [() => {}, () => {}, () => {}, () => {}, () => {}],
-  (block, sprite = getSprite(block), app) => {
+  (block, sprite = block.sprite, app) => {
     if (sprite.texture !== blockData[block.type].defaultTexture)
       sprite.texture.destroy(true);
     sprite.texture = blockData[block.type].getTexture(block, app);
@@ -521,7 +521,7 @@ new BlockType(
       if (!block.magOnly) tempObj.xg = block.newxg;
     }
   ],
-  (block, sprite = getSprite(block), app) => {
+  (block, sprite = block.sprite, app) => {
     if (sprite.texture !== blockData[block.type].defaultTexture)
       sprite.texture.destroy(true);
     sprite.texture = blockData[block.type].getTexture(block, app);
@@ -591,7 +591,7 @@ new BlockType(
       tempObj.moveSpeed = block.newSpeed;
     }
   ],
-  (block, sprite = getSprite(block), app) => {
+  (block, sprite = block.sprite, app) => {
     if (sprite.texture !== blockData[block.type].defaultTexture)
       sprite.texture.destroy(true);
     sprite.texture = blockData[block.type].getTexture(block, app);
@@ -767,7 +767,7 @@ new BlockType(
       }
     }
   ],
-  (block, sprite = getSprite(block), app) => {
+  (block, sprite = block.sprite, app) => {
     if (sprite.texture !== blockData[block.type].defaultTexture)
       sprite.texture.destroy(true);
     sprite.texture = blockData[block.type].getTexture(block, app);

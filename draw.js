@@ -21,32 +21,15 @@ function drawLevel(clear = false) {
     levelLayer.removeChildren();
   }
   for (let x = 0; x <= level.length - 1; x++) {
-    let xCont;
-    if (clear) {
-      xCont = new PIXI.Container();
-      xCont.visible = false;
-      levelLayer.addChild(xCont);
-    }
     for (let y = 0; y <= level[0].length - 1; y++) {
-      let yCont;
-      if (clear) {
-        yCont = new PIXI.Container();
-        yCont.visible = false;
-        xCont.addChild(yCont);
-      }
       for (let i in level[x][y]) {
         let block = level[x][y][i];
         let prevBlock = prevLevel[x]?.[y]?.[i];
         if (clear) {
           block.index = parseInt(i);
           let s = createSprite(block);
-          if (clear) {
-            yCont.addChild(s);
-          } else {
-            levelLayer.children[gridUnit(s.x)].children[gridUnit(s.y)].addChild(
-              s
-            );
-          }
+          levelLayer.addChild(s);
+          block.sprite = s;
           s.visible = !block.invisible;
           s.alpha = block.opacity;
         }
@@ -56,8 +39,8 @@ function drawLevel(clear = false) {
           [2, 8].includes(block.type)
         ) {
           blockData[block.type].update(block);
-          getSprite(block).visible = !block.invisible;
-          getSprite(block).alpha = block.opacity;
+          block.sprite.visible = !block.invisible;
+          block.sprite.alpha = block.opacity;
         }
       }
     }
@@ -125,44 +108,6 @@ function adjustScreen(instant = false) {
     gridDisp.x = Math.max((camx / cams) % editor.gridSize, camx / cams);
     gridDisp.y = Math.max((camy / cams) % editor.gridSize, camy / cams);
     updateSelectDisp();
-  }
-  for (
-    let x = Math.max(
-      Math.min(gridUnit(-camx / cams), gridUnit(-camxPrev / cams)),
-      0
-    );
-    x <=
-    Math.min(
-      Math.max(
-        gridUnit((-camx + window.innerWidth) / cams),
-        gridUnit((-camxPrev + window.innerWidth) / cams)
-      ),
-      level.length - 1
-    );
-    x++
-  ) {
-    levelLayer.children[x].visible =
-      gridUnit(-camx / cams) - 1 <= x &&
-      x <= gridUnit((-camx + window.innerWidth) / cams);
-    for (
-      let y = Math.max(
-        Math.min(gridUnit(-camy / cams), gridUnit(-camyPrev / cams)),
-        0
-      );
-      y <=
-      Math.min(
-        Math.max(
-          gridUnit((-camy + window.innerHeight) / cams),
-          gridUnit((-camyPrev + window.innerHeight) / cams)
-        ),
-        level[0].length - 1
-      );
-      y++
-    ) {
-      levelLayer.children[x].children[y].visible =
-        gridUnit(-camy / cams) - 1 <= y &&
-        y <= gridUnit((-camy + window.innerHeight) / cams);
-    }
   }
   camxPrev = camx;
   camyPrev = camy;

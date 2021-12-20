@@ -270,7 +270,7 @@ id("display").addEventListener("mousedown", function (event) {
       if ((event.ctrlKey || event.metaKey) && !event.shiftKey) {
         player.x = xPos - player.size / 2;
         player.y = yPos - player.size / 2;
-      } else if (!(event.ctrlKey || event.metaKey) || !event.shiftKey) {
+      } else if (!(event.ctrlKey || event.metaKey)) {
         if (editor.editMode) {
           editor.selectStart = [event.clientX, event.clientY];
           selectBox.visible = true;
@@ -356,6 +356,17 @@ document.addEventListener("mousemove", function (event) {
         selectBox.drawRect(x, y, w, h);
         selectBox.lineStyle(2, 0xffffff, 0.5, 0);
         selectBox.drawRect(x, y, w, h);
+      } else if (event.shiftKey) {
+        let xInit = editor.buildSelect.x;
+        let yInit = editor.buildSelect.y;
+        if (
+          updateBuildLocation(xPos, yPos) &&
+          (xInit !== editor.buildSelect.x || yInit !== editor.buildSelect.y)
+        ) {
+          editor.actionList[editor.actionList.length - 1][1].push(
+            deepCopy(addBlock(deepCopy(editor.buildSelect)))
+          );
+        }
       }
       break;
     }
@@ -490,9 +501,12 @@ function updateBuildLocation(x, y) {
     level[0].length * maxBlockSize - editor.buildSelect.size
   );
   let snapPos = getSnapPos(editor.buildSelect);
+  let changed =
+    editor.buildSelect.x !== snapPos[0] || editor.buildSelect.y !== snapPos[1];
   editor.buildSelect.x = snapPos[0];
   editor.buildSelect.y = snapPos[1];
   updateBuildDisp();
+  return changed;
 }
 function updateBuildDisp() {
   let block = editor.buildSelect;
@@ -1096,7 +1110,7 @@ function lvl2str(lvl) {
       if (prop === "type") continue;
       if (
         block[prop] === blockData[block.type].defaultBlock[prop] ||
-        prop === "index"
+        prop === "index" || prop === "sprite"
       ) {
         delete block[prop];
         continue;
