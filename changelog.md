@@ -137,3 +137,7 @@
 
 - Optimizations
 - Added the ability to place multiple grid-aligned blocks at once using \[shift] LDrag
+
+#### 21 Dec. 2021
+
+- Fixed a bug where shit goes very wrong

@@ -64,19 +64,20 @@ function nextFrame(timeStamp) {
           let newDynObjs = deepCopy(dynamicObjs);
           for (let j in newDynObjs)
             doPhysics(newDynObjs[j], interval / 1000 / simReruns, false);
-          for (let j in dynamicObjs) {
+          for (let j = 0; j < dynamicObjs.length; j++) {
             if (newDynObjs[j].isDead) {
               removeBlock(dynamicObjs[j]);
-            } else {
-              moveBlock(
-                dynamicObjs[j],
-                newDynObjs[j].x - dynamicObjs[j].x,
-                newDynObjs[j].y - dynamicObjs[j].y
-              );
-              let newIndex = dynamicObjs[j].index;
-              Object.assign(dynamicObjs[j], newDynObjs[j]);
-              dynamicObjs[j].index = newIndex;
+              newDynObjs.splice(j, 1);
+              if (j > dynamicObjs.length - 1) break;
             }
+            moveBlock(
+              dynamicObjs[j],
+              newDynObjs[j].x - dynamicObjs[j].x,
+              newDynObjs[j].y - dynamicObjs[j].y
+            );
+            let newIndex = dynamicObjs[j].index;
+            Object.assign(dynamicObjs[j], newDynObjs[j]);
+            dynamicObjs[j].index = newIndex;
           }
         }
         if (player.isDead) {
