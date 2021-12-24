@@ -80,7 +80,7 @@
             <textarea v-else-if="inputType[propData[prop][0]] == 'textarea'"style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.stop></textarea>
             <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.stop></input>
           </div>
-          <div v-if="Object.keys(editor.editBlockProp).length > 0" v-for="prop in editor.editBlockProp" class="blockProp">
+          <div v-if="Object.keys(editor.editBlockProp).length > 0 && inputType[propData[prop][0]] !== 'none'" v-for="prop in editor.editBlockProp" class="blockProp">
             <span style="width:50%">{{prop}}</span>
             <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.stop>
               <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">

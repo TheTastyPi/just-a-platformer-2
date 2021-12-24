@@ -12,15 +12,21 @@ var defaultPlayer = {
   xg: false,
   maxJump: 1,
   currentJump: 1,
+  canWallJump: false,
+  wallJumpDir: 0,
   moveSpeed: 1,
   friction: true,
   gameSpeed: 1,
-  displayingText: false
+  displayingText: false,
+  lastEventList: [[], [], [], [], []]
 };
 var player = deepCopy(defaultPlayer);
 var dynamicInit = [];
 var dynamicSave = [];
 var dynamicObjs = [];
+var animatedTypes = [8];
+var animatedObjs = [];
+var timerList = [];
 const maxBlockSize = 50;
 var display = new PIXI.Application({
   width: window.innerWidth,
@@ -57,6 +63,18 @@ function nextFrame(timeStamp) {
   if (dt < timeLimit) {
     while (dt >= interval) {
       dt -= interval;
+      for (let i in timerList) {
+        let data = timerList[i];
+        let block = data[0];
+        let prop = data[1];
+        let func = data[2];
+        block[prop] -= interval;
+        if (block[prop] < 0) {
+          block[prop] = 0;
+          timerList.splice(i, 1);
+        }
+        func(block);
+      }
       for (let i = 0; i < simReruns; i++) {
         let newPlayer = deepCopy(player);
         doPhysics(newPlayer, interval / 1000 / simReruns, true);
@@ -85,7 +103,11 @@ function nextFrame(timeStamp) {
         } else Object.assign(player, newPlayer);
       }
     }
-    if (editor?.doAnimation ?? true) drawLevel();
+    if (editor?.doAnimation ?? true) {
+      for (let i in animatedObjs) {
+        if (animatedObjs[i].sprite.visible) updateBlock(animatedObjs[i]);
+      }
+    }
     drawPlayer();
     adjustScreen();
   } else {
@@ -100,10 +122,6 @@ function doPhysics(obj, t, isPlayer) {
   let px2 = px1 + obj.size;
   let py1 = obj.y;
   let py2 = py1 + obj.size;
-  let hasLeft = false;
-  let hasRight = false;
-  let hasTop = false;
-  let hasBottom = false;
   let leftBlock;
   let rightBlock;
   let topBlock;
@@ -139,7 +157,16 @@ function doPhysics(obj, t, isPlayer) {
       )
         gridSpace.push(player);
       for (let i in gridSpace) {
-        let block = gridSpace[i];
+        let realBlock = gridSpace[i];
+        let block;
+        if (realBlock.type === 15) {
+          block = {
+            ...realBlock,
+            x: realBlock.x - 1,
+            y: realBlock.y - 1,
+            size: realBlock.size + 2
+          };
+        } else block = realBlock;
         let bx1 = block.x;
         let bx2 = block.x + block.size;
         let by1 = block.y;
@@ -253,78 +280,82 @@ function doPhysics(obj, t, isPlayer) {
           }
           // left
           if (isLeft) {
-            hasLeft = true;
-            if (
-              leftBlock === undefined ||
-              leftBlock.x + leftBlock.size < bx2 ||
-              (leftBlock.x + leftBlock.size === bx2 &&
-                block.eventPriority > leftBlock.eventPriority)
-            )
-              leftBlock = block;
+            if (isColliding(obj, realBlock)) {
+              if (
+                leftBlock === undefined ||
+                leftBlock.x + leftBlock.size < bx2 ||
+                (leftBlock.x + leftBlock.size === bx2 &&
+                  block.eventPriority > leftBlock.eventPriority)
+              )
+                leftBlock = realBlock;
+            }
             if (block === player) continue;
             if (block.eventPriority > topPriority[0]) {
               eventList[0] = [];
               topPriority[0] = block.eventPriority;
             }
             if (block.eventPriority === topPriority[0])
-              eventList[0].push([block, data.touchEvent[0]]);
+              eventList[0].push([realBlock, data.touchEvent[0]]);
             continue;
           }
           // right
           if (isRight) {
-            hasRight = true;
-            if (
-              rightBlock === undefined ||
-              rightBlock.x > bx1 ||
-              (rightBlock.x === bx1 &&
-                block.eventPriority > rightBlock.eventPriority)
-            )
-              rightBlock = block;
+            if (isColliding(obj, realBlock)) {
+              if (
+                rightBlock === undefined ||
+                rightBlock.x > bx1 ||
+                (rightBlock.x === bx1 &&
+                  block.eventPriority > rightBlock.eventPriority)
+              )
+                rightBlock = realBlock;
+            }
             if (block === player) continue;
             if (block.eventPriority > topPriority[1]) {
               eventList[1] = [];
               topPriority[1] = block.eventPriority;
             }
             if (block.eventPriority === topPriority[1])
-              eventList[1].push([block, data.touchEvent[1]]);
+              eventList[1].push([realBlock, data.touchEvent[1]]);
             continue;
           }
           // top
           if (isTop) {
-            hasTop = true;
-            if (
-              topBlock === undefined ||
-              topBlock.y + topBlock.size < by2 ||
-              (topBlock.y + topBlock.size === by2 &&
-                block.eventPriority > topBlock.eventPriority)
-            )
-              topBlock = block;
+            if (isColliding(obj, realBlock)) {
+              if (
+                topBlock === undefined ||
+                topBlock.y + topBlock.size < by2 ||
+                (topBlock.y + topBlock.size === by2 &&
+                  block.eventPriority > topBlock.eventPriority)
+              )
+                topBlock = realBlock;
+            }
             if (block === player) continue;
             if (block.eventPriority > topPriority[2]) {
               eventList[2] = [];
               topPriority[2] = block.eventPriority;
             }
             if (block.eventPriority === topPriority[2])
-              eventList[2].push([block, data.touchEvent[2]]);
+              eventList[2].push([realBlock, data.touchEvent[2]]);
             continue;
           }
           // bottom
           if (isBottom) {
-            hasBottom = true;
-            if (
-              bottomBlock === undefined ||
-              bottomBlock.y > by1 ||
-              (bottomBlock.y === by1 &&
-                block.eventPriority > bottomBlock.eventPriority)
-            )
-              bottomBlock = block;
+            if (isColliding(obj, realBlock)) {
+              if (
+                bottomBlock === undefined ||
+                bottomBlock.y > by1 ||
+                (bottomBlock.y === by1 &&
+                  block.eventPriority > bottomBlock.eventPriority)
+              )
+                bottomBlock = realBlock;
+            }
             if (block === player) continue;
             if (block.eventPriority > topPriority[3]) {
               eventList[3] = [];
               topPriority[3] = block.eventPriority;
             }
             if (block.eventPriority === topPriority[3])
-              eventList[3].push([block, data.touchEvent[3]]);
+              eventList[3].push([realBlock, data.touchEvent[3]]);
             continue;
           }
         } else {
@@ -333,7 +364,7 @@ function doPhysics(obj, t, isPlayer) {
             topPriority[4] = block.eventPriority;
           }
           if (block.eventPriority === topPriority[4])
-            eventList[4].push([block, data.touchEvent[4]]);
+            eventList[4].push([realBlock, data.touchEvent[4]]);
           if (isPlayer && block.giveJump) giveJump = true;
         }
       }
@@ -372,9 +403,24 @@ function doPhysics(obj, t, isPlayer) {
       for (let j in eventList[i]) {
         let block = eventList[i][j][0];
         if (!isColliding(obj, block) && !block.isSolid) continue;
-        eventList[i][j][1](obj, block, tempObj, isPlayer);
+        eventList[i][j][1](
+          obj,
+          block,
+          tempObj,
+          isPlayer,
+          !obj.lastEventList[i].find((x) => x[0] === block),
+          false
+        );
       }
     }
+    for (let i in obj.lastEventList) {
+      for (let j in obj.lastEventList[i]) {
+        let block = obj.lastEventList[i][j][0];
+        if (eventList[i].find((x) => x[0] === block)) continue;
+        obj.lastEventList[i][j][1](obj, block, tempObj, isPlayer, false, true);
+      }
+    }
+    obj.lastEventList = eventList;
     if (isPlayer) {
       if (
         (leftBlock?.giveJump && tempObj.xg && tempObj.g < 0) ||
@@ -386,8 +432,8 @@ function doPhysics(obj, t, isPlayer) {
         obj.currentJump = obj.maxJump;
         coyoteTimer = coyoteTime;
       } else {
-        coyoteTimer -= t * 1000;
-        if (coyoteTimer <= 0) {
+        if (coyoteTimer > 0) coyoteTimer -= t * 1000;
+        if (coyoteTimer < 0) {
           obj.currentJump = Math.max(
             Math.min(obj.maxJump - 1, obj.currentJump),
             0
@@ -395,8 +441,6 @@ function doPhysics(obj, t, isPlayer) {
           coyoteTimer = 0;
         }
       }
-    }
-    if (isPlayer) {
       let s = id("textBlockText").style;
       if (tempObj.displayingText) {
         s.display = "inline-block";
@@ -407,18 +451,54 @@ function doPhysics(obj, t, isPlayer) {
       if (isPlayer) obj.currentJump = 1;
     }
     // jumping
-    if (isPlayer && tempObj.currentJump > 0 && canJump) {
-      if (tempObj.xg) {
-        if (control.left || control.right) {
-          obj.xv = Math.sign(tempObj.g) * -375;
-          obj.currentJump--;
-          canJump = false;
+    if (isPlayer) {
+      let vert = control.up || control.down;
+      let hori = control.left || control.right;
+      if (obj.currentJump > 0 && canJump) {
+        if (tempObj.xg) {
+          if (hori) {
+            obj.xv = Math.sign(tempObj.g) * -375;
+            obj.currentJump--;
+            canJump = false;
+          }
+        } else {
+          if (vert) {
+            obj.yv = Math.sign(tempObj.g) * -375;
+            obj.currentJump--;
+            canJump = false;
+          }
         }
-      } else {
-        if (control.up || control.down) {
-          obj.yv = Math.sign(tempObj.g) * -375;
-          obj.currentJump--;
-          canJump = false;
+      } else if (tempObj.canWallJump) {
+        if (tempObj.xg) {
+          obj.xv = Math[obj.g < 0 ? "max" : "min"](obj.xv, tempObj.g * 100);
+        } else
+          obj.yv = Math[obj.g < 0 ? "max" : "min"](obj.yv, tempObj.g * 100);
+        switch (tempObj.wallJumpDir) {
+          case 0:
+            if (vert && control.right) {
+              obj.yv = Math.sign(tempObj.g) * -375;
+              obj.xv = obj.moveSpeed * 400;
+            }
+            break;
+          case 1:
+            if (vert && control.left) {
+              obj.yv = Math.sign(tempObj.g) * -375;
+              obj.xv = -obj.moveSpeed * 400;
+            }
+            break;
+          case 2:
+            if (hori && control.down) {
+              obj.xv = Math.sign(tempObj.g) * -375;
+              obj.yv = obj.moveSpeed * 400;
+            }
+            break;
+          case 3:
+            if (hori && control.up) {
+              obj.xv = Math.sign(tempObj.g) * -375;
+              obj.yv = -obj.moveSpeed * 400;
+            }
+            break;
+          default:
         }
       }
     }
@@ -598,12 +678,15 @@ function addBlock(block) {
   s.visible = !block.invisible;
   s.alpha = block.opacity;
   if (block.dynamic) dynamicObjs.push(block);
+  if (animatedTypes.includes(block.type)) animatedObjs.push(block);
   return block;
 }
 function removeBlock(block) {
   let s = block.sprite;
   s.destroy({ texture: s.texture !== blockData[block.type].defaultTexture });
   if (block.dynamic) dynamicObjs.splice(dynamicObjs.indexOf(block), 1);
+  if (animatedTypes.includes(block.type))
+    animatedObjs.splice(dynamicObjs.indexOf(block), 1);
   let gridSpace = level[gridUnit(block.x)][gridUnit(block.y)];
   for (let i = parseInt(block.index) + 1; i < gridSpace.length; i++) {
     gridSpace[i].index--;
@@ -670,16 +753,232 @@ function arraysEqual(a, b) {
 }
 function deepCopy(inObject) {
   let outObject, value, key;
-  if (typeof inObject !== "object" || inObject === null || inObject.isSprite) {
+  if (typeof inObject !== "object" || inObject === null) {
     return inObject;
   }
   outObject = Array.isArray(inObject) ? [] : {};
   for (key in inObject) {
     value = inObject[key];
-    outObject[key] = deepCopy(value);
+    if (key === "lastEventList" || key === "sprite") {
+      outObject[key] = value;
+    } else {
+      outObject[key] = deepCopy(value);
+    }
   }
   return outObject;
 }
 function dist(x1, y1, x2, y2) {
   return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
+}
+function romanize(num) {
+  var lookup = {
+      C: 100,
+      XC: 90,
+      L: 50,
+      XL: 40,
+      X: 10,
+      IX: 9,
+      V: 5,
+      IV: 4,
+      I: 1
+    },
+    roman = "",
+    i;
+  for (i in lookup) {
+    while (num >= lookup[i]) {
+      roman += i;
+      num -= lookup[i];
+    }
+  }
+  return roman;
+}
+function drawStr(g, str, color, space = 3, maxWidth = Infinity) {
+  let w = Math.min(maxWidth, (40 - space * (str.length - 1)) / str.length);
+  g.lineStyle({
+    width: 2,
+    color: color,
+    join: PIXI.LINE_JOIN.BEVEL
+  });
+  for (let i = 0; i < str.length; i++) {
+    let x = 25 - (str.length * (w + space) - space) / 2 + i * (w + space);
+    switch (str[i]) {
+      case "a":
+        g.moveTo(x, 45);
+        g.lineTo(x + w / 2, 5);
+        g.lineTo(x + w, 45);
+        g.moveTo(x + w / 4, 25);
+        g.lineTo(x + (w * 3) / 4, 25);
+        break;
+      case "b":
+        g.moveTo(x, 5);
+        g.lineTo(x, 45);
+        g.lineTo(x + w, 35);
+        g.lineTo(x, 25);
+        g.lineTo(x + w, 15);
+        g.lineTo(x, 5);
+        break;
+      case "c":
+        g.moveTo(x + w, 15);
+        g.lineTo(x + w / 2, 5);
+        g.lineTo(x, 25);
+        g.lineTo(x + w / 2, 45);
+        g.lineTo(x + w, 35);
+        break;
+      case "d":
+        g.moveTo(x, 5);
+        g.lineTo(x + w, 25);
+        g.lineTo(x, 45);
+        g.lineTo(x, 5);
+        break;
+      case "e":
+        g.moveTo(x + w, 5);
+        g.lineTo(x, 5);
+        g.lineTo(x, 45);
+        g.lineTo(x + w, 45);
+        g.moveTo(x, 25);
+        g.lineTo(x + w, 25);
+        break;
+      case "f":
+        g.moveTo(x + w, 5);
+        g.lineTo(x, 5);
+        g.lineTo(x, 45);
+        g.moveTo(x, 25);
+        g.lineTo(x + w, 25);
+        break;
+      case "g":
+        g.moveTo(x + w, 5);
+        g.lineTo(x, 25);
+        g.lineTo(x + w, 45);
+        g.lineTo(x + w, 25);
+        break;
+      case "h":
+        g.moveTo(x, 5);
+        g.lineTo(x, 45);
+        g.moveTo(x, 25);
+        g.lineTo(x + w, 25);
+        g.moveTo(x + w, 5);
+        g.lineTo(x + w, 45);
+        break;
+      case "i":
+        g.moveTo(x, 5);
+        g.lineTo(x + w, 5);
+        g.moveTo(x + w / 2, 5);
+        g.lineTo(x + w / 2, 45);
+        g.moveTo(x, 45);
+        g.lineTo(x + w, 45);
+        break;
+      case "j":
+        g.moveTo(x, 5);
+        g.lineTo(x + w, 5);
+        g.moveTo(x + w / 2, 5);
+        g.lineTo(x + w / 2, 45);
+        g.lineTo(x, 25);
+        break;
+      case "k":
+        g.moveTo(x, 5);
+        g.lineTo(x, 45);
+        g.moveTo(x + w, 5);
+        g.lineTo(x, 25);
+        g.lineTo(x + w, 45);
+        break;
+      case "l":
+        g.moveTo(x, 5);
+        g.lineTo(x, 45);
+        g.lineTo(x + w, 45);
+        break;
+      case "m":
+        g.moveTo(x, 45);
+        g.lineTo(x, 5);
+        g.lineTo(x + w / 2, 45);
+        g.lineTo(x + w, 5);
+        g.lineTo(x + w, 45);
+        break;
+      case "n":
+        g.moveTo(x, 45);
+        g.lineTo(x, 5);
+        g.lineTo(x + w, 45);
+        g.lineTo(x + w, 5);
+        break;
+      case "o":
+        g.moveTo(x + w / 2, 5);
+        g.lineTo(x, 25);
+        g.lineTo(x + w / 2, 45);
+        g.lineTo(x + w, 25);
+        g.lineTo(x + w / 2, 5);
+        break;
+      case "p":
+        g.moveTo(x, 45);
+        g.lineTo(x, 5);
+        g.lineTo(x + w, 15);
+        g.lineTo(x, 25);
+        break;
+      case "q":
+        g.moveTo(x + w / 2, 5);
+        g.lineTo(x, 25);
+        g.lineTo(x + w / 2, 45);
+        g.lineTo(x + w, 25);
+        g.lineTo(x + w / 2, 5);
+        g.moveTo(x + w / 2, 25);
+        g.lineTo(x + w, 45);
+        break;
+      case "r":
+        g.moveTo(x, 45);
+        g.lineTo(x, 5);
+        g.lineTo(x + w, 15);
+        g.lineTo(x, 25);
+        g.lineTo(x + w, 45);
+        break;
+      case "s":
+        g.moveTo(x, 45);
+        g.lineTo(x + w, 31.66);
+        g.lineTo(x, 18.33);
+        g.lineTo(x + w, 5);
+        break;
+      case "t":
+        g.moveTo(x, 5);
+        g.lineTo(x + w, 5);
+        g.lineTo(x + w / 2, 5);
+        g.lineTo(x + w / 2, 45);
+        break;
+      case "u":
+        g.moveTo(x, 5);
+        g.lineTo(x, 35);
+        g.lineTo(x + w / 2, 45);
+        g.lineTo(x + w, 35);
+        g.lineTo(x + w, 5);
+        break;
+      case "v":
+        g.moveTo(x, 5);
+        g.lineTo(x + w / 2, 45);
+        g.lineTo(x + w, 5);
+        break;
+      case "w":
+        g.moveTo(x, 5);
+        g.lineTo(x + w / 4, 45);
+        g.lineTo(x + w / 2, 5);
+        g.lineTo(x + (w * 3) / 4, 45);
+        g.lineTo(x + w, 5);
+        break;
+      case "x":
+        g.moveTo(x, 5);
+        g.lineTo(x + w, 45);
+        g.moveTo(x, 45);
+        g.lineTo(x + w, 5);
+        break;
+      case "y":
+        g.moveTo(x, 5);
+        g.lineTo(x + w / 2, 25);
+        g.lineTo(x + w, 5);
+        g.moveTo(x + w / 2, 25);
+        g.lineTo(x + w / 2, 45);
+        break;
+      case "z":
+        g.moveTo(x, 5);
+        g.lineTo(x + w, 5);
+        g.lineTo(x, 45);
+        g.lineTo(x + w, 45);
+        break;
+      default:
+    }
+  }
 }

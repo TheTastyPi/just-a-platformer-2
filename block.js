@@ -25,6 +25,7 @@ class Block {
     this.pushable = false;
     this.crushPlayer = true;
     this.invincible = false;
+    this.lastEventList = [[], [], [], [], []];
   }
 }
 class BlockType {
@@ -49,7 +50,6 @@ class BlockType {
     blockData.push(this);
   }
 }
-
 new BlockType(
   "Solid Block",
   { ...new Block(0, 0, 0, 50, true, true, 3), color: "#000000" },
@@ -113,26 +113,7 @@ new BlockType(
       !isColliding(saveState, block) &&
       app === display
     ) {
-      g.lineStyle(2, 0x008888); // s
-      g.moveTo(5, 45);
-      g.lineTo(13, 31.66);
-      g.lineTo(5, 18.33);
-      g.lineTo(13, 5);
-      g.moveTo(17, 5); // h
-      g.lineTo(17, 45);
-      g.moveTo(17, 25);
-      g.lineTo(23, 25);
-      g.moveTo(23, 5);
-      g.lineTo(23, 45);
-      g.moveTo(27, 45); // f
-      g.lineTo(27, 5);
-      g.lineTo(33, 5);
-      g.moveTo(27, 25);
-      g.lineTo(33, 25);
-      g.moveTo(37, 5); // t
-      g.lineTo(45, 5);
-      g.moveTo(41, 5);
-      g.lineTo(41, 45);
+      drawStr(g, "shft", 0x008888);
     } else {
       g.lineStyle(5, 0x008888);
       g.moveTo(5, 25);
@@ -146,11 +127,15 @@ new BlockType(
     () => {},
     () => {},
     () => {},
-    (obj, block, tempObj, isPlayer) => {
-      if (isPlayer && control.shift && canSave) {
-        setSpawn();
-        canSave = false;
-        drawLevel();
+    (obj, block, tempObj, isPlayer, isEntering, isExiting) => {
+      if (isPlayer) {
+        if (control.shift && canSave) {
+          setSpawn();
+          canSave = false;
+          updateBlock(block);
+          drawLevel();
+        }
+        if (isEntering || isExiting) updateBlock(block);
       }
     }
   ],
@@ -434,27 +419,11 @@ new BlockType(
       g[fxn](x, y, w, h);
     };
     if (block.dirOnly && block.magOnly) {
-      g.moveTo(5, 5); // b
-      g.lineTo(5, 45);
-      g.lineTo(15, 35);
-      g.lineTo(5, 25);
-      g.lineTo(15, 15);
-      g.lineTo(5, 5);
-      g.moveTo(15, 45); // r
-      g.lineTo(15, 5);
-      g.lineTo(25, 15);
-      g.lineTo(15, 25);
-      g.lineTo(25, 45);
-      g.moveTo(25, 5); // u
-      g.lineTo(25, 35);
-      g.lineTo(30, 45);
-      g.lineTo(35, 35);
-      g.lineTo(35, 5);
-      g.lineTo(35, 45); // h
-      g.moveTo(35, 25);
-      g.lineTo(45, 25);
-      g.moveTo(45, 5);
-      g.lineTo(45, 45);
+      drawStr(
+        g,
+        "bruh",
+        PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2))
+      );
     } else if (block.magOnly) {
       if (block.newg !== 0) {
         g.drawRect(20, 35, 10, 10);
@@ -779,5 +748,193 @@ new BlockType(
     yOnly: [],
     addVel: []
   },
-  ["newSpeed", "temporary"]
+  ["newxv", "newyv", "xOnly", "yOnly", "addVel"]
+);
+new BlockType(
+  "Jump Field",
+  {
+    ...new Block(13, 0, 0, 50, false, false, 1),
+    newJump: 1,
+    infJump: false,
+    temporary: false
+  },
+  (block, app = display) => {
+    let g = new PIXI.Graphics();
+    g.alpha = 0.5;
+    let factor = Math.min(block.newJump / 3, 1);
+    let str = romanize(block.newJump).toLowerCase();
+    if (block.infJump) str = "inf";
+    let color = PIXI.utils.rgb2hex([
+      0.5 + 0.5 * factor,
+      0.5 + 0.25 * factor,
+      0.5
+    ]);
+    g.beginFill(color);
+    g.drawRect(0, 0, 50, 50);
+    g.endFill();
+    drawStr(
+      g,
+      str,
+      PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2)),
+      block.infJump * 3,
+      20
+    );
+    if (!block.temporary) {
+      g.moveTo(35, 10);
+      g.lineTo(45, 10);
+      g.moveTo(40, 5);
+      g.lineTo(40, 15);
+    }
+    return app.renderer.generateTexture(g);
+  },
+  [
+    () => {},
+    () => {},
+    () => {},
+    () => {},
+    (obj, block, tempObj, isPlayer) => {
+      if (!isPlayer) return;
+      if (!block.temporary) {
+        obj.maxJump = block.newJump;
+        if (block.infJump) obj.maxJump = Infinity;
+      }
+      tempObj.maxJump = block.newJump;
+      if (block.infJump) tempObj.maxJump = Infinity;
+    }
+  ],
+  (block, sprite = block.sprite, app) => {
+    if (sprite.texture !== blockData[block.type].defaultTexture)
+      sprite.texture.destroy(true);
+    sprite.texture = blockData[block.type].getTexture(block, app);
+  },
+  {
+    newJump: [() => 0, () => 100],
+    infJump: [],
+    temporary: []
+  },
+  ["newJump", "infJump", "temporary"]
+);
+new BlockType(
+  "Jump Restore Field",
+  {
+    ...new Block(14, 0, 0, 50, false, false, 1),
+    addedJump: 1,
+    fullRestore: false,
+    cooldown: 1000,
+    timer: 0
+  },
+  (block, app = display) => {
+    let g = new PIXI.Graphics();
+    g.alpha = 0.5;
+    let factor = Math.min(block.addedJump / 3, 1);
+    let str = romanize(block.addedJump).toLowerCase();
+    if (block.fullRestore) str = "full";
+    let color = PIXI.utils.rgb2hex([
+      0.5,
+      0.5 + 0.25 * factor,
+      0.5 + 0.5 * factor
+    ]);
+    g.beginFill(color);
+    g.drawRect(0, 0, 50, 50);
+    g.endFill();
+    drawStr(
+      g,
+      str,
+      PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2)),
+      block.fullRestore * 3,
+      20
+    );
+    return app.renderer.generateTexture(g);
+  },
+  [
+    () => {},
+    () => {},
+    () => {},
+    () => {},
+    (obj, block, tempObj, isPlayer) => {
+      if (!isPlayer || block.timer > 0) return;
+      obj.currentJump = Math.min(
+        obj.maxJump,
+        obj.currentJump + block.addedJump
+      );
+      if (block.fullRestore) obj.currentJump = obj.maxJump;
+      block.timer = block.cooldown;
+      timerList.push([
+        block,
+        "timer",
+        function (block) {
+          let sprite = block.sprite;
+          let ratio = 1 - block.timer / block.cooldown;
+          sprite.tint = PIXI.utils.rgb2hex([
+            1,
+            0.5 + ratio * 0.5,
+            0.5 + ratio * 0.5
+          ]);
+        }
+      ]);
+    }
+  ],
+  (block, sprite = block.sprite, app) => {
+    if (sprite.texture !== blockData[block.type].defaultTexture)
+      sprite.texture.destroy(true);
+    sprite.texture = blockData[block.type].getTexture(block, app);
+  },
+  {
+    addedJump: [() => 0, () => 100],
+    fullRestore: [],
+    cooldown: [() => 0, () => 1000 * 60],
+    timer: []
+  },
+  ["addedJump", "fullRestore", "cooldown"]
+);
+new BlockType(
+  "Wall-Jump Block",
+  new Block(15, 0, 0, 50, true, true, 3),
+  (block, app = display) => {
+    let g = new PIXI.Graphics();
+    g.beginFill(0x8866ff);
+    g.drawRect(0, 0, 50, 50);
+    g.endFill();
+    g.lineStyle({
+      width: 4,
+      color: 0x000000
+    });
+    g.drawRect(15, 15, 20, 20);
+    g.moveTo(5, 5);
+    g.lineTo(15, 15);
+    g.moveTo(5, 45);
+    g.lineTo(15, 35);
+    g.moveTo(45, 5);
+    g.lineTo(35, 15);
+    g.moveTo(45, 45);
+    g.lineTo(35, 35);
+    return app.renderer.generateTexture(g);
+  },
+  [
+    (obj, block, tempObj, isPlayer) => {
+      if (isPlayer && !obj.xg) {
+        tempObj.canWallJump = true;
+        tempObj.wallJumpDir = 0;
+      }
+    },
+    (obj, block, tempObj, isPlayer) => {
+      if (isPlayer && !obj.xg) {
+        tempObj.canWallJump = true;
+        tempObj.wallJumpDir = 1;
+      }
+    },
+    (obj, block, tempObj, isPlayer) => {
+      if (isPlayer && obj.xg) {
+        tempObj.canWallJump = true;
+        tempObj.wallJumpDir = 2;
+      }
+    },
+    (obj, block, tempObj, isPlayer) => {
+      if (isPlayer && obj.xg) {
+        tempObj.canWallJump = true;
+        tempObj.wallJumpDir = 3;
+      }
+    },
+    () => {}
+  ]
 );

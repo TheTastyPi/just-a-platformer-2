@@ -141,3 +141,7 @@
 #### 21 Dec. 2021
 
 - Fixed a bug where shit goes very wrong
+
+## 24 Dec. 2021
+
+- Added Jump Field, Jump Restore Field, and Wall-Jump Block

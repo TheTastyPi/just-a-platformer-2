@@ -52,6 +52,7 @@ const propData = {
     (block) => level[0].length * maxBlockSize - block.size
   ],
   size: ["num", "s", () => 6.25, () => 50],
+  index: ["hidden", ""],
   isSolid: ["bool", "so"],
   giveJump: ["bool", "j"],
   eventPriority: ["int", "ep", () => 0, () => Infinity],
@@ -60,16 +61,18 @@ const propData = {
   friction: ["bool", "fr"],
   dynamic: ["bool", "dy"],
   interactive: ["bool", "i"],
+  lastEventList: ["hidden", ""],
+  sprite: ["hidden",""],
   // solid only
   floorLeniency: ["num", "fl", () => 0, () => 50],
   // dynamic props
   xv: ["num", "xv"],
   yv: ["num", "yv"],
-  xa: ["num", "xa"],
-  ya: ["num", "ya"],
+  xa: ["hidden", "xa"],
+  ya: ["hidden", "ya"],
   g: ["num", "g"],
   xg: ["bool", "xg"],
-  isDead: ["bool", "d"],
+  isDead: ["hidden", "d"],
   pushable: ["bool", "u"],
   crushPlayer: ["bool", "csh"],
   invincible: ["bool", "iv"],
@@ -92,15 +95,21 @@ const propData = {
   newyv: ["num", "nyv"],
   xOnly: ["bool", "xO"],
   yOnly: ["bool", "yO"],
-  addVel: ["bool", "aV"]
+  addVel: ["bool", "aV"],
+  newJump: ["int", "nJ"],
+  infJump: ["bool", "iJ"],
+  addedJump: ["int", "aJ"],
+  fullRestore: ["bool", "fR"],
+  cooldown: ["num", "cd"],
+  timer: ["hidden", "tm"]
 };
 const propAliasReverse = {};
 const blockList = {
   Special: [2, 11],
   Basic: [0, 1],
   Dynamic: [4, 5],
-  Movement: [3, 6, 7, 8, 12],
-  Status: [9, 10]
+  Movement: [3, 6, 7, 8, 12, 15],
+  Status: [9, 10, 13, 14]
 };
 var level =
   "NrDeCIBcE8AcFNwC4AMAacAPZAmArBtLngL5oQwLLrhFJ4pkVyKqHICMKj5UL17JBwZM+VNrVzdRlVjTr4ezcfOQBmab1kDJSNSK38JdNQHYCWYjKM1s9JWLkY7DQQBZNyp5aGfHOuy5VJEVrFWdOfEEcczDvQO53P20JQIMvAM5zQQ4o8ABnK0Nwn2FgjjMAOgtCoRxquMyhV11cmsiG4vjOFroOXOqMWoHSLqaynMSCjtGM1M4ANnqLPqnh5cb5oWzWtZnN204ADlNB3Zp1zrnDoROzvpGh-bGtidb0-1fe9WSbCObgh4HCkbjhfiU7GDghpgUZ+v8oYJ9DRIJhIMhwAAFABO8Hy+QABMAABIAXQJkAA9gTKQgAHYUgAW8AJzIANrACQBbeB0gCuAEJwAcEVM6ECRT5Qi9QTs+nlavhJZC7itOI9pnUrp9QarJhdntcEXLOHstbMdQilvdTQbzcriOUzSMHSFvkINZcLSCEe62k97TLfeUqu1A0apX6Pj6pSaQrEg5HoeDum7ASmmjDXTDotG-j4c7oJYm7Mjs3GlSX1HGzN786X3cWI3YgYI8xDkK3zq6u3126ne1JYR2kIO0z2xT9hwPJ3oRKS0ABOJekoA";
@@ -146,7 +155,8 @@ var blockEdit = new Vue({
       str: "textarea",
       bool: "checkbox",
       blockType: "select",
-      color: "color"
+      color: "color",
+      hidden: "none"
     },
     blocks: blockList
   }
@@ -535,7 +545,11 @@ function confirmPropEdit(block) {
       };
       break;
     }
-    if (editBlock[i] !== "MIXED" && i !== "index") {
+    if (editBlock[i] !== "MIXED") {
+      if (propData[i][0] === "hidden") {
+        newBlock[i] = blockData[newBlock.type].defaultBlock[i];
+        continue;
+      }
       if (parseFloat(editBlock[i]) == editBlock[i]) {
         let limIndex = 2;
         let propLimit = propData[i];
@@ -1110,7 +1124,7 @@ function lvl2str(lvl) {
       if (prop === "type") continue;
       if (
         block[prop] === blockData[block.type].defaultBlock[prop] ||
-        prop === "index" || prop === "sprite"
+        propData[prop][0] === "hidden"
       ) {
         delete block[prop];
         continue;
@@ -1137,11 +1151,9 @@ function str2lvl(str) {
         .map((x) => Array(0))
     );
   let dynBlocks = [];
+  let aniBlocks = [];
   for (let i in blocks) {
     let block = blocks[i];
-    if (block.dynamic) {
-      dynBlocks.push(block);
-    }
     for (let prop in block) {
       if (
         propAliasReverse[prop] !== undefined &&
@@ -1154,18 +1166,21 @@ function str2lvl(str) {
     for (let prop in blockData[block.type].defaultBlock) {
       block[prop] ??= blockData[block.type].defaultBlock[prop];
     }
+    if (animatedTypes.includes(block.type)) {
+      aniBlocks.push(block);
+    }
     if (block.dynamic) {
       dynBlocks.push(block);
       continue;
     }
     lvl[gridUnit(block.x)][gridUnit(block.y)].push(block);
   }
-  return [lvl, dynBlocks];
+  return [lvl, dynBlocks, aniBlocks];
 }
 function pState2str(pState) {
   pState = deepCopy(pState);
   for (let prop in pState) {
-    if (pState[prop] === defaultPlayer[prop]) delete pState[prop];
+    if (pState[prop] === defaultPlayer[prop] || propData[prop][0] === "hidden") delete pState[prop];
   }
   let str = JSON.stringify(pState);
   return LZString.compressToEncodedURIComponent(str);
@@ -1203,6 +1218,7 @@ function load(name) {
     setLevel(saveData[0]);
     dynamicInit = saveData[1];
     dynamicObjs = [];
+    animatedObjs = saveData[2];
     startState = str2pState(save[1]);
     updateGrid();
     respawn(true);
@@ -1333,7 +1349,8 @@ function init() {
       width: 50,
       height: 50,
       view: id("blockSelect" + i),
-      transparent: true
+      transparent: true,
+      forceCanvas: true
     });
     let s = new PIXI.Sprite(
       blockData[i].getTexture(blockData[i].defaultBlock, btn)

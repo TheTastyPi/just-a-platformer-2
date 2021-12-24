@@ -5,8 +5,8 @@ playerDisp.endFill();
 playerLayer.addChild(playerDisp);
 function drawPlayer() {
   let ratio = player.currentJump / player.maxJump;
-  if (player.maxJumps === Infinity) ratio = 1;
-  if (player.maxJumps === 0) ratio = 0;
+  if (player.maxJump === Infinity) ratio = 1;
+  if (player.maxJump === 0) ratio = 0;
   playerDisp.tint = PIXI.utils.rgb2hex([1 - ratio, 0, ratio]);
   if (editor?.invincible) playerDisp.tint = PIXI.utils.rgb2hex([1, 0, 1]);
   playerDisp.alpha = player.isDead ? 0.5 : 1;
@@ -36,11 +36,10 @@ function drawLevel(clear = false) {
         if (
           prevBlock === undefined ||
           !arraysEqual(block, prevBlock) ||
-          [2, 8].includes(block.type)
+          animatedObjs.includes(block.type) ||
+          (block.type === 2 && !arraysEqual(saveState, prevSaveState))
         ) {
-          blockData[block.type].update(block);
-          block.sprite.visible = !block.invisible;
-          block.sprite.alpha = block.opacity;
+          updateBlock(block);
         }
       }
     }
@@ -48,6 +47,11 @@ function drawLevel(clear = false) {
   prevLevel = deepCopy(level);
   prevSaveState = deepCopy(saveState);
   if (clear) adjustScreen();
+}
+function updateBlock(block) {
+  blockData[block.type].update(block);
+  block.sprite.visible = !block.invisible;
+  block.sprite.alpha = block.opacity;
 }
 var lvlxOffset = 0;
 var lvlyOffset = 0;
@@ -108,6 +112,16 @@ function adjustScreen(instant = false) {
     gridDisp.x = Math.max((camx / cams) % editor.gridSize, camx / cams);
     gridDisp.y = Math.max((camy / cams) % editor.gridSize, camy / cams);
     updateSelectDisp();
+  }
+  for (let i in levelLayer.children) {
+    let s = levelLayer.children[i];
+    let pos = s.getGlobalPosition();
+    s.visible = !(
+      pos.x + s.width < 0 ||
+      pos.x > window.innerWidth ||
+      pos.y + s.height < 0 ||
+      pos.y > window.innerHeight
+    );
   }
   camxPrev = camx;
   camyPrev = camy;
