@@ -133,6 +133,8 @@ function doPhysics(obj, t, isPlayer) {
   obj.ya = 0;
   let eventList = [[], [], [], [], []];
   let topPriority = [0, 0, 0, 0, 0];
+  let gdxv = 0;
+  let gdyv = 0;
   for (let x = gridUnit(px1) - 1; x <= gridUnit(px2); x++) {
     if (isDead || obj.isDead) break;
     for (let y = gridUnit(py1) - 1; y <= gridUnit(py2); y++) {
@@ -359,6 +361,10 @@ function doPhysics(obj, t, isPlayer) {
             continue;
           }
         } else {
+          if (block.type === 12 && block.addVel) {
+            gdxv = block.newxv;
+            gdyv = block.newyv;
+          }
           if (block.eventPriority > topPriority[4]) {
             eventList[4] = [];
             topPriority[4] = block.eventPriority;
@@ -537,8 +543,8 @@ function doPhysics(obj, t, isPlayer) {
       if (leftBlock) dlv -= obj.leftSpeed;
       if (rightBlock) drv -= obj.rightSpeed;
     }
-    let dxv = obj.xv - dtv - dbv;
-    let dyv = obj.yv - dlv - drv;
+    let dxv = obj.xv - dtv - dbv - gdxv;
+    let dyv = obj.yv - dlv - drv - gdyv;
     if (tempObj.xg) {
       obj.xa += 1000 * tempObj.g;
       if (isPlayer)

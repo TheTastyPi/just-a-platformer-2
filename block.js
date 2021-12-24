@@ -726,11 +726,8 @@ new BlockType(
     () => {},
     () => {},
     () => {},
-    (obj, block, tempObj) => {
-      if (block.addVel) {
-        if (!block.yOnly) obj.xa = block.newxv;
-        if (!block.xOnly) obj.ya = block.newyv;
-      } else {
+    (obj, block) => {
+      if (!block.addVel) {
         if (!block.yOnly) obj.xv = block.newxv;
         if (!block.xOnly) obj.yv = block.newyv;
       }
