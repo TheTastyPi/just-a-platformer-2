@@ -153,3 +153,8 @@
 ## 25 Dec. 2021
 
 - Added several Panels (Solid, Death, Bounce, Wall-Jump, Ice, Conveyor)
+
+#### 25 Dec. 2021 #2
+
+- Fixed a bug where the "invisible" property doesn't work
+- Fixed a bug where the grid display extends beyond the level

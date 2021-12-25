@@ -1,8 +1,5 @@
-var playerDisp = new PIXI.Graphics();
-playerDisp.beginFill(0xffffff, 1);
-playerDisp.drawRect(player.x, player.y, player.size, player.size);
-playerDisp.endFill();
-playerLayer.addChild(playerDisp);
+var playerDisp = new PIXI.Sprite(blockData[0].defaultTexture);
+levelLayer.addChild(playerDisp);
 function drawPlayer() {
   let ratio = player.currentJump / player.maxJump;
   if (player.maxJump === Infinity) ratio = 1;
@@ -10,14 +7,17 @@ function drawPlayer() {
   playerDisp.tint = PIXI.utils.rgb2hex([1 - ratio, 0, ratio]);
   if (editor?.invincible) playerDisp.tint = PIXI.utils.rgb2hex([1, 0, 1]);
   playerDisp.alpha = player.isDead ? 0.5 : 1;
-  playerDisp.x = player.x + camx / cams;
-  playerDisp.y = player.y + camy / cams;
+  playerDisp.x = player.x;
+  playerDisp.y = player.y;
+  playerDisp.width = player.size;
+  playerDisp.height = player.size;
 }
 var prevLevel = [];
 function drawLevel(clear = false) {
   if (clear) {
     prevLevel = [];
     levelLayer.removeChildren();
+    levelLayer.addChild(playerDisp);
   }
   for (let x = 0; x <= level.length - 1; x++) {
     for (let y = 0; y <= level[0].length - 1; y++) {
@@ -106,18 +106,33 @@ function adjustScreen(instant = false) {
     ) + "px";
   levelLayer.x = camx;
   levelLayer.y = camy;
-  if (editor !== undefined) {
-    gridDisp.x = Math.max((camx / cams) % editor.gridSize, camx / cams);
-    gridDisp.y = Math.max((camy / cams) % editor.gridSize, camy / cams);
+  if (editor !== undefined && gridDisp.visible) {
+    gridDisp.x =
+      Math.min(
+        Math.max(0, camx),
+        camx +
+          Math.max(0, level.length * maxBlockSize * cams - window.innerWidth)
+      ) / cams;
+    gridDisp.y =
+      Math.min(
+        Math.max(0, camy),
+        camy +
+          Math.max(
+            0,
+            level[0].length * maxBlockSize * cams - window.innerHeight
+          )
+      ) / cams;
+    gridDisp.tilePosition.x = (camx / cams - gridDisp.x) % editor.gridSize;
+    gridDisp.tilePosition.y = (camy / cams - gridDisp.y) % editor.gridSize;
     updateSelectDisp();
   }
   for (let i in levelLayer.children) {
     let s = levelLayer.children[i];
     let pos = s.getGlobalPosition();
-    s.visible = !(
-      pos.x + s.width < 0 ||
+    s.renderable = !(
+      pos.x + s.width * cams < 0 ||
       pos.x > window.innerWidth ||
-      pos.y + s.height < 0 ||
+      pos.y + s.height * cams < 0 ||
       pos.y > window.innerHeight
     );
   }
@@ -128,9 +143,16 @@ function adjustScreen(instant = false) {
 function adjustLevelSize() {
   let w = Math.min(level.length * maxBlockSize * cams, window.innerWidth);
   let h = Math.min(level[0].length * maxBlockSize * cams, window.innerHeight);
+  gridDisp.width = Math.min(
+    level.length * maxBlockSize,
+    window.innerWidth / cams
+  );
+  gridDisp.height = Math.min(
+    level[0].length * maxBlockSize,
+    window.innerHeight / cams
+  );
   id("background").style.width = w + "px";
   id("background").style.height = h + "px";
-  playerLayer.scale.set(cams, cams);
   levelLayer.scale.set(cams, cams);
   selectLayer?.scale?.set(cams, cams);
   adjustScreen(true);

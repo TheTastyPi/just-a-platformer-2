@@ -167,7 +167,7 @@ var blockEdit = new Vue({
 });
 var selectLayer = new PIXI.Container();
 display.stage.addChild(selectLayer);
-var gridDisp = new PIXI.Graphics();
+var gridDisp = new PIXI.TilingSprite(createGridTexture());
 gridDisp.visible = false;
 selectLayer.addChild(gridDisp);
 var buildDisp = new PIXI.Graphics();
@@ -746,38 +746,30 @@ function changeGridSize(size) {
   editor.gridSize = size;
   updateGrid();
 }
+let prevGridSize = 50;
 function updateGrid() {
   editor.gridSize = +parseFloat(editor.gridSize).toFixed(2);
   if (isNaN(editor.gridSize)) editor.gridSize = 50;
   editor.gridSize = Math.min(Math.max(editor.gridSize, 6.25), 50);
-  gridDisp.clear();
-  for (
-    let i = 1;
-    i <
-    Math.min(level.length * maxBlockSize, window.innerWidth) / editor.gridSize;
-    i++
-  ) {
-    gridDisp.lineStyle(2, 0x000000, 0.5, 1);
-    gridDisp.moveTo(i * editor.gridSize, 0);
-    gridDisp.lineTo(i * editor.gridSize, level[0].length * maxBlockSize);
-    gridDisp.lineStyle(2, 0xffffff, 0.5, 0);
-    gridDisp.moveTo(i * editor.gridSize, 0);
-    gridDisp.lineTo(i * editor.gridSize, level[0].length * maxBlockSize);
-  }
-  for (
-    let i = 1;
-    i <
-    Math.min(level[0].length * maxBlockSize, window.innerHeight) /
-      editor.gridSize;
-    i++
-  ) {
-    gridDisp.lineStyle(2, 0x000000, 0.5, 1);
-    gridDisp.moveTo(0, i * editor.gridSize);
-    gridDisp.lineTo(level.length * maxBlockSize, i * editor.gridSize);
-    gridDisp.lineStyle(2, 0xffffff, 0.5, 0);
-    gridDisp.moveTo(0, i * editor.gridSize);
-    gridDisp.lineTo(level.length * maxBlockSize, i * editor.gridSize);
-  }
+  if (prevGridSize !== editor.gridSize) gridDisp.texture = createGridTexture();
+  prevGridSize = editor.gridSize;
+}
+function createGridTexture() {
+  let g = new PIXI.Graphics();
+  g.lineStyle(2, 0x000000, 0.5, 1);
+  g.moveTo(0, 0);
+  g.lineTo(0, editor.gridSize);
+  g.lineTo(editor.gridSize, editor.gridSize);
+  g.lineStyle(2, 0xffffff, 0.5, 0);
+  g.moveTo(0, 0);
+  g.lineTo(editor.gridSize, 0);
+  g.lineTo(editor.gridSize, editor.gridSize);
+  return display.renderer.generateTexture(
+    g,
+    undefined,
+    undefined,
+    new PIXI.Rectangle(0, 0, editor.gridSize, editor.gridSize)
+  );
 }
 function getSnapPos(box) {
   let width = box.size;

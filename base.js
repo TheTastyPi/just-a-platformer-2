@@ -36,8 +36,6 @@ var display = new PIXI.Application({
   transparent: true,
   resizeTo: window
 });
-var playerLayer = new PIXI.Container();
-display.stage.addChild(playerLayer);
 var levelLayer = new PIXI.Container();
 display.stage.addChild(levelLayer);
 var canJump = true;
