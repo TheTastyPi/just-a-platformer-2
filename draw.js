@@ -14,7 +14,6 @@ function drawPlayer() {
   playerDisp.y = player.y + camy / cams;
 }
 var prevLevel = [];
-var prevSaveState = [];
 function drawLevel(clear = false) {
   if (clear) {
     prevLevel = [];
@@ -37,7 +36,7 @@ function drawLevel(clear = false) {
           prevBlock === undefined ||
           !arraysEqual(block, prevBlock) ||
           animatedObjs.includes(block.type) ||
-          (block.type === 2 && !arraysEqual(saveState, prevSaveState))
+          block.type === 2
         ) {
           updateBlock(block);
         }
@@ -45,7 +44,6 @@ function drawLevel(clear = false) {
     }
   }
   prevLevel = deepCopy(level);
-  prevSaveState = deepCopy(saveState);
   if (clear) adjustScreen();
 }
 function updateBlock(block) {
