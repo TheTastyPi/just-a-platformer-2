@@ -18,15 +18,16 @@ var defaultPlayer = {
   friction: true,
   gameSpeed: 1,
   displayingText: false,
-  lastEventList: [[], [], [], [], []]
+  lastCollided: []
 };
 var player = deepCopy(defaultPlayer);
 var dynamicInit = [];
 var dynamicSave = [];
 var dynamicObjs = [];
-var animatedTypes = [8];
+var animatedTypes = [8, 21];
 var animatedObjs = [];
 var timerList = [];
+var oneWayBlocks = [16, 17, 18, 19, 20, 21];
 const maxBlockSize = 50;
 var display = new PIXI.Application({
   width: window.innerWidth,
@@ -131,6 +132,7 @@ function doPhysics(obj, t, isPlayer) {
   let giveJump = false;
   obj.xa = 0;
   obj.ya = 0;
+  let collided = [];
   let eventList = [[], [], [], [], []];
   let topPriority = [0, 0, 0, 0, 0];
   let gdxv = 0;
@@ -161,7 +163,7 @@ function doPhysics(obj, t, isPlayer) {
       for (let i in gridSpace) {
         let realBlock = gridSpace[i];
         let block;
-        if (realBlock.type === 15) {
+        if ([15, 19].includes(realBlock.type)) {
           block = {
             ...realBlock,
             x: realBlock.x - 1,
@@ -182,6 +184,7 @@ function doPhysics(obj, t, isPlayer) {
           continue;
         let data = blockData[block.type];
         if (!block.friction) friction = false;
+        if (isColliding(obj, realBlock)) collided.push(realBlock);
         // solid block
         if (block === player || block.isSolid) {
           let dxv = (obj.xv - block.xv) * t + ((obj.xa - block.xa) * t * t) / 2;
@@ -282,6 +285,13 @@ function doPhysics(obj, t, isPlayer) {
           }
           // left
           if (isLeft) {
+            if (
+              oneWayBlocks.includes(realBlock.type) &&
+              (!realBlock.rightWall ||
+                obj.lastCollided.find((x) => x === realBlock))
+            ) {
+              continue;
+            }
             if (isColliding(obj, realBlock)) {
               if (
                 leftBlock === undefined ||
@@ -302,6 +312,13 @@ function doPhysics(obj, t, isPlayer) {
           }
           // right
           if (isRight) {
+            if (
+              oneWayBlocks.includes(realBlock.type) &&
+              (!realBlock.leftWall ||
+                obj.lastCollided.find((x) => x === realBlock))
+            ) {
+              continue;
+            }
             if (isColliding(obj, realBlock)) {
               if (
                 rightBlock === undefined ||
@@ -322,6 +339,13 @@ function doPhysics(obj, t, isPlayer) {
           }
           // top
           if (isTop) {
+            if (
+              oneWayBlocks.includes(realBlock.type) &&
+              (!realBlock.bottomWall ||
+                obj.lastCollided.find((x) => x === realBlock))
+            ) {
+              continue;
+            }
             if (isColliding(obj, realBlock)) {
               if (
                 topBlock === undefined ||
@@ -342,6 +366,13 @@ function doPhysics(obj, t, isPlayer) {
           }
           // bottom
           if (isBottom) {
+            if (
+              oneWayBlocks.includes(realBlock.type) &&
+              (!realBlock.topWall ||
+                obj.lastCollided.find((x) => x === realBlock))
+            ) {
+              continue;
+            }
             if (isColliding(obj, realBlock)) {
               if (
                 bottomBlock === undefined ||
@@ -389,7 +420,6 @@ function doPhysics(obj, t, isPlayer) {
     obj.isDead = true;
   }
   if (obj.invincible || (isPlayer && editor?.invincible)) obj.isDead = false;
-  friction = obj.friction && friction;
   // MOVEMENT & EVENTS
   if (!isDead && !obj.isDead) {
     // collision
@@ -401,8 +431,12 @@ function doPhysics(obj, t, isPlayer) {
     if (isNaN(rightPush)) rightPush = 0;
     if (isNaN(topPush)) topPush = 0;
     if (isNaN(bottomPush)) bottomPush = 0;
-    obj.x += (leftPush + rightPush) / 2;
-    obj.y += (topPush + bottomPush) / 2;
+    if (leftBlock?.dynamic || leftBlock === player) leftPush /= 2;
+    if (rightBlock?.dynamic || rightBlock === player) rightPush /= 2;
+    if (topBlock?.dynamic || topBlock === player) topPush /= 2;
+    if (bottomBlock?.dynamic || bottomBlock === player) bottomPush /= 2;
+    obj.x += leftPush + rightPush;
+    obj.y += topPush + bottomPush;
     // touch events
     let tempObj = deepCopy(obj);
     for (let i in eventList) {
@@ -414,19 +448,31 @@ function doPhysics(obj, t, isPlayer) {
           block,
           tempObj,
           isPlayer,
-          !obj.lastEventList[i].find((x) => x[0] === block),
+          !obj.lastCollided.find((x) => x === block),
           false
         );
       }
     }
-    for (let i in obj.lastEventList) {
-      for (let j in obj.lastEventList[i]) {
-        let block = obj.lastEventList[i][j][0];
-        if (eventList[i].find((x) => x[0] === block)) continue;
-        obj.lastEventList[i][j][1](obj, block, tempObj, isPlayer, false, true);
+    for (let i in obj.lastCollided) {
+      let block = obj.lastCollided[i];
+      if (block === player || block.isSolid) continue;
+      if (collided.find((x) => x === block)) continue;
+      blockData[block.type].touchEvent[4](
+        obj,
+        block,
+        tempObj,
+        isPlayer,
+        false,
+        true
+      );
+    }
+    for (let i in collided) {
+      while (collided[i] !== undefined && !isColliding(obj, collided[i])) {
+        collided.splice(i, 1);
       }
     }
-    obj.lastEventList = eventList;
+    obj.lastCollided = collided;
+    friction = tempObj.friction && friction;
     if (isPlayer) {
       if (
         (leftBlock?.giveJump && tempObj.xg && tempObj.g < 0) ||
@@ -533,11 +579,12 @@ function doPhysics(obj, t, isPlayer) {
         drv = -rightBlock.yv;
       }
     }
-    if (topBlock?.type === 8) dtv += topBlock.bottomSpeed;
-    if (bottomBlock?.type === 8) dbv += bottomBlock.topSpeed;
-    if (leftBlock?.type === 8) dlv += leftBlock.rightSpeed;
-    if (rightBlock?.type === 8) drv += rightBlock.leftSpeed;
-    if (obj.type === 8) {
+    let conveyorBlocks = [8, 21];
+    if (conveyorBlocks.includes(topBlock?.type)) dtv += topBlock.bottomSpeed;
+    if (conveyorBlocks.includes(bottomBlock?.type)) dbv += bottomBlock.topSpeed;
+    if (conveyorBlocks.includes(leftBlock?.type)) dlv += leftBlock.rightSpeed;
+    if (conveyorBlocks.includes(rightBlock?.type)) drv += rightBlock.leftSpeed;
+    if (conveyorBlocks.includes(obj.type)) {
       if (topBlock) dtv -= obj.topSpeed;
       if (bottomBlock) dbv -= obj.bottomSpeed;
       if (leftBlock) dlv -= obj.leftSpeed;
@@ -765,7 +812,7 @@ function deepCopy(inObject) {
   outObject = Array.isArray(inObject) ? [] : {};
   for (key in inObject) {
     value = inObject[key];
-    if (key === "lastEventList" || key === "sprite") {
+    if (key === "lastCollided" || key === "sprite") {
       outObject[key] = value;
     } else {
       outObject[key] = deepCopy(value);

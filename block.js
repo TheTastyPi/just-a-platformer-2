@@ -25,7 +25,7 @@ class Block {
     this.pushable = false;
     this.crushPlayer = true;
     this.invincible = false;
-    this.lastEventList = [[], [], [], [], []];
+    this.lastCollided = [];
   }
 }
 class BlockType {
@@ -889,7 +889,7 @@ new BlockType(
   new Block(15, 0, 0, 50, true, true, 3),
   (block, app = display) => {
     let g = new PIXI.Graphics();
-    g.beginFill(0x8866ff);
+    g.beginFill(0x8844ff);
     g.drawRect(0, 0, 50, 50);
     g.endFill();
     g.lineStyle({
@@ -934,4 +934,398 @@ new BlockType(
     },
     () => {}
   ]
+);
+new BlockType(
+  "Solid Panel",
+  {
+    ...new Block(16, 0, 0, 50, true, true, 3),
+    leftWall: false,
+    rightWall: false,
+    topWall: true,
+    bottomWall: false
+  },
+  (block, app = display) => {
+    let g = new PIXI.Graphics();
+    g.beginFill(0x000000);
+    if (block.leftWall) g.drawRect(0, 0, 5, 50);
+    if (block.rightWall) g.drawRect(45, 0, 5, 50);
+    if (block.topWall) g.drawRect(0, 0, 50, 5);
+    if (block.bottomWall) g.drawRect(0, 45, 50, 5);
+    g.endFill();
+    g.beginFill(0x888888);
+    if (block.leftWall) g.drawPolygon(0, 25, 5, 30, 5, 20);
+    if (block.rightWall) g.drawPolygon(50, 25, 45, 20, 45, 30);
+    if (block.topWall) g.drawPolygon(25, 0, 30, 5, 20, 5);
+    if (block.bottomWall) g.drawPolygon(25, 50, 20, 45, 30, 45);
+    g.endFill();
+    return app.renderer.generateTexture(
+      g,
+      undefined,
+      undefined,
+      new PIXI.Rectangle(0, 0, 50, 50)
+    );
+  },
+  [() => {}, () => {}, () => {}, () => {}, () => {}],
+  (block, sprite = block.sprite, app) => {
+    if (sprite.texture !== blockData[block.type].defaultTexture)
+      sprite.texture.destroy(true);
+    sprite.texture = blockData[block.type].getTexture(block, app);
+  },
+  {
+    leftWall: [],
+    rightWall: [],
+    topWall: [],
+    bottomWall: []
+  },
+  ["leftWall", "rightWall", "topWall", "bottomWall"]
+);
+new BlockType(
+  "Death Panel",
+  {
+    ...new Block(17, 0, 0, 50, true, false, 1),
+    leftWall: false,
+    rightWall: false,
+    topWall: true,
+    bottomWall: false
+  },
+  (block, app = display) => {
+    let g = new PIXI.Graphics();
+    g.beginFill(0xff0000);
+    if (block.leftWall) g.drawRect(0, 0, 5, 50);
+    if (block.rightWall) g.drawRect(45, 0, 5, 50);
+    if (block.topWall) g.drawRect(0, 0, 50, 5);
+    if (block.bottomWall) g.drawRect(0, 45, 50, 5);
+    g.endFill();
+    g.beginFill(0x000000);
+    if (block.leftWall) g.drawPolygon(0, 25, 5, 30, 5, 20);
+    if (block.rightWall) g.drawPolygon(50, 25, 45, 20, 45, 30);
+    if (block.topWall) g.drawPolygon(25, 0, 30, 5, 20, 5);
+    if (block.bottomWall) g.drawPolygon(25, 50, 20, 45, 30, 45);
+    g.endFill();
+    return app.renderer.generateTexture(
+      g,
+      undefined,
+      undefined,
+      new PIXI.Rectangle(0, 0, 50, 50)
+    );
+  },
+  [
+    (obj, block, tempObj, isPlayer, isEntering) => {
+      if (isEntering && block.rightWall) obj.isDead = true;
+    },
+    (obj, block, tempObj, isPlayer, isEntering) => {
+      if (isEntering && block.leftWall) obj.isDead = true;
+    },
+    (obj, block, tempObj, isPlayer, isEntering) => {
+      if (isEntering && block.bottomWall) obj.isDead = true;
+    },
+    (obj, block, tempObj, isPlayer, isEntering) => {
+      if (isEntering && block.topWall) obj.isDead = true;
+    },
+    () => {}
+  ],
+  (block, sprite = block.sprite, app) => {
+    if (sprite.texture !== blockData[block.type].defaultTexture)
+      sprite.texture.destroy(true);
+    sprite.texture = blockData[block.type].getTexture(block, app);
+  },
+  {
+    leftWall: [],
+    rightWall: [],
+    topWall: [],
+    bottomWall: []
+  },
+  ["leftWall", "rightWall", "topWall", "bottomWall"]
+);
+new BlockType(
+  "Bounce Panel",
+  {
+    ...new Block(18, 0, 0, 50, true, false, 2),
+    leftWall: false,
+    rightWall: false,
+    topWall: true,
+    bottomWall: false,
+    power: 500
+  },
+  (block, app = display) => {
+    let g = new PIXI.Graphics();
+    g.beginFill(0xffff00);
+    if (block.leftWall) g.drawRect(0, 0, 5, 50);
+    if (block.rightWall) g.drawRect(45, 0, 5, 50);
+    if (block.topWall) g.drawRect(0, 0, 50, 5);
+    if (block.bottomWall) g.drawRect(0, 45, 50, 5);
+    g.endFill();
+    g.beginFill(0x000000);
+    if (block.leftWall) g.drawPolygon(0, 25, 5, 30, 5, 20);
+    if (block.rightWall) g.drawPolygon(50, 25, 45, 20, 45, 30);
+    if (block.topWall) g.drawPolygon(25, 0, 30, 5, 20, 5);
+    if (block.bottomWall) g.drawPolygon(25, 50, 20, 45, 30, 45);
+    g.endFill();
+    return app.renderer.generateTexture(
+      g,
+      undefined,
+      undefined,
+      new PIXI.Rectangle(0, 0, 50, 50)
+    );
+  },
+  [
+    (obj, block, tempObj, isPlayer, isEntering) => {
+      if (isEntering && block.rightWall) obj.xv = block.power;
+    },
+    (obj, block, tempObj, isPlayer, isEntering) => {
+      if (isEntering && block.leftWall) obj.xv = -block.power;
+    },
+    (obj, block, tempObj, isPlayer, isEntering) => {
+      if (isEntering && block.bottomWall) obj.yv = block.power;
+    },
+    (obj, block, tempObj, isPlayer, isEntering) => {
+      if (isEntering && block.topWall) obj.yv = -block.power;
+    },
+    () => {}
+  ],
+  (block, sprite = block.sprite, app) => {
+    if (sprite.texture !== blockData[block.type].defaultTexture)
+      sprite.texture.destroy(true);
+    sprite.texture = blockData[block.type].getTexture(block, app);
+  },
+  {
+    leftWall: [],
+    rightWall: [],
+    topWall: [],
+    bottomWall: [],
+    power: [() => 0, () => 2000]
+  },
+  ["leftWall", "rightWall", "topWall", "bottomWall"]
+);
+new BlockType(
+  "Wall-Jump Panel",
+  {
+    ...new Block(19, 0, 0, 50, true, true, 3),
+    leftWall: false,
+    rightWall: false,
+    topWall: true,
+    bottomWall: false
+  },
+  (block, app = display) => {
+    let g = new PIXI.Graphics();
+    g.beginFill(0x8844ff);
+    if (block.leftWall) g.drawRect(0, 0, 5, 50);
+    if (block.rightWall) g.drawRect(45, 0, 5, 50);
+    if (block.topWall) g.drawRect(0, 0, 50, 5);
+    if (block.bottomWall) g.drawRect(0, 45, 50, 5);
+    g.endFill();
+    g.beginFill(0x000000);
+    if (block.leftWall) g.drawPolygon(0, 25, 5, 30, 5, 20);
+    if (block.rightWall) g.drawPolygon(50, 25, 45, 20, 45, 30);
+    if (block.topWall) g.drawPolygon(25, 0, 30, 5, 20, 5);
+    if (block.bottomWall) g.drawPolygon(25, 50, 20, 45, 30, 45);
+    g.endFill();
+    return app.renderer.generateTexture(
+      g,
+      undefined,
+      undefined,
+      new PIXI.Rectangle(0, 0, 50, 50)
+    );
+  },
+  [
+    (obj, block, tempObj, isPlayer, isEntering) => {
+      if (isEntering && block.rightWall && isPlayer && !obj.xg) {
+        tempObj.canWallJump = true;
+        tempObj.wallJumpDir = 0;
+      }
+    },
+    (obj, block, tempObj, isPlayer, isEntering) => {
+      if (isEntering && block.leftWall && isPlayer && !obj.xg) {
+        tempObj.canWallJump = true;
+        tempObj.wallJumpDir = 1;
+      }
+    },
+    (obj, block, tempObj, isPlayer, isEntering) => {
+      if (isEntering && block.bottomWall && isPlayer && obj.xg) {
+        tempObj.canWallJump = true;
+        tempObj.wallJumpDir = 2;
+      }
+    },
+    (obj, block, tempObj, isPlayer, isEntering) => {
+      if (isEntering && block.topWall && isPlayer && obj.xg) {
+        tempObj.canWallJump = true;
+        tempObj.wallJumpDir = 3;
+      }
+    },
+    () => {}
+  ],
+  (block, sprite = block.sprite, app) => {
+    if (sprite.texture !== blockData[block.type].defaultTexture)
+      sprite.texture.destroy(true);
+    sprite.texture = blockData[block.type].getTexture(block, app);
+  },
+  {
+    leftWall: [],
+    rightWall: [],
+    topWall: [],
+    bottomWall: []
+  },
+  ["leftWall", "rightWall", "topWall", "bottomWall"]
+);
+new BlockType(
+  "Ice Panel",
+  {
+    ...new Block(20, 0, 0, 50, true, true, 3),
+    leftWall: false,
+    rightWall: false,
+    topWall: true,
+    bottomWall: false
+  },
+  (block, app = display) => {
+    let g = new PIXI.Graphics();
+    g.beginFill(0x8888ff);
+    if (block.leftWall) g.drawRect(0, 0, 5, 50);
+    if (block.rightWall) g.drawRect(45, 0, 5, 50);
+    if (block.topWall) g.drawRect(0, 0, 50, 5);
+    if (block.bottomWall) g.drawRect(0, 45, 50, 5);
+    g.endFill();
+    g.beginFill(0x000000);
+    if (block.leftWall) g.drawPolygon(0, 25, 5, 30, 5, 20);
+    if (block.rightWall) g.drawPolygon(50, 25, 45, 20, 45, 30);
+    if (block.topWall) g.drawPolygon(25, 0, 30, 5, 20, 5);
+    if (block.bottomWall) g.drawPolygon(25, 50, 20, 45, 30, 45);
+    g.endFill();
+    return app.renderer.generateTexture(
+      g,
+      undefined,
+      undefined,
+      new PIXI.Rectangle(0, 0, 50, 50)
+    );
+  },
+  [
+    (obj, block, tempObj, isPlayer, isEntering) => {
+      if (isEntering && block.rightWall) tempObj.friction = false;
+    },
+    (obj, block, tempObj, isPlayer, isEntering) => {
+      if (isEntering && block.leftWall) tempObj.friction = false;
+    },
+    (obj, block, tempObj, isPlayer, isEntering) => {
+      if (isEntering && block.bottomWall) tempObj.friction = false;
+    },
+    (obj, block, tempObj, isPlayer, isEntering) => {
+      if (isEntering && block.topWall) tempObj.friction = false;
+    },
+    () => {}
+  ],
+  (block, sprite = block.sprite, app) => {
+    if (sprite.texture !== blockData[block.type].defaultTexture)
+      sprite.texture.destroy(true);
+    sprite.texture = blockData[block.type].getTexture(block, app);
+  },
+  {
+    leftWall: [],
+    rightWall: [],
+    topWall: [],
+    bottomWall: []
+  },
+  ["leftWall", "rightWall", "topWall", "bottomWall"]
+);
+new BlockType(
+  "Conveyor Panel",
+  {
+    ...new Block(21, 0, 0, 50, true, true, 4),
+    leftWall: false,
+    rightWall: false,
+    topWall: true,
+    bottomWall: false,
+    leftSpeed: -100,
+    rightSpeed: 100,
+    topSpeed: 100,
+    bottomSpeed: -100
+  },
+  (block, app = display) => {
+    let g = new PIXI.Graphics();
+    g.beginFill(0x000000);
+    if (block.leftWall) g.drawRect(0, 0, 5, 50);
+    if (block.rightWall) g.drawRect(45, 0, 5, 50);
+    if (block.topWall) g.drawRect(0, 0, 50, 5);
+    if (block.bottomWall) g.drawRect(0, 45, 50, 5);
+    g.endFill();
+    g.lineStyle({
+      width: 4,
+      color: 0xff0000
+    });
+    //left
+    if (block.leftWall && block.leftSpeed !== 0) {
+      for (
+        let i = (((((lastFrame / 1000) * block.leftSpeed) % 10) + 10) % 10) - 2;
+        i < 52;
+        i += 10
+      ) {
+        g.moveTo(0, i);
+        g.lineTo(5, i);
+      }
+    }
+    //right
+    if (block.rightWall && block.rightSpeed !== 0) {
+      for (
+        let i =
+          (((((lastFrame / 1000) * block.rightSpeed) % 10) + 10) % 10) - 2;
+        i < 52;
+        i += 10
+      ) {
+        g.moveTo(45, i);
+        g.lineTo(50, i);
+      }
+    }
+    //top
+    if (block.topWall && block.topSpeed !== 0) {
+      for (
+        let i = (((((lastFrame / 1000) * block.topSpeed) % 10) + 10) % 10) - 2;
+        i < 52;
+        i += 10
+      ) {
+        g.moveTo(i, 0);
+        g.lineTo(i, 5);
+      }
+    }
+    //bottom
+    if (block.bottomWall && block.bottomSpeed !== 0) {
+      for (
+        let i =
+          (((((lastFrame / 1000) * block.bottomSpeed) % 10) + 10) % 10) - 2;
+        i < 50;
+        i += 10
+      ) {
+        g.moveTo(i, 45);
+        g.lineTo(i, 50);
+      }
+    }
+    g.lineStyle({
+      width: 0
+    });
+    g.beginFill(0x888888);
+    if (block.leftWall) g.drawPolygon(0, 25, 5, 30, 5, 20);
+    if (block.rightWall) g.drawPolygon(50, 25, 45, 20, 45, 30);
+    if (block.topWall) g.drawPolygon(25, 0, 30, 5, 20, 5);
+    if (block.bottomWall) g.drawPolygon(25, 50, 20, 45, 30, 45);
+    g.endFill();
+    return app.renderer.generateTexture(
+      g,
+      undefined,
+      undefined,
+      new PIXI.Rectangle(0, 0, 50, 50)
+    );
+  },
+  [() => {}, () => {}, () => {}, () => {}, () => {}],
+  (block, sprite = block.sprite, app) => {
+    if (sprite.texture !== blockData[block.type].defaultTexture)
+      sprite.texture.destroy(true);
+    sprite.texture = blockData[block.type].getTexture(block, app);
+  },
+  {
+    leftWall: [],
+    rightWall: [],
+    topWall: [],
+    bottomWall: [],
+    leftSpeed: [() => -2000, () => 2000],
+    rightSpeed: [() => -2000, () => 2000],
+    topSpeed: [() => -2000, () => 2000],
+    bottomSpeed: [() => -2000, () => 2000]
+  }
 );

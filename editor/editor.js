@@ -61,8 +61,8 @@ const propData = {
   friction: ["bool", "fr"],
   dynamic: ["bool", "dy"],
   interactive: ["bool", "i"],
-  lastEventList: ["hidden", ""],
-  sprite: ["hidden",""],
+  lastCollided: ["hidden", ""],
+  sprite: ["hidden", ""],
   // solid only
   floorLeniency: ["num", "fl", () => 0, () => 50],
   // dynamic props
@@ -101,14 +101,18 @@ const propData = {
   addedJump: ["int", "aJ"],
   fullRestore: ["bool", "fR"],
   cooldown: ["num", "cd"],
-  timer: ["hidden", "tm"]
+  timer: ["hidden", "tm"],
+  leftWall: ["bool", "lW"],
+  rightWall: ["bool", "rW"],
+  topWall: ["bool", "tW"],
+  bottomWall: ["bool", "bW"]
 };
 const propAliasReverse = {};
 const blockList = {
   Special: [2, 11],
-  Basic: [0, 1],
+  Basic: [0, 16, 1, 17],
   Dynamic: [4, 5],
-  Movement: [3, 6, 7, 8, 12, 15],
+  Movement: [3, 18, 15, 19, 6, 20, 8, 21, 7, 12],
   Status: [9, 10, 13, 14]
 };
 var level =
@@ -1180,7 +1184,8 @@ function str2lvl(str) {
 function pState2str(pState) {
   pState = deepCopy(pState);
   for (let prop in pState) {
-    if (pState[prop] === defaultPlayer[prop] || propData[prop][0] === "hidden") delete pState[prop];
+    if (pState[prop] === defaultPlayer[prop] || propData[prop][0] === "hidden")
+      delete pState[prop];
   }
   let str = JSON.stringify(pState);
   return LZString.compressToEncodedURIComponent(str);

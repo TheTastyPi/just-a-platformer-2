@@ -149,3 +149,7 @@
 #### 24 Dec. 2021 #2
 
 - Fixed a bug where Force Block with addVel true doesn't work
+
+## 25 Dec. 2021
+
+- Added several Panels (Solid, Death, Bounce, Wall-Jump, Ice, Conveyor)
