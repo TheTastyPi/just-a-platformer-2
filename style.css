@@ -13,6 +13,7 @@ body::after {
   position: absolute;
   display: none;
   background: #ffffff88;
+  user-select: none;
 }
 .blockSelect {
   position: absolute;

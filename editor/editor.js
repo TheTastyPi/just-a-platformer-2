@@ -397,7 +397,7 @@ document.addEventListener("mousemove", function (event) {
   }
   if (!editor.editMode) updateBuildLocation(xPos, yPos);
 });
-id("display").addEventListener("mouseup", function (event) {
+document.addEventListener("mouseup", function (event) {
   let button = event.button;
   mouseDown[button] = false;
   if (editor.playMode) return;
