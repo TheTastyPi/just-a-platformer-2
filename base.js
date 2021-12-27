@@ -197,9 +197,7 @@ function doPhysics(obj, t, isPlayer) {
           let isBottom = by1 < py2 && by2 > py2 && by1 > py1;
           // block inside
           if (bx1 >= px1 && bx2 <= px2 && by1 >= py1 && by2 <= py2) {
-            if (isPlayer) {
-              obj.isDead = true;
-            } else isDead = true;
+            obj.isDead = true;
             break;
           }
           if (obj.xg && obj.g < 0 && block.floorLeniency >= bx2 - px1) {
@@ -380,7 +378,7 @@ function doPhysics(obj, t, isPlayer) {
       }
     }
   }
-  // inside block
+  // crushed
   if (
     isPlayer &&
     (((leftBlock?.xv > 0 || rightBlock?.xv < 0) &&
@@ -413,6 +411,15 @@ function doPhysics(obj, t, isPlayer) {
       obj.y += topPush + bottomPush;
     } else {
       moveBlock(obj, leftPush + rightPush, topPush + bottomPush);
+    }
+    // OoB
+    if (
+      px2 < 0 ||
+      px1 > level.length * 50 ||
+      py2 < 0 ||
+      py1 > level[0].length * 50
+    ) {
+      obj.isDead = true;
     }
     // touch events
     let tempObj = deepCopy(obj);
