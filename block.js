@@ -109,8 +109,8 @@ new BlockType(
     g.drawRect(0, 0, 50, 50);
     g.endFill();
     if (
-      isColliding(player, block) &&
-      !isColliding(saveState, block) &&
+      isColliding(player, block, true) &&
+      !isColliding(saveState, block, true) &&
       app === display
     ) {
       drawStr(g, "shft", 0x008888);
@@ -140,7 +140,7 @@ new BlockType(
     }
   ],
   (block, sprite = block.sprite, app) => {
-    sprite.tint = isColliding(saveState, block) ? 0xffffff : 0x888888;
+    sprite.tint = isColliding(saveState, block, true) ? 0xffffff : 0x888888;
     if (canSave) {
       if (sprite.texture !== blockData[block.type].defaultTexture)
         sprite.texture.destroy(true);
@@ -149,7 +149,9 @@ new BlockType(
       sprite.texture.destroy(true);
       sprite.texture = blockData[block.type].defaultTexture;
     }
-  }
+  },
+  {},
+  ["idkman"]
 );
 new BlockType(
   "Bounce Block",
@@ -357,7 +359,8 @@ new BlockType(
     rightSpeed: [() => -2000, () => 2000],
     topSpeed: [() => -2000, () => 2000],
     bottomSpeed: [() => -2000, () => 2000]
-  }
+  },
+  ["leftSpeed", "rightSpeed", "topSpeed", "bottomSpeed"]
 );
 new BlockType(
   "Gravity Field",
@@ -1327,5 +1330,15 @@ new BlockType(
     rightSpeed: [() => -2000, () => 2000],
     topSpeed: [() => -2000, () => 2000],
     bottomSpeed: [() => -2000, () => 2000]
-  }
+  },
+  [
+    "leftWall",
+    "rightWall",
+    "topWall",
+    "bottomWall",
+    "leftSpeed",
+    "rightSpeed",
+    "topSpeed",
+    "bottomSpeed"
+  ]
 );

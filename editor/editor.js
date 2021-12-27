@@ -44,15 +44,9 @@ var editor = {
 const propData = {
   // general
   type: ["blockType", "t"],
-  x: ["num", "x", () => 0, (block) => level.length * maxBlockSize - block.size],
-  y: [
-    "num",
-    "y",
-    () => 0,
-    (block) => level[0].length * maxBlockSize - block.size
-  ],
-  size: ["num", "s", () => 6.25, () => 50],
-  index: ["hidden", ""],
+  x: ["num", "x", () => 0, (block) => level.length * 50 - block.size],
+  y: ["num", "y", () => 0, (block) => level[0].length * 50 - block.size],
+  size: ["num", "s", () => 6.25, () => maxBlockSize],
   isSolid: ["bool", "so"],
   giveJump: ["bool", "j"],
   eventPriority: ["int", "ep", () => 0, () => Infinity],
@@ -61,18 +55,13 @@ const propData = {
   friction: ["bool", "fr"],
   dynamic: ["bool", "dy"],
   interactive: ["bool", "i"],
-  lastCollided: ["hidden", ""],
-  sprite: ["hidden", ""],
   // solid only
   floorLeniency: ["num", "fl", () => 0, () => 50],
   // dynamic props
   xv: ["num", "xv"],
   yv: ["num", "yv"],
-  xa: ["hidden", "xa"],
-  ya: ["hidden", "ya"],
   g: ["num", "g"],
   xg: ["bool", "xg"],
-  isDead: ["hidden", "d"],
   pushable: ["bool", "u"],
   crushPlayer: ["bool", "csh"],
   invincible: ["bool", "iv"],
@@ -101,7 +90,6 @@ const propData = {
   addedJump: ["int", "aJ"],
   fullRestore: ["bool", "fR"],
   cooldown: ["num", "cd"],
-  timer: ["hidden", "tm"],
   leftWall: ["bool", "lW"],
   rightWall: ["bool", "rW"],
   topWall: ["bool", "tW"],
@@ -172,7 +160,7 @@ gridDisp.visible = false;
 selectLayer.addChild(gridDisp);
 var buildDisp = new PIXI.Graphics();
 selectLayer.addChild(buildDisp);
-var selectDisp = new PIXI.Graphics();
+var selectDisp = new PIXI.ParticleContainer(1500, {}, undefined, true);
 selectDisp.visible = false;
 selectLayer.addChild(selectDisp);
 var selectBox = new PIXI.Graphics();
@@ -508,11 +496,11 @@ function changeBuildSelect(block) {
 function updateBuildLocation(x, y) {
   editor.buildSelect.x = Math.min(
     Math.max(x - editor.buildSelect.size / 2, 0),
-    level.length * maxBlockSize - editor.buildSelect.size
+    level.length * 50 - editor.buildSelect.size
   );
   editor.buildSelect.y = Math.min(
     Math.max(y - editor.buildSelect.size / 2, 0),
-    level[0].length * maxBlockSize - editor.buildSelect.size
+    level[0].length * 50 - editor.buildSelect.size
   );
   let snapPos = getSnapPos(editor.buildSelect);
   let changed =
@@ -526,7 +514,7 @@ function updateBuildDisp() {
   let block = editor.buildSelect;
   block.size = +parseFloat(block.size).toFixed(2);
   if (isNaN(block.size)) block.size = 50;
-  block.size = Math.min(Math.max(block.size, 6.25), 50);
+  block.size = Math.min(Math.max(block.size, 6.25), maxBlockSize);
   blockSelect.selectType = block.type;
   buildDisp.clear();
   buildDisp.lineStyle(2, 0x000000, 0.5, 1);
@@ -550,10 +538,7 @@ function confirmPropEdit(block) {
       break;
     }
     if (editBlock[i] !== "MIXED") {
-      if (propData[i][0] === "hidden") {
-        newBlock[i] = blockData[newBlock.type].defaultBlock[i];
-        continue;
-      }
+      if (propData[i] === undefined) continue;
       if (parseFloat(editBlock[i]) == editBlock[i]) {
         let limIndex = 2;
         let propLimit = propData[i];
@@ -665,7 +650,7 @@ function deselect() {
   editor.selectBox.maxy = -Infinity;
   editor.selectBox.width = 0;
   editor.selectBox.height = 0;
-  selectDisp.clear();
+  selectDisp.removeChildren();
   editor.editBlock = undefined;
   editor.editBlockProp = [];
 }
@@ -691,7 +676,6 @@ function reselect() {
   updateSelectDisp();
 }
 function updateSelectDisp() {
-  selectDisp.clear();
   editor.selectBox.maxx = -Infinity;
   editor.selectBox.maxy = -Infinity;
   editor.selectBox.x = Infinity;
@@ -700,10 +684,14 @@ function updateSelectDisp() {
   editor.selectBox.mins = Infinity;
   for (let i in editor.editSelect) {
     let block = editor.editSelect[i];
-    selectDisp.lineStyle(2, 0x000000, 0.5, 1);
-    selectDisp.drawRect(block.x, block.y, block.size, block.size);
-    selectDisp.lineStyle(2, 0xffffff, 0.5, 0);
-    selectDisp.drawRect(block.x, block.y, block.size, block.size);
+    let s = selectDisp.children[i];
+    if (s === undefined) {
+      s = selectDisp.addChild(new PIXI.Sprite(selectTexture));
+    }
+    s.x = block.x - (2 * block.size) / 50;
+    s.y = block.y - (2 * block.size) / 50;
+    s.width = block.size + (4 * block.size) / 50;
+    s.height = block.size + (4 * block.size) / 50;
     editor.selectBox.x = Math.min(editor.selectBox.x, block.x);
     editor.selectBox.y = Math.min(editor.selectBox.y, block.y);
     editor.selectBox.maxx = Math.max(
@@ -717,10 +705,22 @@ function updateSelectDisp() {
     editor.selectBox.maxs = Math.max(editor.selectBox.maxs, block.size);
     editor.selectBox.mins = Math.min(editor.selectBox.mins, block.size);
   }
+  if (selectDisp.children.length > editor.editSelect.length) {
+    selectDisp.removeChildren(editor.editSelect.length);
+  }
   editor.selectBox.width = editor.selectBox.maxx - editor.selectBox.x;
   editor.selectBox.height = editor.selectBox.maxy - editor.selectBox.y;
   selectDisp.x = camx / cams;
   selectDisp.y = camy / cams;
+}
+let selectTexture = createSelectTexture();
+function createSelectTexture() {
+  let g = new PIXI.Graphics();
+  g.lineStyle(2, 0x000000, 0.5, 1);
+  g.drawRect(0, 0, 50, 50);
+  g.lineStyle(2, 0xffffff, 0.5, 0);
+  g.drawRect(0, 0, 50, 50);
+  return display.renderer.generateTexture(g);
 }
 function copy() {
   if (editor.editSelect.length < 1) return;
@@ -750,7 +750,7 @@ let prevGridSize = 50;
 function updateGrid() {
   editor.gridSize = +parseFloat(editor.gridSize).toFixed(2);
   if (isNaN(editor.gridSize)) editor.gridSize = 50;
-  editor.gridSize = Math.min(Math.max(editor.gridSize, 6.25), 50);
+  editor.gridSize = Math.min(Math.max(editor.gridSize, 6.25), maxBlockSize);
   if (prevGridSize !== editor.gridSize) gridDisp.texture = createGridTexture();
   prevGridSize = editor.gridSize;
 }
@@ -776,11 +776,8 @@ function getSnapPos(box) {
   if (width === undefined) width = box.width;
   let height = box.size;
   if (height === undefined) height = box.height;
-  let normX = Math.min(Math.max(box.x, 0), level.length * maxBlockSize - width);
-  let normY = Math.min(
-    Math.max(box.y, 0),
-    level[0].length * maxBlockSize - height
-  );
+  let normX = Math.min(Math.max(box.x, 0), level.length * 50 - width);
+  let normY = Math.min(Math.max(box.y, 0), level[0].length * 50 - height);
   let snapX = [];
   let snapY = [];
   let gx1 = normX / editor.gridSize;
@@ -822,11 +819,11 @@ function getSnapPos(box) {
   if (editor.gridSnap[2]) {
     let gx = Math.min(
       Math.max((box.x + width / 2) / editor.gridSize, 0),
-      (level.length * maxBlockSize) / editor.gridSize - 0.01
+      (level.length * 50) / editor.gridSize - 0.01
     );
     let gy = Math.min(
       Math.max((box.y + height / 2) / editor.gridSize, 0),
-      (level[0].length * maxBlockSize) / editor.gridSize - 0.01
+      (level[0].length * 50) / editor.gridSize - 0.01
     );
     snapX[2] = (Math.floor(gx) + 0.5) * editor.gridSize - width / 2;
     snapY[2] = (Math.floor(gy) + 0.5) * editor.gridSize - height / 2;
@@ -883,13 +880,13 @@ function changeLevelSize(dir, num, action = true) {
       level.map((x) =>
         x.map((y) =>
           y.map((b) => {
-            b.x += maxBlockSize * num;
+            b.x += 50 * num;
           })
         )
       );
-      startState.x += maxBlockSize * num;
-      saveState.x += maxBlockSize * num;
-      player.x += maxBlockSize * num;
+      startState.x += 50 * num;
+      saveState.x += 50 * num;
+      player.x += 50 * num;
       dynamicSave = deepCopy(dynamicObjs);
       dynamicInit = deepCopy(dynamicObjs);
       break;
@@ -949,13 +946,13 @@ function changeLevelSize(dir, num, action = true) {
       level.map((x) =>
         x.map((y) =>
           y.map((b) => {
-            b.y += maxBlockSize * num;
+            b.y += 50 * num;
           })
         )
       );
-      startState.y += maxBlockSize * num;
-      saveState.y += maxBlockSize * num;
-      player.y += maxBlockSize * num;
+      startState.y += 50 * num;
+      saveState.y += 50 * num;
+      player.y += 50 * num;
       dynamicSave = deepCopy(dynamicObjs);
       dynamicInit = deepCopy(dynamicObjs);
       break;
@@ -1120,7 +1117,7 @@ function lvl2str(lvl) {
       if (prop === "type") continue;
       if (
         block[prop] === blockData[block.type].defaultBlock[prop] ||
-        propData[prop][0] === "hidden"
+        propData[prop] === undefined
       ) {
         delete block[prop];
         continue;
@@ -1176,7 +1173,7 @@ function str2lvl(str) {
 function pState2str(pState) {
   pState = deepCopy(pState);
   for (let prop in pState) {
-    if (pState[prop] === defaultPlayer[prop] || propData[prop][0] === "hidden")
+    if (pState[prop] === defaultPlayer[prop] || propData[prop] === undefined)
       delete pState[prop];
   }
   let str = JSON.stringify(pState);

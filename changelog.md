@@ -158,3 +158,9 @@
 
 - Fixed a bug where the "invisible" property doesn't work
 - Fixed a bug where the grid display extends beyond the level
+
+### 27 Dec. 2021
+
+- Optimizations, again
+  - Now the 'world' port from jap1 runs smooth on my device
+- Raised the block size limit to 100

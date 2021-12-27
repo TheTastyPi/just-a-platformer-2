@@ -28,7 +28,7 @@ var animatedTypes = [8, 21];
 var animatedObjs = [];
 var timerList = [];
 var oneWayBlocks = [16, 17, 18, 19, 20, 21];
-const maxBlockSize = 50;
+const maxBlockSize = 100;
 var display = new PIXI.Application({
   width: window.innerWidth,
   height: window.innerHeight,
@@ -40,7 +40,7 @@ var levelLayer = new PIXI.Container();
 display.stage.addChild(levelLayer);
 var canJump = true;
 var lastFrame = 0;
-var simReruns = 20;
+var simReruns = 10;
 var timeLimit = 100;
 var CThreshold = 1;
 var VCThreshold = 1;
@@ -54,6 +54,8 @@ var interval = 1000 / 60;
 var coyoteTime = 1000 / 20;
 var coyoteTimer = 1000 / 20;
 var logfps = false;
+var prevDynObjs = [];
+var justDied = false;
 function nextFrame(timeStamp) {
   dt += (timeStamp - lastFrame) * player.gameSpeed;
   if (logfps && timeStamp % 1000 > 900)
@@ -75,31 +77,13 @@ function nextFrame(timeStamp) {
         func(block);
       }
       for (let i = 0; i < simReruns; i++) {
-        let newPlayer = deepCopy(player);
-        doPhysics(newPlayer, interval / 1000 / simReruns, true);
-        if (editor?.playMode ?? true) {
-          let newDynObjs = deepCopy(dynamicObjs);
-          for (let j in newDynObjs)
-            doPhysics(newDynObjs[j], interval / 1000 / simReruns, false);
-          for (let j = 0; j < dynamicObjs.length; j++) {
-            if (newDynObjs[j].isDead) {
-              removeBlock(dynamicObjs[j]);
-              newDynObjs.splice(j, 1);
-              if (j > dynamicObjs.length - 1) break;
-            }
-            moveBlock(
-              dynamicObjs[j],
-              newDynObjs[j].x - dynamicObjs[j].x,
-              newDynObjs[j].y - dynamicObjs[j].y
-            );
-            let newIndex = dynamicObjs[j].index;
-            Object.assign(dynamicObjs[j], newDynObjs[j]);
-            dynamicObjs[j].index = newIndex;
-          }
+        prevDynObjs = deepCopy(dynamicObjs);
+        doPhysics(player, interval / 1000 / simReruns, true);
+        if ((editor?.playMode ?? true) && !justDied) {
+          for (let j in dynamicObjs)
+            doPhysics(dynamicObjs[j], interval / 1000 / simReruns, false);
         }
-        if (player.isDead) {
-          if (deathTimer < 0) respawn();
-        } else Object.assign(player, newPlayer);
+        justDied = false;
       }
     }
     if (editor?.doAnimation ?? true) {
@@ -135,54 +119,49 @@ function doPhysics(obj, t, isPlayer) {
   let topPriority = [0, 0, 0, 0, 0];
   let gdxv = 0;
   let gdyv = 0;
-  for (let x = gridUnit(px1) - 1; x <= gridUnit(px2); x++) {
+  for (let x = gridUnit(px1) - maxBlockSize / 50; x <= gridUnit(px2); x++) {
     if (isDead || obj.isDead) break;
-    for (let y = gridUnit(py1) - 1; y <= gridUnit(py2); y++) {
+    for (let y = gridUnit(py1) - maxBlockSize / 50; y <= gridUnit(py2); y++) {
       if (isDead || obj.isDead) break;
       let gridSpace = level[x]?.[y];
       if (gridSpace === undefined) {
         gridSpace = [
           {
             ...blockData[0].defaultBlock,
-            x: x * maxBlockSize,
-            y: y * maxBlockSize
+            x: x * 50,
+            y: y * 50
           }
         ];
       } else {
-        gridSpace = [...gridSpace];
+        gridSpace = Object.assign([], gridSpace);
       }
       if (
         x === gridUnit(px1) - 1 &&
         y === gridUnit(py1) - 1 &&
         obj.dynamic &&
         obj.pushable
-      )
+      ) {
         gridSpace.push(player);
+      }
+      gridSpace.push(...prevDynObjs);
       for (let i in gridSpace) {
-        let realBlock = gridSpace[i];
-        let block;
-        if ([15, 19].includes(realBlock.type)) {
-          block = {
-            ...realBlock,
-            x: realBlock.x - 1,
-            y: realBlock.y - 1,
-            size: realBlock.size + 2
-          };
-        } else block = realBlock;
-        let bx1 = block.x;
-        let bx2 = block.x + block.size;
-        let by1 = block.y;
-        let by2 = block.y + block.size;
+        let block = gridSpace[i];
+        let colliding = isColliding(obj, block, true);
         if (
           (block.x === obj.x &&
             block.y === obj.y &&
             block.index === obj.index) ||
-          !isColliding(obj, block)
+          !colliding ||
+          (block.dynamic && !prevDynObjs.includes(block))
         )
           continue;
+        let bx1 = block.x;
+        let bx2 = block.x + block.size;
+        let by1 = block.y;
+        let by2 = block.y + block.size;
         let data = blockData[block.type];
         if (!block.friction) friction = false;
-        if (isColliding(obj, realBlock)) collided.push(realBlock);
+        if (colliding) collided.push(block);
         // solid block
         if (block === player || block.isSolid) {
           let dxv = (obj.xv - block.xv) * t + ((obj.xa - block.xa) * t * t) / 2;
@@ -284,20 +263,19 @@ function doPhysics(obj, t, isPlayer) {
           // left
           if (isLeft) {
             if (
-              oneWayBlocks.includes(realBlock.type) &&
-              (!realBlock.rightWall ||
-                obj.lastCollided.find((x) => x === realBlock))
+              oneWayBlocks.includes(block.type) &&
+              (!block.rightWall || obj.lastCollided.find((x) => x === block))
             ) {
               continue;
             }
-            if (isColliding(obj, realBlock)) {
+            if (colliding) {
               if (
                 leftBlock === undefined ||
                 leftBlock.x + leftBlock.size < bx2 ||
                 (leftBlock.x + leftBlock.size === bx2 &&
                   block.eventPriority > leftBlock.eventPriority)
               )
-                leftBlock = realBlock;
+                leftBlock = block;
             }
             if (block === player) continue;
             if (block.eventPriority > topPriority[0]) {
@@ -305,26 +283,25 @@ function doPhysics(obj, t, isPlayer) {
               topPriority[0] = block.eventPriority;
             }
             if (block.eventPriority === topPriority[0])
-              eventList[0].push([realBlock, data.touchEvent[0]]);
+              eventList[0].push([block, data.touchEvent[0]]);
             continue;
           }
           // right
           if (isRight) {
             if (
-              oneWayBlocks.includes(realBlock.type) &&
-              (!realBlock.leftWall ||
-                obj.lastCollided.find((x) => x === realBlock))
+              oneWayBlocks.includes(block.type) &&
+              (!block.leftWall || obj.lastCollided.find((x) => x === block))
             ) {
               continue;
             }
-            if (isColliding(obj, realBlock)) {
+            if (colliding) {
               if (
                 rightBlock === undefined ||
                 rightBlock.x > bx1 ||
                 (rightBlock.x === bx1 &&
                   block.eventPriority > rightBlock.eventPriority)
               )
-                rightBlock = realBlock;
+                rightBlock = block;
             }
             if (block === player) continue;
             if (block.eventPriority > topPriority[1]) {
@@ -332,26 +309,25 @@ function doPhysics(obj, t, isPlayer) {
               topPriority[1] = block.eventPriority;
             }
             if (block.eventPriority === topPriority[1])
-              eventList[1].push([realBlock, data.touchEvent[1]]);
+              eventList[1].push([block, data.touchEvent[1]]);
             continue;
           }
           // top
           if (isTop) {
             if (
-              oneWayBlocks.includes(realBlock.type) &&
-              (!realBlock.bottomWall ||
-                obj.lastCollided.find((x) => x === realBlock))
+              oneWayBlocks.includes(block.type) &&
+              (!block.bottomWall || obj.lastCollided.find((x) => x === block))
             ) {
               continue;
             }
-            if (isColliding(obj, realBlock)) {
+            if (colliding) {
               if (
                 topBlock === undefined ||
                 topBlock.y + topBlock.size < by2 ||
                 (topBlock.y + topBlock.size === by2 &&
                   block.eventPriority > topBlock.eventPriority)
               )
-                topBlock = realBlock;
+                topBlock = block;
             }
             if (block === player) continue;
             if (block.eventPriority > topPriority[2]) {
@@ -359,26 +335,25 @@ function doPhysics(obj, t, isPlayer) {
               topPriority[2] = block.eventPriority;
             }
             if (block.eventPriority === topPriority[2])
-              eventList[2].push([realBlock, data.touchEvent[2]]);
+              eventList[2].push([block, data.touchEvent[2]]);
             continue;
           }
           // bottom
           if (isBottom) {
             if (
-              oneWayBlocks.includes(realBlock.type) &&
-              (!realBlock.topWall ||
-                obj.lastCollided.find((x) => x === realBlock))
+              oneWayBlocks.includes(block.type) &&
+              (!block.topWall || obj.lastCollided.find((x) => x === block))
             ) {
               continue;
             }
-            if (isColliding(obj, realBlock)) {
+            if (colliding) {
               if (
                 bottomBlock === undefined ||
                 bottomBlock.y > by1 ||
                 (bottomBlock.y === by1 &&
                   block.eventPriority > bottomBlock.eventPriority)
               )
-                bottomBlock = realBlock;
+                bottomBlock = block;
             }
             if (block === player) continue;
             if (block.eventPriority > topPriority[3]) {
@@ -386,7 +361,7 @@ function doPhysics(obj, t, isPlayer) {
               topPriority[3] = block.eventPriority;
             }
             if (block.eventPriority === topPriority[3])
-              eventList[3].push([realBlock, data.touchEvent[3]]);
+              eventList[3].push([block, data.touchEvent[3]]);
             continue;
           }
         } else {
@@ -399,7 +374,7 @@ function doPhysics(obj, t, isPlayer) {
             topPriority[4] = block.eventPriority;
           }
           if (block.eventPriority === topPriority[4])
-            eventList[4].push([realBlock, data.touchEvent[4]]);
+            eventList[4].push([block, data.touchEvent[4]]);
           if (isPlayer && block.giveJump) giveJump = true;
         }
       }
@@ -433,14 +408,18 @@ function doPhysics(obj, t, isPlayer) {
     if (rightBlock?.dynamic || rightBlock === player) rightPush /= 2;
     if (topBlock?.dynamic || topBlock === player) topPush /= 2;
     if (bottomBlock?.dynamic || bottomBlock === player) bottomPush /= 2;
-    obj.x += leftPush + rightPush;
-    obj.y += topPush + bottomPush;
+    if (isPlayer) {
+      obj.x += leftPush + rightPush;
+      obj.y += topPush + bottomPush;
+    } else {
+      moveBlock(obj, leftPush + rightPush, topPush + bottomPush);
+    }
     // touch events
     let tempObj = deepCopy(obj);
     for (let i in eventList) {
       for (let j in eventList[i]) {
         let block = eventList[i][j][0];
-        if (!isColliding(obj, block) && !block.isSolid) continue;
+        if (!isColliding(obj, block, true) && !block.isSolid) continue;
         eventList[i][j][1](
           obj,
           block,
@@ -465,11 +444,18 @@ function doPhysics(obj, t, isPlayer) {
       );
     }
     for (let i in collided) {
-      while (collided[i] !== undefined && !isColliding(obj, collided[i])) {
+      while (
+        collided[i] !== undefined &&
+        !isColliding(obj, collided[i], true)
+      ) {
         collided.splice(i, 1);
       }
     }
     obj.lastCollided = collided;
+    if ([15, 19].includes(leftBlock?.type) && obj.xv === 0) obj.x--;
+    if ([15, 19].includes(rightBlock?.type) && obj.xv === 0) obj.x++;
+    if ([15, 19].includes(topBlock?.type) && obj.yv === 0) obj.y--;
+    if ([15, 19].includes(bottomBlock?.type) && obj.yv === 0) obj.y++;
     friction = tempObj.friction && friction;
     if (isPlayer) {
       if (
@@ -650,9 +636,23 @@ function doPhysics(obj, t, isPlayer) {
       } else obj.yv = Math.min(obj.yv, bottomBlock.yv);
     }
     // change position
-    obj.x += obj.xv * t + (obj.xa * t * t) / 2;
-    obj.y += obj.yv * t + (obj.ya * t * t) / 2;
-  } else if (isPlayer) deathTimer -= t * 1000;
+    if (isPlayer) {
+      obj.x += obj.xv * t + (obj.xa * t * t) / 2;
+      obj.y += obj.yv * t + (obj.ya * t * t) / 2;
+    } else {
+      moveBlock(
+        obj,
+        obj.xv * t + (obj.xa * t * t) / 2,
+        obj.yv * t + (obj.ya * t * t) / 2
+      );
+    }
+  } else {
+    if (isPlayer) {
+      deathTimer -= t * 1000;
+      justDied = true;
+      if (deathTimer < 0) respawn();
+    } else removeBlock(obj);
+  }
 }
 function setLevel(lvlData) {
   level = lvlData;
@@ -683,7 +683,7 @@ function respawn(start = false) {
   drawLevel();
 }
 function gridUnit(n) {
-  return Math.max(0, Math.floor(n / maxBlockSize));
+  return Math.max(0, Math.floor(n / 50));
 }
 function createSprite(block) {
   let t;
@@ -705,19 +705,27 @@ function createSprite(block) {
   s.height = block.size;
   return s;
 }
-function isColliding(blockA, blockB) {
-  let aw = blockA.width ?? blockA.size;
-  let ah = blockA.height ?? blockA.size;
-  let bw = blockB.width ?? blockB.size;
-  let bh = blockB.height ?? blockB.size;
-  let ax1 = blockA.x;
-  let ax2 = ax1 + aw;
-  let ay1 = blockA.y;
-  let ay2 = ay1 + ah;
-  let bx1 = blockB.x;
-  let bx2 = bx1 + bw;
-  let by1 = blockB.y;
-  let by2 = by1 + bh;
+function isColliding(blockA, blockB, areSquares = false) {
+  let ax1, ax2, ay1, ay2, bx1, bx2, by1, by2;
+  if (!areSquares) {
+    ax1 = blockA.x;
+    ax2 = ax1 + (blockA.width ?? blockA.size);
+    ay1 = blockA.y;
+    ay2 = ay1 + (blockA.height ?? blockA.size);
+    bx1 = blockB.x;
+    bx2 = bx1 + (blockB.width ?? blockB.size);
+    by1 = blockB.y;
+    by2 = by1 + (blockB.height ?? blockB.size);
+  } else {
+    ax1 = blockA.x;
+    ax2 = ax1 + blockA.size;
+    ay1 = blockA.y;
+    ay2 = ay1 + blockA.size;
+    bx1 = blockB.x;
+    bx2 = bx1 + blockB.size;
+    by1 = blockB.y;
+    by2 = by1 + blockB.size;
+  }
   return ax1 < bx2 && ax2 > bx1 && ay1 < by2 && ay2 > by1;
 }
 function addBlock(block) {
@@ -726,7 +734,7 @@ function addBlock(block) {
   levelLayer.addChild(s);
   block.sprite = s;
   blockData[block.type].update(block);
-  s.visible = !block.invisible;
+  s.renderable = !block.invisible;
   s.alpha = block.opacity;
   if (block.dynamic) dynamicObjs.push(block);
   if (animatedTypes.includes(block.type)) animatedObjs.push(block);
@@ -745,7 +753,7 @@ function removeBlock(block) {
   gridSpace.splice(block.index, 1);
 }
 function scaleBlock(block, factor, focusX, focusY, draw = true) {
-  block.size = Math.max(Math.min(block.size * factor, 50), 6.25);
+  block.size = Math.max(Math.min(block.size * factor, maxBlockSize), 6.25);
   if (focusX !== undefined) {
     let dx = focusX - block.x;
     let dy = focusY - block.y;
@@ -763,18 +771,12 @@ function moveBlock(block, dx, dy) {
   let sprite = block.sprite;
   block.x += dx;
   block.y += dy;
-  if (block.x < 0 || block.x > level.length * maxBlockSize - block.size) {
-    block.x = Math.min(
-      Math.max(block.x, 0),
-      level.length * maxBlockSize - block.size
-    );
+  if (block.x < 0 || block.x > level.length * 50 - block.size) {
+    block.x = Math.min(Math.max(block.x, 0), level.length * 50 - block.size);
     block.xv = 0;
   }
-  if (block.y < 0 || block.y > level[0].length * maxBlockSize - block.size) {
-    block.y = Math.min(
-      Math.max(block.y, 0),
-      level[0].length * maxBlockSize - block.size
-    );
+  if (block.y < 0 || block.y > level[0].length * 50 - block.size) {
+    block.y = Math.min(Math.max(block.y, 0), level[0].length * 50 - block.size);
     block.yv = 0;
   }
   sprite.x = block.x;

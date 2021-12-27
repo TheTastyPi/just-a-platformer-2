@@ -29,8 +29,7 @@ function drawLevel(clear = false) {
           let s = createSprite(block);
           levelLayer.addChild(s);
           block.sprite = s;
-          s.visible = !block.invisible;
-          s.alpha = block.opacity;
+          cullBlock(block);
         }
         if (
           prevBlock === undefined ||
@@ -48,7 +47,7 @@ function drawLevel(clear = false) {
 }
 function updateBlock(block) {
   blockData[block.type].update(block);
-  block.sprite.visible = !block.invisible;
+  block.sprite.renderable = !block.invisible;
   block.sprite.alpha = block.opacity;
 }
 var lvlxOffset = 0;
@@ -60,9 +59,10 @@ var camy = 0;
 var cams = 1;
 var camDelay = 10;
 var camFocused = true;
+var gridVisPrev;
 function adjustScreen(instant = false) {
-  let lvlx = level.length * maxBlockSize * cams;
-  let lvly = level[0].length * maxBlockSize * cams;
+  let lvlx = level.length * 50 * cams;
+  let lvly = level[0].length * 50 * cams;
   if (camFocused) {
     lvlxOffset = Math.floor((window.innerWidth - lvlx) / 2);
     if (lvlxOffset < 0) {
@@ -93,67 +93,86 @@ function adjustScreen(instant = false) {
   } else camy = Math.ceil(camy);
   if (Math.abs(camx - lvlxOffset) < 1 || instant) camx = lvlxOffset;
   if (Math.abs(camy - lvlyOffset) < 1 || instant) camy = lvlyOffset;
-  id("background").style.left =
-    Math.min(
-      Math.max(0, camx),
-      camx + Math.max(0, level.length * maxBlockSize * cams - window.innerWidth)
-    ) + "px";
-  id("background").style.top =
-    Math.min(
-      Math.max(0, camy),
-      camy +
-        Math.max(0, level[0].length * maxBlockSize * cams - window.innerHeight)
-    ) + "px";
-  levelLayer.x = camx;
-  levelLayer.y = camy;
-  if (editor !== undefined && gridDisp.visible) {
-    gridDisp.x =
+  if (
+    camx !== camxPrev ||
+    camy !== camyPrev ||
+    gridDisp?.visible !== gridVisPrev
+  ) {
+    id("background").style.left =
       Math.min(
         Math.max(0, camx),
-        camx +
-          Math.max(0, level.length * maxBlockSize * cams - window.innerWidth)
-      ) / cams;
-    gridDisp.y =
+        camx + Math.max(0, level.length * 50 * cams - window.innerWidth)
+      ) + "px";
+    id("background").style.top =
       Math.min(
         Math.max(0, camy),
-        camy +
-          Math.max(
-            0,
-            level[0].length * maxBlockSize * cams - window.innerHeight
-          )
-      ) / cams;
-    gridDisp.tilePosition.x = (camx / cams - gridDisp.x) % editor.gridSize;
-    gridDisp.tilePosition.y = (camy / cams - gridDisp.y) % editor.gridSize;
+        camy + Math.max(0, level[0].length * 50 * cams - window.innerHeight)
+      ) + "px";
+    levelLayer.x = camx;
+    levelLayer.y = camy;
+    if (editor !== undefined && gridDisp.visible) {
+      gridDisp.x =
+        Math.min(
+          Math.max(0, camx),
+          camx + Math.max(0, level.length * 50 * cams - window.innerWidth)
+        ) / cams;
+      gridDisp.y =
+        Math.min(
+          Math.max(0, camy),
+          camy + Math.max(0, level[0].length * 50 * cams - window.innerHeight)
+        ) / cams;
+      gridDisp.tilePosition.x = (camx / cams - gridDisp.x) % editor.gridSize;
+      gridDisp.tilePosition.y = (camy / cams - gridDisp.y) % editor.gridSize;
+    }
     updateSelectDisp();
-  }
-  for (let i in levelLayer.children) {
-    let s = levelLayer.children[i];
-    let pos = s.getGlobalPosition();
-    s.renderable = !(
-      pos.x + s.width * cams < 0 ||
-      pos.x > window.innerWidth ||
-      pos.y + s.height * cams < 0 ||
-      pos.y > window.innerHeight
-    );
+    for (
+      let x = Math.max(Math.min(gridUnit(-camx) - 1, gridUnit(-camxPrev)), 0);
+      x <=
+      Math.min(
+        Math.max(
+          gridUnit(-camx + window.innerWidth),
+          gridUnit(-camxPrev + window.innerWidth)
+        ),
+        level.length - 1
+      );
+      x++
+    ) {
+      for (
+        let y = Math.max(Math.min(gridUnit(-camy), gridUnit(-camxPrev)), 0);
+        y <=
+        Math.min(
+          Math.max(
+            gridUnit(-camy + window.innerHeight),
+            gridUnit(-camyPrev + window.innerHeight)
+          ),
+          level[0].length - 1
+        );
+        y++
+      ) {
+        for (let i in level[x][y]) cullBlock(level[x][y][i]);
+      }
+    }
   }
   camxPrev = camx;
   camyPrev = camy;
+  gridVisPrev = gridDisp?.visible;
   drawPlayer();
 }
 function adjustLevelSize() {
-  let w = Math.min(level.length * maxBlockSize * cams, window.innerWidth);
-  let h = Math.min(level[0].length * maxBlockSize * cams, window.innerHeight);
-  gridDisp.width = Math.min(
-    level.length * maxBlockSize,
-    window.innerWidth / cams
-  );
-  gridDisp.height = Math.min(
-    level[0].length * maxBlockSize,
-    window.innerHeight / cams
-  );
+  let w = Math.min(level.length * 50 * cams, window.innerWidth);
+  let h = Math.min(level[0].length * 50 * cams, window.innerHeight);
+  gridDisp.width = Math.min(level.length * 50, window.innerWidth / cams);
+  gridDisp.height = Math.min(level[0].length * 50, window.innerHeight / cams);
   id("background").style.width = w + "px";
   id("background").style.height = h + "px";
   levelLayer.scale.set(cams, cams);
   selectLayer?.scale?.set(cams, cams);
   adjustScreen(true);
+}
+function cullBlock(block) {
+  block.sprite.visible =
+    block.x + block.size > -camx / cams &&
+    block.y + block.size > -camy / cams &&
+    block.x < (window.innerWidth - camx) / cams &&
+    block.y < (window.innerHeight - camy) / cams;
 }
