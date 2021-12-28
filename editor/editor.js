@@ -262,16 +262,17 @@ document.addEventListener("keydown", function (event) {
 });
 var mouseDown = [false, false, false];
 id("display").addEventListener("mousedown", function (event) {
-  if (editor.playMode) return;
   let button = event.button;
   mouseDown[button] = true;
   let xPos = (event.clientX - camx) / cams;
   let yPos = (event.clientY - camy) / cams;
   switch (button) {
     case 0: // left
+      if (editor.playMode) return;
       if ((event.ctrlKey || event.metaKey) && !event.shiftKey) {
         player.x = xPos - player.size / 2;
         player.y = yPos - player.size / 2;
+        player.isDead = false;
       } else if (!(event.ctrlKey || event.metaKey)) {
         if (editor.editMode) {
           editor.selectStart = [event.clientX, event.clientY];
@@ -294,6 +295,7 @@ id("display").addEventListener("mousedown", function (event) {
         camFocused = true;
         adjustScreen();
       } else {
+        if (editor.playMode) return;
         editor.moveSelect = [0, 0];
         if (editor.editSelect.length === 0) {
           select(
@@ -318,6 +320,7 @@ id("display").addEventListener("mousedown", function (event) {
         return;
       }
       if (!editor.editMode) {
+        if (editor.playMode) return;
         select(
           {
             x: xPos,
@@ -336,7 +339,6 @@ id("display").addEventListener("mousedown", function (event) {
   }
 });
 document.addEventListener("mousemove", function (event) {
-  if (editor.playMode) return;
   let xPos = (event.clientX - camx) / cams;
   let yPos = (event.clientY - camy) / cams;
   editor.mousePos = [event.clientX, event.clientY];
@@ -349,6 +351,7 @@ document.addEventListener("mousemove", function (event) {
         camy += event.movementY;
         adjustScreen();
       } else if (editor.editMode) {
+        if (editor.playMode) return;
         if (editor.selectStart !== undefined) {
           let x = Math.min(editor.selectStart[0], event.clientX) / cams;
           let y = Math.min(editor.selectStart[1], event.clientY) / cams;
@@ -361,6 +364,7 @@ document.addEventListener("mousemove", function (event) {
           selectBox.drawRect(x, y, w, h);
         }
       } else if (event.shiftKey) {
+        if (editor.playMode) return;
         let xInit = editor.buildSelect.x;
         let yInit = editor.buildSelect.y;
         if (
@@ -375,6 +379,7 @@ document.addEventListener("mousemove", function (event) {
       break;
     }
     case 2:
+      if (editor.playMode) return;
       if (editor.editMode) {
         editor.moveSelect[0] += event.movementX / cams;
         editor.moveSelect[1] += event.movementY / cams;

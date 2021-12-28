@@ -171,7 +171,14 @@
   - Specifically for dynamic block
 - Fixed a bug where you can select block by interacting with the side menus
 
-#### 28 Dec. 2021
+#### 28 Dec. 2021 #2
 
 - Fixed a bug where the removal of animated blocks weren't handled properly
 - Fixed a bug where saving while interacting with a dynamic block and respawning causes the game to crash
+
+#### 28 Dec. 2021 #3
+
+- You can now control the camera while in play mode
+- You can no longer save the "dead" state
+- You now undie when you teleport the player using \[ctrl] LMB
+- Objects can no longer die when a panel is inside of it

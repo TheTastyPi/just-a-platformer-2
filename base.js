@@ -175,7 +175,7 @@ function doPhysics(obj, t, isPlayer) {
       let isTop = by1 < py1 && by2 > py1 && by2 < py2;
       let isBottom = by1 < py2 && by2 > py2 && by1 > py1;
       // block inside
-      if (bx1 >= px1 && bx2 <= px2 && by1 >= py1 && by2 <= py2) {
+      if (!oneWayBlocks.includes(block.type) && bx1 >= px1 && bx2 <= px2 && by1 >= py1 && by2 <= py2) {
         obj.isDead = true;
         return;
       }
@@ -661,10 +661,12 @@ function setLevel(lvlData) {
 function setSpawn(start = false) {
   if (start) {
     startState = deepCopy(player);
+    startState.isDead = false;
     dynamicInit = deepCopy(dynamicObjs);
     if (editor) save();
   }
   saveState = deepCopy(player);
+  saveState.isDead = false;
   dynamicSave = deepCopy(dynamicObjs);
 }
 function respawn(start = false) {
