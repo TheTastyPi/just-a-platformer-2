@@ -83,15 +83,15 @@ function adjustScreen(instant = false) {
     }
     camx = (camx * (camDelay - 1) + lvlxOffset) / camDelay;
     camy = (camy * (camDelay - 1) + lvlyOffset) / camDelay;
+    if (camx > lvlxOffset) {
+      camx = Math.floor(camx);
+    } else camx = Math.ceil(camx);
+    if (camy > lvlyOffset) {
+      camy = Math.floor(camy);
+    } else camy = Math.ceil(camy);
+    if (Math.abs(camx - lvlxOffset) < 1 || instant) camx = lvlxOffset;
+    if (Math.abs(camy - lvlyOffset) < 1 || instant) camy = lvlyOffset;
   }
-  if (camx > lvlxOffset) {
-    camx = Math.floor(camx);
-  } else camx = Math.ceil(camx);
-  if (camy > lvlyOffset) {
-    camy = Math.floor(camy);
-  } else camy = Math.ceil(camy);
-  if (Math.abs(camx - lvlxOffset) < 1 || instant) camx = lvlxOffset;
-  if (Math.abs(camy - lvlyOffset) < 1 || instant) camy = lvlyOffset;
   if (
     camx !== camxPrev ||
     camy !== camyPrev ||

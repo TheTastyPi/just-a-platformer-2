@@ -182,3 +182,9 @@
 - You can no longer save the "dead" state
 - You now undie when you teleport the player using \[ctrl] LMB
 - Objects can no longer die when a panel is inside of it
+
+#### 28 Dec. 2021 #4
+
+- Fixed a bug where scaling selected block doesn't update the selection display
+- Fixed a bug where dynamic objects does not save post-death after being moved, scaled, or property changed without going into play mode
+- The camera no longer resets position when you change level size

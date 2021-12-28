@@ -160,7 +160,12 @@ gridDisp.visible = false;
 selectLayer.addChild(gridDisp);
 var buildDisp = new PIXI.Graphics();
 selectLayer.addChild(buildDisp);
-var selectDisp = new PIXI.ParticleContainer(1500, {}, undefined, true);
+var selectDisp = new PIXI.ParticleContainer(
+  1500,
+  { vertices: true },
+  undefined,
+  true
+);
 selectDisp.visible = false;
 selectLayer.addChild(selectDisp);
 var selectBox = new PIXI.Graphics();
@@ -203,8 +208,6 @@ document.addEventListener("keydown", function (event) {
           removeBlock(editor.editSelect[i]);
         }
         deselect();
-        dynamicSave = deepCopy(dynamicObjs);
-        dynamicInit = deepCopy(dynamicObjs);
       }
       break;
     case "KeyZ":
@@ -283,10 +286,6 @@ id("display").addEventListener("mousedown", function (event) {
           addAction("addBlock", [
             deepCopy(addBlock(deepCopy(editor.buildSelect)))
           ]);
-          if (editor.buildSelect.dynamic) {
-            dynamicSave = deepCopy(dynamicObjs);
-            dynamicInit = deepCopy(dynamicObjs);
-          }
         }
       }
       break;
@@ -1222,15 +1221,15 @@ function load(name) {
   if (save) {
     let saveData = str2lvl(save[0]);
     setLevel(saveData[0]);
-    dynamicInit = saveData[1];
-    dynamicObjs = [];
     animatedObjs = saveData[2];
     startState = str2pState(save[1]);
-    updateGrid();
+    togglePlayMode();
+    dynamicInit = saveData[1];
+    dynamicObjs = [];
     respawn(true);
+    updateGrid();
     deselect();
     editor.currentSave = name;
-    togglePlayMode();
   }
 }
 function exportSave(name) {

@@ -175,7 +175,13 @@ function doPhysics(obj, t, isPlayer) {
       let isTop = by1 < py1 && by2 > py1 && by2 < py2;
       let isBottom = by1 < py2 && by2 > py2 && by1 > py1;
       // block inside
-      if (!oneWayBlocks.includes(block.type) && bx1 >= px1 && bx2 <= px2 && by1 >= py1 && by2 <= py2) {
+      if (
+        !oneWayBlocks.includes(block.type) &&
+        bx1 >= px1 &&
+        bx2 <= px2 &&
+        by1 >= py1 &&
+        by2 <= py2
+      ) {
         obj.isDead = true;
         return;
       }
@@ -673,6 +679,10 @@ function respawn(start = false) {
   deathTimer = spawnDelay;
   player.isDead = false;
   player = deepCopy(start ? startState : saveState);
+  if (!editor?.playMode ?? false) {
+    dynamicInit = deepCopy(dynamicObjs);
+    dynamicSave = deepCopy(dynamicObjs);
+  }
   let amt = dynamicObjs.length;
   for (let i = 0; i < amt; i++) removeBlock(dynamicObjs[0]);
   let newDynamicObjs = deepCopy(start ? dynamicInit : dynamicSave);
