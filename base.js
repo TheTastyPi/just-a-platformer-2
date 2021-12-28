@@ -56,10 +56,16 @@ var coyoteTimer = 1000 / 20;
 var logfps = false;
 var prevDynObjs = [];
 var justDied = false;
+var fpsTimer = 10;
 function nextFrame(timeStamp) {
   dt += (timeStamp - lastFrame) * player.gameSpeed;
-  if (logfps && timeStamp % 1000 > 900)
-    console.log(1000 / (timeStamp - lastFrame));
+  if (logfps) {
+    fpsTimer--;
+    if (fpsTimer < 0) {
+      console.log(1000 / (timeStamp - lastFrame));
+      fpsTimer = 10;
+    }
+  }
   lastFrame = timeStamp;
   if (dt < timeLimit) {
     while (dt >= interval) {
@@ -119,265 +125,250 @@ function doPhysics(obj, t, isPlayer) {
   let topPriority = [0, 0, 0, 0, 0];
   let gdxv = 0;
   let gdyv = 0;
+  let doCollision = function (block) {
+    let colliding = isColliding(obj, block, true);
+    if (
+      !colliding ||
+      (block.dynamic && !prevDynObjs.includes(block)) ||
+      (block.x === obj.x && block.y === obj.y && block.index === obj.index)
+    )
+      return;
+    let bx1 = block.x;
+    let bx2 = block.x + block.size;
+    let by1 = block.y;
+    let by2 = block.y + block.size;
+    let data = blockData[block.type];
+    if (!block.friction) friction = false;
+    if (colliding) collided.push(block);
+    // solid block
+    if (block === player || block.isSolid) {
+      let dxv = (obj.xv - block.xv) * t + ((obj.xa - block.xa) * t * t) / 2;
+      let dyv = (obj.yv - block.yv) * t + ((obj.ya - block.ya) * t * t) / 2;
+      let VUncertainty =
+        obj.xv < VCThreshold ||
+        block.xv < VCThreshold ||
+        obj.yv < VCThreshold ||
+        block.yv < VCThreshold ||
+        Math.abs(obj.xv - block.xv) < VCThreshold ||
+        Math.abs(obj.yv - block.xv) < VCThreshold;
+      if (VUncertainty) {
+        dxv = 1;
+        dyv = 1;
+      }
+      let tx1 = (px1 - bx2) / dxv;
+      let tx2 = (px2 - bx1) / dxv;
+      let ty1 = (py1 - by2) / dyv;
+      let ty2 = (py2 - by1) / dyv;
+      if (VUncertainty) {
+        tx1 = Math.abs(tx1);
+        tx2 = Math.abs(tx2);
+        ty1 = Math.abs(ty1);
+        ty2 = Math.abs(ty2);
+      }
+      if (tx1 < 0) tx1 = Infinity;
+      if (tx2 < 0) tx2 = Infinity;
+      if (ty1 < 0) ty1 = Infinity;
+      if (ty2 < 0) ty2 = Infinity;
+      let isLeft = bx1 < px1 && bx2 > px1 && bx2 < px2;
+      let isRight = bx1 < px2 && bx2 > px2 && bx1 > px1;
+      let isTop = by1 < py1 && by2 > py1 && by2 < py2;
+      let isBottom = by1 < py2 && by2 > py2 && by1 > py1;
+      // block inside
+      if (bx1 >= px1 && bx2 <= px2 && by1 >= py1 && by2 <= py2) {
+        obj.isDead = true;
+        return;
+      }
+      if (obj.xg && obj.g < 0 && block.floorLeniency >= bx2 - px1) {
+        isLeft = true;
+        isRight = false;
+        isTop = false;
+        isBottom = false;
+      } else if (obj.xg && obj.g > 0 && block.floorLeniency >= px2 - bx1) {
+        isLeft = false;
+        isRight = true;
+        isTop = false;
+        isBottom = false;
+      } else if (!obj.xg && obj.g < 0 && block.floorLeniency >= by2 - py1) {
+        isLeft = false;
+        isRight = false;
+        isTop = true;
+        isBottom = false;
+      } else if (!obj.xg && obj.g > 0 && block.floorLeniency >= py2 - by1) {
+        isLeft = false;
+        isRight = false;
+        isTop = false;
+        isBottom = true;
+      } else {
+        // top left
+        if (isLeft && isTop) {
+          if (Math.abs(tx1 - ty1) < CThreshold) return;
+          if (tx1 < ty1) {
+            isTop = false;
+          } else {
+            isLeft = false;
+          }
+        }
+        // top right
+        if (isRight && isTop) {
+          if (Math.abs(tx2 - ty1) < CThreshold) return;
+          if (tx2 < ty1) {
+            isTop = false;
+          } else {
+            isRight = false;
+          }
+        }
+        // bottom left
+        if (isLeft && isBottom) {
+          if (Math.abs(tx1 - ty2) < CThreshold) return;
+          if (tx1 < ty2) {
+            isBottom = false;
+          } else {
+            isLeft = false;
+          }
+        }
+        // bottom right
+        if (isRight && isBottom) {
+          if (Math.abs(tx2 - ty2) < CThreshold) return;
+          if (tx2 < ty2) {
+            isBottom = false;
+          } else {
+            isRight = false;
+          }
+        }
+      }
+      // left
+      if (isLeft) {
+        if (
+          oneWayBlocks.includes(block.type) &&
+          (!block.rightWall || obj.lastCollided.find((x) => x === block))
+        ) {
+          return;
+        }
+        if (colliding) {
+          if (
+            leftBlock === undefined ||
+            leftBlock.x + leftBlock.size < bx2 ||
+            (leftBlock.x + leftBlock.size === bx2 &&
+              block.eventPriority > leftBlock.eventPriority)
+          )
+            leftBlock = block;
+        }
+        if (block === player) return;
+        if (block.eventPriority > topPriority[0]) {
+          eventList[0] = [];
+          topPriority[0] = block.eventPriority;
+        }
+        if (block.eventPriority === topPriority[0])
+          eventList[0].push([block, data.touchEvent[0]]);
+        return;
+      }
+      // right
+      if (isRight) {
+        if (
+          oneWayBlocks.includes(block.type) &&
+          (!block.leftWall || obj.lastCollided.find((x) => x === block))
+        ) {
+          return;
+        }
+        if (colliding) {
+          if (
+            rightBlock === undefined ||
+            rightBlock.x > bx1 ||
+            (rightBlock.x === bx1 &&
+              block.eventPriority > rightBlock.eventPriority)
+          )
+            rightBlock = block;
+        }
+        if (block === player) return;
+        if (block.eventPriority > topPriority[1]) {
+          eventList[1] = [];
+          topPriority[1] = block.eventPriority;
+        }
+        if (block.eventPriority === topPriority[1])
+          eventList[1].push([block, data.touchEvent[1]]);
+        return;
+      }
+      // top
+      if (isTop) {
+        if (
+          oneWayBlocks.includes(block.type) &&
+          (!block.bottomWall || obj.lastCollided.find((x) => x === block))
+        ) {
+          return;
+        }
+        if (colliding) {
+          if (
+            topBlock === undefined ||
+            topBlock.y + topBlock.size < by2 ||
+            (topBlock.y + topBlock.size === by2 &&
+              block.eventPriority > topBlock.eventPriority)
+          )
+            topBlock = block;
+        }
+        if (block === player) return;
+        if (block.eventPriority > topPriority[2]) {
+          eventList[2] = [];
+          topPriority[2] = block.eventPriority;
+        }
+        if (block.eventPriority === topPriority[2])
+          eventList[2].push([block, data.touchEvent[2]]);
+        return;
+      }
+      // bottom
+      if (isBottom) {
+        if (
+          oneWayBlocks.includes(block.type) &&
+          (!block.topWall || obj.lastCollided.find((x) => x === block))
+        ) {
+          return;
+        }
+        if (colliding) {
+          if (
+            bottomBlock === undefined ||
+            bottomBlock.y > by1 ||
+            (bottomBlock.y === by1 &&
+              block.eventPriority > bottomBlock.eventPriority)
+          )
+            bottomBlock = block;
+        }
+        if (block === player) return;
+        if (block.eventPriority > topPriority[3]) {
+          eventList[3] = [];
+          topPriority[3] = block.eventPriority;
+        }
+        if (block.eventPriority === topPriority[3])
+          eventList[3].push([block, data.touchEvent[3]]);
+        return;
+      }
+    } else {
+      if (block.type === 12 && block.addVel) {
+        gdxv = block.newxv;
+        gdyv = block.newyv;
+      }
+      if (block.eventPriority > topPriority[4]) {
+        eventList[4] = [];
+        topPriority[4] = block.eventPriority;
+      }
+      if (block.eventPriority === topPriority[4])
+        eventList[4].push([block, data.touchEvent[4]]);
+      if (isPlayer && block.giveJump) giveJump = true;
+    }
+  };
   for (let x = gridUnit(px1) - maxBlockSize / 50; x <= gridUnit(px2); x++) {
     if (isDead || obj.isDead) break;
     for (let y = gridUnit(py1) - maxBlockSize / 50; y <= gridUnit(py2); y++) {
       if (isDead || obj.isDead) break;
       let gridSpace = level[x]?.[y];
       if (gridSpace === undefined) {
-        gridSpace = [
-          {
-            ...blockData[0].defaultBlock,
-            x: x * 50,
-            y: y * 50
-          }
-        ];
-      } else {
-        gridSpace = Object.assign([], gridSpace);
+        gridSpace = [new Block(0, x*50, y*50, 50, true, true, 3)];
       }
-      if (
-        x === gridUnit(px1) - 1 &&
-        y === gridUnit(py1) - 1 &&
-        obj.dynamic &&
-        obj.pushable
-      ) {
-        gridSpace.push(player);
-      }
-      gridSpace.push(...prevDynObjs);
-      for (let i in gridSpace) {
-        let block = gridSpace[i];
-        let colliding = isColliding(obj, block, true);
-        if (
-          (block.x === obj.x &&
-            block.y === obj.y &&
-            block.index === obj.index) ||
-          !colliding ||
-          (block.dynamic && !prevDynObjs.includes(block))
-        )
-          continue;
-        let bx1 = block.x;
-        let bx2 = block.x + block.size;
-        let by1 = block.y;
-        let by2 = block.y + block.size;
-        let data = blockData[block.type];
-        if (!block.friction) friction = false;
-        if (colliding) collided.push(block);
-        // solid block
-        if (block === player || block.isSolid) {
-          let dxv = (obj.xv - block.xv) * t + ((obj.xa - block.xa) * t * t) / 2;
-          let dyv = (obj.yv - block.yv) * t + ((obj.ya - block.ya) * t * t) / 2;
-          let VUncertainty =
-            obj.xv < VCThreshold ||
-            block.xv < VCThreshold ||
-            obj.yv < VCThreshold ||
-            block.yv < VCThreshold ||
-            Math.abs(obj.xv - block.xv) < VCThreshold ||
-            Math.abs(obj.yv - block.xv) < VCThreshold;
-          if (VUncertainty) {
-            dxv = 1;
-            dyv = 1;
-          }
-          let tx1 = (px1 - bx2) / dxv;
-          let tx2 = (px2 - bx1) / dxv;
-          let ty1 = (py1 - by2) / dyv;
-          let ty2 = (py2 - by1) / dyv;
-          if (VUncertainty) {
-            tx1 = Math.abs(tx1);
-            tx2 = Math.abs(tx2);
-            ty1 = Math.abs(ty1);
-            ty2 = Math.abs(ty2);
-          }
-          if (tx1 < 0) tx1 = Infinity;
-          if (tx2 < 0) tx2 = Infinity;
-          if (ty1 < 0) ty1 = Infinity;
-          if (ty2 < 0) ty2 = Infinity;
-          let isLeft = bx1 < px1 && bx2 > px1 && bx2 < px2;
-          let isRight = bx1 < px2 && bx2 > px2 && bx1 > px1;
-          let isTop = by1 < py1 && by2 > py1 && by2 < py2;
-          let isBottom = by1 < py2 && by2 > py2 && by1 > py1;
-          // block inside
-          if (bx1 >= px1 && bx2 <= px2 && by1 >= py1 && by2 <= py2) {
-            obj.isDead = true;
-            break;
-          }
-          if (obj.xg && obj.g < 0 && block.floorLeniency >= bx2 - px1) {
-            isLeft = true;
-            isRight = false;
-            isTop = false;
-            isBottom = false;
-          } else if (obj.xg && obj.g > 0 && block.floorLeniency >= px2 - bx1) {
-            isLeft = false;
-            isRight = true;
-            isTop = false;
-            isBottom = false;
-          } else if (!obj.xg && obj.g < 0 && block.floorLeniency >= by2 - py1) {
-            isLeft = false;
-            isRight = false;
-            isTop = true;
-            isBottom = false;
-          } else if (!obj.xg && obj.g > 0 && block.floorLeniency >= py2 - by1) {
-            isLeft = false;
-            isRight = false;
-            isTop = false;
-            isBottom = true;
-          } else {
-            // top left
-            if (isLeft && isTop) {
-              if (Math.abs(tx1 - ty1) < CThreshold) continue;
-              if (tx1 < ty1) {
-                isTop = false;
-              } else {
-                isLeft = false;
-              }
-            }
-            // top right
-            if (isRight && isTop) {
-              if (Math.abs(tx2 - ty1) < CThreshold) continue;
-              if (tx2 < ty1) {
-                isTop = false;
-              } else {
-                isRight = false;
-              }
-            }
-            // bottom left
-            if (isLeft && isBottom) {
-              if (Math.abs(tx1 - ty2) < CThreshold) continue;
-              if (tx1 < ty2) {
-                isBottom = false;
-              } else {
-                isLeft = false;
-              }
-            }
-            // bottom right
-            if (isRight && isBottom) {
-              if (Math.abs(tx2 - ty2) < CThreshold) continue;
-              if (tx2 < ty2) {
-                isBottom = false;
-              } else {
-                isRight = false;
-              }
-            }
-          }
-          // left
-          if (isLeft) {
-            if (
-              oneWayBlocks.includes(block.type) &&
-              (!block.rightWall || obj.lastCollided.find((x) => x === block))
-            ) {
-              continue;
-            }
-            if (colliding) {
-              if (
-                leftBlock === undefined ||
-                leftBlock.x + leftBlock.size < bx2 ||
-                (leftBlock.x + leftBlock.size === bx2 &&
-                  block.eventPriority > leftBlock.eventPriority)
-              )
-                leftBlock = block;
-            }
-            if (block === player) continue;
-            if (block.eventPriority > topPriority[0]) {
-              eventList[0] = [];
-              topPriority[0] = block.eventPriority;
-            }
-            if (block.eventPriority === topPriority[0])
-              eventList[0].push([block, data.touchEvent[0]]);
-            continue;
-          }
-          // right
-          if (isRight) {
-            if (
-              oneWayBlocks.includes(block.type) &&
-              (!block.leftWall || obj.lastCollided.find((x) => x === block))
-            ) {
-              continue;
-            }
-            if (colliding) {
-              if (
-                rightBlock === undefined ||
-                rightBlock.x > bx1 ||
-                (rightBlock.x === bx1 &&
-                  block.eventPriority > rightBlock.eventPriority)
-              )
-                rightBlock = block;
-            }
-            if (block === player) continue;
-            if (block.eventPriority > topPriority[1]) {
-              eventList[1] = [];
-              topPriority[1] = block.eventPriority;
-            }
-            if (block.eventPriority === topPriority[1])
-              eventList[1].push([block, data.touchEvent[1]]);
-            continue;
-          }
-          // top
-          if (isTop) {
-            if (
-              oneWayBlocks.includes(block.type) &&
-              (!block.bottomWall || obj.lastCollided.find((x) => x === block))
-            ) {
-              continue;
-            }
-            if (colliding) {
-              if (
-                topBlock === undefined ||
-                topBlock.y + topBlock.size < by2 ||
-                (topBlock.y + topBlock.size === by2 &&
-                  block.eventPriority > topBlock.eventPriority)
-              )
-                topBlock = block;
-            }
-            if (block === player) continue;
-            if (block.eventPriority > topPriority[2]) {
-              eventList[2] = [];
-              topPriority[2] = block.eventPriority;
-            }
-            if (block.eventPriority === topPriority[2])
-              eventList[2].push([block, data.touchEvent[2]]);
-            continue;
-          }
-          // bottom
-          if (isBottom) {
-            if (
-              oneWayBlocks.includes(block.type) &&
-              (!block.topWall || obj.lastCollided.find((x) => x === block))
-            ) {
-              continue;
-            }
-            if (colliding) {
-              if (
-                bottomBlock === undefined ||
-                bottomBlock.y > by1 ||
-                (bottomBlock.y === by1 &&
-                  block.eventPriority > bottomBlock.eventPriority)
-              )
-                bottomBlock = block;
-            }
-            if (block === player) continue;
-            if (block.eventPriority > topPriority[3]) {
-              eventList[3] = [];
-              topPriority[3] = block.eventPriority;
-            }
-            if (block.eventPriority === topPriority[3])
-              eventList[3].push([block, data.touchEvent[3]]);
-            continue;
-          }
-        } else {
-          if (block.type === 12 && block.addVel) {
-            gdxv = block.newxv;
-            gdyv = block.newyv;
-          }
-          if (block.eventPriority > topPriority[4]) {
-            eventList[4] = [];
-            topPriority[4] = block.eventPriority;
-          }
-          if (block.eventPriority === topPriority[4])
-            eventList[4].push([block, data.touchEvent[4]]);
-          if (isPlayer && block.giveJump) giveJump = true;
-        }
-      }
+      for (let i in gridSpace) doCollision(gridSpace[i]);
     }
   }
+  if (obj.dynamic && obj.pushable) {
+    doCollision(player);
+  }
+  for (let i in prevDynObjs) doCollision(prevDynObjs[i]);
   // crushed
   if (
     isPlayer &&

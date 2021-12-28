@@ -164,3 +164,9 @@
 - Optimizations, again
   - Now the 'world' port from jap1 runs smooth on my device
 - Raised the block size limit to 100
+
+### 28 Dec. 2021
+
+- Optimizations, again, again
+  - Specifically for dynamic block
+- Fixed a bug where you can select block by interacting with the side menus

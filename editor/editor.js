@@ -2,7 +2,7 @@ var editor = {
   mousePos: [0, 0],
   editMode: false,
   buildSelect: deepCopy(blockData[0].defaultBlock),
-  selectStart: [0, 0],
+  selectStart: undefined,
   moveStart: [0, 0],
   moveSelect: [0, 0],
   editSelect: [],
@@ -349,15 +349,17 @@ document.addEventListener("mousemove", function (event) {
         camy += event.movementY;
         adjustScreen();
       } else if (editor.editMode) {
-        let x = Math.min(editor.selectStart[0], event.clientX) / cams;
-        let y = Math.min(editor.selectStart[1], event.clientY) / cams;
-        let w = Math.abs(editor.selectStart[0] - event.clientX) / cams;
-        let h = Math.abs(editor.selectStart[1] - event.clientY) / cams;
-        selectBox.clear();
-        selectBox.lineStyle(2, 0x000000, 0.5, 1);
-        selectBox.drawRect(x, y, w, h);
-        selectBox.lineStyle(2, 0xffffff, 0.5, 0);
-        selectBox.drawRect(x, y, w, h);
+        if (editor.selectStart !== undefined) {
+          let x = Math.min(editor.selectStart[0], event.clientX) / cams;
+          let y = Math.min(editor.selectStart[1], event.clientY) / cams;
+          let w = Math.abs(editor.selectStart[0] - event.clientX) / cams;
+          let h = Math.abs(editor.selectStart[1] - event.clientY) / cams;
+          selectBox.clear();
+          selectBox.lineStyle(2, 0x000000, 0.5, 1);
+          selectBox.drawRect(x, y, w, h);
+          selectBox.lineStyle(2, 0xffffff, 0.5, 0);
+          selectBox.drawRect(x, y, w, h);
+        }
       } else if (event.shiftKey) {
         let xInit = editor.buildSelect.x;
         let yInit = editor.buildSelect.y;
@@ -405,7 +407,11 @@ document.addEventListener("mouseup", function (event) {
   let yPos = (event.clientY - camy) / cams;
   switch (button) {
     case 0: // left
-      if (editor.editMode && !(event.ctrlKey || event.metaKey)) {
+      if (
+        editor.editMode &&
+        !(event.ctrlKey || event.metaKey) &&
+        editor.selectStart !== undefined
+      ) {
         let prev = editor.editSelect[0];
         if (!event.shiftKey) deselect();
         let x = Math.min((editor.selectStart[0] - camx) / cams, xPos);
@@ -417,6 +423,7 @@ document.addEventListener("mouseup", function (event) {
           w === 0 && h === 0 && !event.shiftKey,
           prev
         );
+        editor.selectStart = undefined;
       }
       selectBox.visible = false;
       break;
