@@ -34,7 +34,6 @@ function drawLevel(clear = false) {
         if (
           prevBlock === undefined ||
           !arraysEqual(block, prevBlock) ||
-          animatedObjs.includes(block.type) ||
           block.type === 2
         ) {
           updateBlock(block);

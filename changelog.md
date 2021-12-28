@@ -170,3 +170,8 @@
 - Optimizations, again, again
   - Specifically for dynamic block
 - Fixed a bug where you can select block by interacting with the side menus
+
+#### 28 Dec. 2021
+
+- Fixed a bug where the removal of animated blocks weren't handled properly
+- Fixed a bug where saving while interacting with a dynamic block and respawning causes the game to crash

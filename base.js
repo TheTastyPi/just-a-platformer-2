@@ -18,7 +18,8 @@ var defaultPlayer = {
   friction: true,
   gameSpeed: 1,
   displayingText: false,
-  lastCollided: []
+  lastCollided: [],
+  isPlayer: true
 };
 var player = deepCopy(defaultPlayer);
 var dynamicInit = [];
@@ -360,7 +361,7 @@ function doPhysics(obj, t, isPlayer) {
       if (isDead || obj.isDead) break;
       let gridSpace = level[x]?.[y];
       if (gridSpace === undefined) {
-        gridSpace = [new Block(0, x*50, y*50, 50, true, true, 3)];
+        gridSpace = [new Block(0, x * 50, y * 50, 50, true, true, 3)];
       }
       for (let i in gridSpace) doCollision(gridSpace[i]);
     }
@@ -430,7 +431,7 @@ function doPhysics(obj, t, isPlayer) {
     }
     for (let i in obj.lastCollided) {
       let block = obj.lastCollided[i];
-      if (block === player || block.isSolid) continue;
+      if (block.isPlayer || block.isSolid) continue;
       if (collided.find((x) => x === block)) continue;
       blockData[block.type].touchEvent[4](
         obj,
@@ -743,7 +744,7 @@ function removeBlock(block) {
   s.destroy({ texture: s.texture !== blockData[block.type].defaultTexture });
   if (block.dynamic) dynamicObjs.splice(dynamicObjs.indexOf(block), 1);
   if (animatedTypes.includes(block.type))
-    animatedObjs.splice(dynamicObjs.indexOf(block), 1);
+    animatedObjs.splice(animatedObjs.indexOf(block), 1);
   let gridSpace = level[gridUnit(block.x)][gridUnit(block.y)];
   for (let i = parseInt(block.index) + 1; i < gridSpace.length; i++) {
     gridSpace[i].index--;
@@ -795,7 +796,7 @@ function arraysEqual(a, b) {
   if (a === b) return true;
   if (a == null || b == null) return false;
   for (let i in a) {
-    if (typeof a[i] === "function") continue;
+    if (typeof a[i] === "function" || propData[i] === undefined) continue;
     if (typeof a[i] === "object" || typeof b[i] === "object") {
       if (!arraysEqual(a[i], b[i])) return false;
     } else if (a[i] !== b[i]) return false;
