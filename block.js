@@ -146,7 +146,10 @@ new BlockType(
       if (sprite.texture !== blockData[block.type].defaultTexture)
         sprite.texture.destroy(true);
       sprite.texture = blockData[block.type].getTexture(block, app);
-    } else if (sprite.texture !== blockData[block.type].defaultTexture) {
+    } else if (
+      sprite.texture !== blockData[block.type].defaultTexture &&
+      app === display
+    ) {
       sprite.texture.destroy(true);
       sprite.texture = blockData[block.type].defaultTexture;
     }
