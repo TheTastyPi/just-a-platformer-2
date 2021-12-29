@@ -140,8 +140,9 @@ new BlockType(
     }
   ],
   (block, sprite = block.sprite, app) => {
-    sprite.tint = isColliding(saveState, block, true) ? 0xffffff : 0x888888;
-    if (canSave) {
+    let colliding = isColliding(saveState, block, true);
+    sprite.tint = colliding ? 0xffffff : 0x888888;
+    if (canSave && !colliding) {
       if (sprite.texture !== blockData[block.type].defaultTexture)
         sprite.texture.destroy(true);
       sprite.texture = blockData[block.type].getTexture(block, app);
