@@ -87,8 +87,10 @@ function nextFrame(timeStamp) {
         prevDynObjs = deepCopy(dynamicObjs);
         doPhysics(player, interval / 1000 / simReruns, true);
         if ((editor?.playMode ?? true) && !justDied) {
-          for (let j in dynamicObjs)
+          for (let j in dynamicObjs) {
             doPhysics(dynamicObjs[j], interval / 1000 / simReruns, false);
+            cullBlock(dynamicObjs[j]);
+          }
         }
         justDied = false;
       }

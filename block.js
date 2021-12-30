@@ -139,7 +139,7 @@ new BlockType(
       }
     }
   ],
-  (block, sprite = block.sprite, app) => {
+  (block, sprite = block.sprite, app = display) => {
     let colliding = isColliding(saveState, block, true);
     sprite.tint = colliding ? 0xffffff : 0x888888;
     if (canSave && !colliding) {

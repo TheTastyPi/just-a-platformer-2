@@ -188,3 +188,8 @@
 - Fixed a bug where scaling selected block doesn't update the selection display
 - Fixed a bug where dynamic objects does not save post-death after being moved, scaled, or property changed without going into play mode
 - The camera no longer resets position when you change level size
+
+#### 30 Dec. 2021
+
+- Fixed a bug where Check Point texture does not change after saving
+- Fixed a bug where (un)culling is not performed on dynamic objects exiting/entering the screen
