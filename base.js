@@ -89,7 +89,7 @@ function nextFrame(timeStamp) {
         if ((editor?.playMode ?? true) && !justDied) {
           for (let j in dynamicObjs) {
             doPhysics(dynamicObjs[j], interval / 1000 / simReruns, false);
-            cullBlock(dynamicObjs[j]);
+            if (dynamicObjs[j] !== undefined) cullBlock(dynamicObjs[j]);
           }
         }
         justDied = false;
