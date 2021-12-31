@@ -295,68 +295,52 @@ new BlockType(
     g.beginFill(0x000000);
     g.drawRect(0, 0, 50, 50);
     g.endFill();
-    g.lineStyle({
-      width: 4,
-      color: 0xff0000
-    });
-    //left
-    if (block.leftSpeed !== 0) {
-      for (
-        let i = (((((lastFrame / 1000) * block.leftSpeed) % 10) + 10) % 10) - 2;
-        i < 52;
-        i += 10
-      ) {
-        g.moveTo(0, i);
-        g.lineTo(5, i);
-      }
-    }
-    //right
-    if (block.rightSpeed !== 0) {
-      for (
-        let i =
-          (((((lastFrame / 1000) * block.rightSpeed) % 10) + 10) % 10) - 2;
-        i < 52;
-        i += 10
-      ) {
-        g.moveTo(45, i);
-        g.lineTo(50, i);
-      }
-    }
-    //top
-    if (block.topSpeed !== 0) {
-      for (
-        let i = (((((lastFrame / 1000) * block.topSpeed) % 10) + 10) % 10) - 2;
-        i < 52;
-        i += 10
-      ) {
-        g.moveTo(i, 0);
-        g.lineTo(i, 5);
-      }
-    }
-    //bottom
-    if (block.bottomSpeed !== 0) {
-      for (
-        let i =
-          (((((lastFrame / 1000) * block.bottomSpeed) % 10) + 10) % 10) - 2;
-        i < 50;
-        i += 10
-      ) {
-        g.moveTo(i, 45);
-        g.lineTo(i, 50);
-      }
-    }
-    return app.renderer.generateTexture(
-      g,
-      undefined,
-      undefined,
-      new PIXI.Rectangle(0, 0, 50, 50)
-    );
+    return app.renderer.generateTexture(g);
   },
   [() => {}, () => {}, () => {}, () => {}, () => {}],
   (block, sprite = block.sprite, app) => {
-    if (sprite.texture !== blockData[block.type].defaultTexture)
-      sprite.texture.destroy(true);
-    sprite.texture = blockData[block.type].getTexture(block, app);
+    if (sprite.children.length === 0) {
+      let hori, vert;
+      if (app !== display) {
+        let bruh = createConveyorTexture(app);
+        hori = bruh[0];
+        vert = bruh[1];
+      } else {
+        hori = convTex[0];
+        vert = convTex[1];
+      }
+      let left = new PIXI.Sprite(vert);
+      let right = new PIXI.Sprite(vert);
+      let top = new PIXI.Sprite(hori);
+      let bottom = new PIXI.Sprite(hori);
+      right.x = 45;
+      bottom.y = 45;
+      if (block.leftSpeed !== 0) sprite.addChild(left);
+      if (block.rightSpeed !== 0) sprite.addChild(right);
+      if (block.topSpeed !== 0) sprite.addChild(top);
+      if (block.bottomSpeed !== 0) sprite.addChild(bottom);
+      let m = new PIXI.Graphics();
+      m.beginFill(0xff0000);
+      m.drawRect(0, 0, 50, 50);
+      m.endFill();
+      sprite.mask = m;
+      sprite.addChild(m);
+    }
+    let t = lastFrame / 1000;
+    let i = 0;
+    if (block.leftSpeed !== 0) {
+      sprite.children[i].y = ((((t * block.leftSpeed) % 10) + 10) % 10) - 4;
+      i++;
+    }
+    if (block.rightSpeed !== 0) {
+      sprite.children[i].y = ((((t * block.rightSpeed) % 10) + 10) % 10) - 4;
+      i++
+    }
+    if (block.topSpeed !== 0) {
+      sprite.children[i].x = ((((t * block.topSpeed) % 10) + 10) % 10) - 4;
+      i++
+    }
+    if (block.bottomSpeed !== 0) sprite.children[i].x = ((((t * block.bottomSpeed) % 10) + 10) % 10) - 4;
   },
   {
     leftSpeed: [() => -2000, () => 2000],
@@ -364,7 +348,7 @@ new BlockType(
     topSpeed: [() => -2000, () => 2000],
     bottomSpeed: [() => -2000, () => 2000]
   },
-  ["leftSpeed", "rightSpeed", "topSpeed", "bottomSpeed"]
+  []
 );
 new BlockType(
   "Gravity Field",
@@ -1253,59 +1237,6 @@ new BlockType(
     if (block.topWall) g.drawRect(0, 0, 50, 5);
     if (block.bottomWall) g.drawRect(0, 45, 50, 5);
     g.endFill();
-    g.lineStyle({
-      width: 4,
-      color: 0xff0000
-    });
-    //left
-    if (block.leftWall && block.leftSpeed !== 0) {
-      for (
-        let i = (((((lastFrame / 1000) * block.leftSpeed) % 10) + 10) % 10) - 2;
-        i < 52;
-        i += 10
-      ) {
-        g.moveTo(0, i);
-        g.lineTo(5, i);
-      }
-    }
-    //right
-    if (block.rightWall && block.rightSpeed !== 0) {
-      for (
-        let i =
-          (((((lastFrame / 1000) * block.rightSpeed) % 10) + 10) % 10) - 2;
-        i < 52;
-        i += 10
-      ) {
-        g.moveTo(45, i);
-        g.lineTo(50, i);
-      }
-    }
-    //top
-    if (block.topWall && block.topSpeed !== 0) {
-      for (
-        let i = (((((lastFrame / 1000) * block.topSpeed) % 10) + 10) % 10) - 2;
-        i < 52;
-        i += 10
-      ) {
-        g.moveTo(i, 0);
-        g.lineTo(i, 5);
-      }
-    }
-    //bottom
-    if (block.bottomWall && block.bottomSpeed !== 0) {
-      for (
-        let i =
-          (((((lastFrame / 1000) * block.bottomSpeed) % 10) + 10) % 10) - 2;
-        i < 50;
-        i += 10
-      ) {
-        g.moveTo(i, 45);
-        g.lineTo(i, 50);
-      }
-    }
-    g.lineStyle({
-      width: 0
-    });
     g.beginFill(0x888888);
     if (block.leftWall) g.drawPolygon(0, 25, 5, 30, 5, 20);
     if (block.rightWall) g.drawPolygon(50, 25, 45, 20, 45, 30);
@@ -1321,9 +1252,48 @@ new BlockType(
   },
   [() => {}, () => {}, () => {}, () => {}, () => {}],
   (block, sprite = block.sprite, app) => {
-    if (sprite.texture !== blockData[block.type].defaultTexture)
-      sprite.texture.destroy(true);
-    sprite.texture = blockData[block.type].getTexture(block, app);
+    if (sprite.children.length === 0) {
+      let hori, vert;
+      if (app !== display) {
+        let bruh = createConveyorTexture(app);
+        hori = bruh[0];
+        vert = bruh[1];
+      } else {
+        hori = convTex[0];
+        vert = convTex[1];
+      }
+      let left = new PIXI.Sprite(vert);
+      let right = new PIXI.Sprite(vert);
+      let top = new PIXI.Sprite(hori);
+      let bottom = new PIXI.Sprite(hori);
+      right.x = 45;
+      bottom.y = 45;
+      if (block.leftWall && block.leftSpeed !== 0) sprite.addChild(left);
+      if (block.rightWall && block.rightSpeed !== 0) sprite.addChild(right);
+      if (block.topWall && block.topSpeed !== 0) sprite.addChild(top);
+      if (block.bottomWall && block.bottomSpeed !== 0) sprite.addChild(bottom);
+      let m = new PIXI.Graphics();
+      m.beginFill(0xff0000);
+      m.drawRect(0, 0, 50, 50);
+      m.endFill();
+      sprite.mask = m;
+      sprite.addChild(m);
+    }
+    let t = lastFrame / 1000;
+    let i = 0;
+    if (block.leftWall && block.leftSpeed !== 0) {
+      sprite.children[i].y = ((((t * block.leftSpeed) % 10) + 10) % 10) - 4;
+      i++;
+    }
+    if (block.rightWall && block.rightSpeed !== 0) {
+      sprite.children[i].y = ((((t * block.rightSpeed) % 10) + 10) % 10) - 4;
+      i++;
+    }
+    if (block.topWall && block.topSpeed !== 0) {
+      sprite.children[i].x = ((((t * block.topSpeed) % 10) + 10) % 10) - 4;
+      i++;
+    }
+    if (block.bottomWall && block.bottomSpeed !== 0) sprite.children[i].x = ((((t * block.bottomSpeed) % 10) + 10) % 10) - 4;
   },
   {
     leftWall: [],
@@ -1340,10 +1310,6 @@ new BlockType(
     "rightWall",
     "topWall",
     "bottomWall",
-    "leftSpeed",
-    "rightSpeed",
-    "topSpeed",
-    "bottomSpeed"
   ]
 );
 // bruh moment

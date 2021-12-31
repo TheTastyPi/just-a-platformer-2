@@ -466,8 +466,8 @@ id("display").addEventListener("wheel", function (event) {
     return;
   }
   if (editor.editMode) {
-    if (editor.selectBox.maxs * factor > 50)
-      factor = 50 / editor.selectBox.maxs;
+    if (editor.selectBox.maxs * factor > maxBlockSize)
+      factor = maxBlockSize / editor.selectBox.maxs;
     if (editor.selectBox.mins * factor < 6.25)
       factor = 6.25 / editor.selectBox.mins;
     for (let i in editor.editSelect) {
@@ -593,12 +593,12 @@ function select(selectRect, single = false, prev, build = false) {
   let found = prev === undefined;
   let cycled = false;
   for (
-    let x = gridUnit(selectRect.x) - 1;
+    let x = gridUnit(selectRect.x) - maxBlockSize/50;
     x <= gridUnit(selectRect.x + selectRect.width);
     x++
   ) {
     for (
-      let y = gridUnit(selectRect.y) - 1;
+      let y = gridUnit(selectRect.y) - maxBlockSize/50;
       y <= gridUnit(selectRect.y + selectRect.height);
       y++
     ) {

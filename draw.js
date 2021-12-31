@@ -175,3 +175,20 @@ function cullBlock(block) {
     block.x < (window.innerWidth - camx) / cams &&
     block.y < (window.innerHeight - camy) / cams;
 }
+var convTex = createConveyorTexture();
+function createConveyorTexture(app = display) {
+  let vert = new PIXI.Graphics();
+  vert.beginFill(0xff0000);
+  for (let i = 0; i <= 50; i += 10) {
+    vert.drawRect(0, i, 5, 4);
+  }
+  let hori = new PIXI.Graphics();
+  hori.beginFill(0xff0000);
+  for (let i = 0; i <= 50; i += 10) {
+    hori.drawRect(i, 0, 4, 5);
+  }
+  return [
+    app.renderer.generateTexture(hori),
+    app.renderer.generateTexture(vert)
+  ];
+}

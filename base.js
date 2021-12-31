@@ -754,6 +754,7 @@ function addBlock(block) {
   return block;
 }
 function removeBlock(block) {
+  block = level[gridUnit(block.x)][gridUnit(block.y)][block.index];
   let s = block.sprite;
   s.destroy({ texture: s.texture !== blockData[block.type].defaultTexture });
   if (block.dynamic) dynamicObjs.splice(dynamicObjs.indexOf(block), 1);

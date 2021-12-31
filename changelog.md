@@ -193,3 +193,11 @@
 
 - Fixed a bug where Check Point texture does not change after saving
 - Fixed a bug where (un)culling is not performed on dynamic objects exiting/entering the screen
+
+### 31 Dec. 2021
+
+- Optimization, again, again, again
+  - This time it's conveyor objects
+- Fixed a bug where you can't scale block above size 50 by scrolling
+- Fixed a bug where you sometimes can't select a block over size 50
+- Fixed a bug where removing blocks via undo/redo can cause the game to crash
