@@ -201,3 +201,30 @@
 - Fixed a bug where you can't scale block above size 50 by scrolling
 - Fixed a bug where you sometimes can't select a block over size 50
 - Fixed a bug where removing blocks via undo/redo can cause the game to crash
+
+## ?? ???. 2022
+
+- Added rooms
+  - Access room controls through the 'rooms' tab beside 'saves'
+  - Controls similar to saves
+  - Dynamic blocks are only active if the player is in the same room or is connected to it by a Boundary Warp (listed below)
+- Added Teleporter
+  - Select teleport position using Ctrl LMB
+- Added Boundary Warp
+  - Connects two rooms by their boundaries
+    - Will connect to another Boundary Warp according to the selected room, id, and target id
+  - Can transport both the player and dynamic blocks
+  - It cannot connect two directions at once
+  - The "forceVert" property forces it to point vertically when at a corner
+- Added the "alwaysActive" property
+  - Makes it so that the block is always active regardless of the player's current room
+- Made eventPriority impact the layering of the block's display
+- Added a display for manually teleporting the player
+  - Applies for Teleporter selection too
+- Manual teleportation of the player is now affected by grid snap options
+- You can now confirm property edit by pressing Enter
+  - Dunno why I didn't do this sooner
+- Fixed a bug where you cannot full jump out of water consistently
+- Fixed a bug where canceling renaming a save after adding a save with a duplicate name causes a save with an empty name to be created
+- Fixed a bug where moving the camera while zoomed in/out does not correctly cull surrounding blocks
+- Fixed a bug where deleting a Check Point while the player is touching it causes the game to crash

@@ -19,7 +19,10 @@ var defaultPlayer = {
   gameSpeed: 1,
   displayingText: false,
   lastCollided: [],
-  isPlayer: true
+  isPlayer: true,
+  currentRoom: "",
+  roomLink: [],
+  dupSprite: null
 };
 var player = deepCopy(defaultPlayer);
 var dynamicInit = [];
@@ -38,7 +41,11 @@ var display = new PIXI.Application({
   resizeTo: window
 });
 var levelLayer = new PIXI.Container();
+levelLayer.sortableChildren = true;
 display.stage.addChild(levelLayer);
+var levelMask = new PIXI.Graphics();
+display.stage.addChild(levelMask);
+levelLayer.mask = levelMask;
 var canJump = true;
 var lastFrame = 0;
 var simReruns = 10;
@@ -88,8 +95,18 @@ function nextFrame(timeStamp) {
         doPhysics(player, interval / 1000 / simReruns, true);
         if ((editor?.playMode ?? true) && !justDied) {
           for (let j in dynamicObjs) {
-            doPhysics(dynamicObjs[j], interval / 1000 / simReruns, false);
-            if (dynamicObjs[j] !== undefined) cullBlock(dynamicObjs[j]);
+            if (
+              dynamicObjs[j].alwaysActive ||
+              dynamicObjs[j].currentRoom === player.currentRoom ||
+              dynamicObjs[j].currentRoom === player.roomLink[1]?.currentRoom
+            )
+              doPhysics(dynamicObjs[j], interval / 1000 / simReruns, false);
+            if (
+              dynamicObjs[j] !== undefined &&
+              dynamicObjs[j].currentRoom === player.currentRoom
+            ) {
+              cullBlock(dynamicObjs[j]);
+            }
           }
         }
         justDied = false;
@@ -97,7 +114,8 @@ function nextFrame(timeStamp) {
     }
     if (editor?.doAnimation ?? true) {
       for (let i in animatedObjs) {
-        if (animatedObjs[i].sprite.visible) updateBlock(animatedObjs[i]);
+        if (animatedObjs[i].currentRoom === player.currentRoom)
+          if (animatedObjs[i].sprite.visible) updateBlock(animatedObjs[i]);
       }
     }
     drawPlayer();
@@ -105,11 +123,13 @@ function nextFrame(timeStamp) {
   } else {
     dt = 0;
   }
+  if (editor) editor.currentRoom = player.currentRoom;
   window.requestAnimationFrame(nextFrame);
 }
 function doPhysics(obj, t, isPlayer) {
   // COLLISION
   // important variables
+  let level = levels[obj.currentRoom];
   let px1 = obj.x;
   let px2 = px1 + obj.size;
   let py1 = obj.y;
@@ -369,15 +389,245 @@ function doPhysics(obj, t, isPlayer) {
       if (isDead || obj.isDead) break;
       let gridSpace = level[x]?.[y];
       if (gridSpace === undefined) {
+        let hori = obj.roomLink[2] === "left" || obj.roomLink[2] === "right";
+        let vert = obj.roomLink[2] === "top" || obj.roomLink[2] === "bottom";
+        if (
+          (hori && x < 0) ||
+          (hori && x > level.length - 1) ||
+          (vert && y < 0) ||
+          (vert && y > level[0].length - 1)
+        )
+          continue;
         gridSpace = [new Block(0, x * 50, y * 50, 50, true, true, 3)];
       }
       for (let i in gridSpace) doCollision(gridSpace[i]);
     }
   }
-  if (obj.dynamic && obj.pushable) {
+  if (obj.dynamic && obj.pushable && obj.currentRoom === player.currentRoom) {
     doCollision(player);
   }
-  for (let i in prevDynObjs) doCollision(prevDynObjs[i]);
+  for (let i in prevDynObjs) {
+    if (prevDynObjs[i].currentRoom === obj.currentRoom)
+      doCollision(prevDynObjs[i]);
+  }
+  // room link
+  let xWarp = 0;
+  let yWarp = 0;
+  let rWarp = obj.currentRoom;
+  if (obj.roomLink[0] !== undefined) {
+    let newlvl = levels[obj.roomLink[1].currentRoom];
+    let dx = obj.roomLink[1].x - obj.roomLink[0].x;
+    let dy = obj.roomLink[1].y - obj.roomLink[0].y;
+    if (obj.roomLink[1].currentRoom === player.currentRoom) {
+      if (obj.dupSprite === null) {
+        let s;
+        if (isPlayer) {
+          s = new PIXI.Sprite(blockData[0].defaultTexture);
+          s.zIndex = -1;
+        } else s = createSprite(obj);
+        levelLayer.addChild(s);
+        obj.dupSprite = s;
+      }
+      switch (obj.roomLink[2]) {
+        case "left":
+          obj.dupSprite.x = obj.x + newlvl.length * 50;
+          obj.dupSprite.y = obj.y + dy;
+          break;
+        case "right":
+          obj.dupSprite.x = obj.x - level.length * 50;
+          obj.dupSprite.y = obj.y + dy;
+          break;
+        case "top":
+          obj.dupSprite.x = obj.x + dx;
+          obj.dupSprite.y = obj.y + newlvl[0].length * 50;
+          break;
+        case "bottom":
+          obj.dupSprite.x = obj.x + dx;
+          obj.dupSprite.y = obj.y + level[0].length * 50;
+          break;
+        default:
+      }
+    } else if (obj.dupSprite !== null) {
+      for (let i in obj.dupSprite.children) obj.dupSprite.children[i].destroy();
+      obj.dupSprite.destroy({
+        texture: isPlayer
+          ? false
+          : obj.dupSprite.texture !== blockData[obj.type]?.defaultTexture
+      });
+      obj.dupSprite = null;
+    }
+    switch (obj.roomLink[2]) {
+      case "left":
+        for (
+          let x = gridUnit(px1 + newlvl.length * 50) - maxBlockSize / 50;
+          x <= gridUnit(px2 + newlvl.length * 50);
+          x++
+        ) {
+          if (isDead || obj.isDead) break;
+          for (
+            let y = gridUnit(py1 + dy) - maxBlockSize / 50;
+            y <= gridUnit(py2 + dy);
+            y++
+          ) {
+            if (isDead || obj.isDead) break;
+            let gridSpace = newlvl[x]?.[y];
+            if (gridSpace === undefined) {
+              if (x < 0 || x > newlvl.length - 1) continue;
+              gridSpace = [new Block(0, x * 50, y * 50, 50, true, true, 3)];
+            }
+            for (let i in gridSpace)
+              doCollision({
+                ...gridSpace[i],
+                x: gridSpace[i].x - newlvl.length * 50,
+                y: gridSpace[i].y - dy
+              });
+          }
+        }
+        if (obj.dynamic && player.currentRoom === obj.roomLink[1].currentRoom)
+          doCollision({
+            ...player,
+            x: player.x - newlvl.length * 50,
+            y: player.y - dy,
+            isSolid: true
+          });
+        if (obj.x < -obj.size / 2) {
+          rWarp = obj.roomLink[1].currentRoom;
+          xWarp = newlvl.length * 50;
+          yWarp = dy;
+        }
+        break;
+      case "right":
+        for (
+          let x = gridUnit(px1 - level.length * 50) - maxBlockSize / 50;
+          x <= gridUnit(px2 - level.length * 50);
+          x++
+        ) {
+          if (isDead || obj.isDead) break;
+          for (
+            let y = gridUnit(py1 + dy) - maxBlockSize / 50;
+            y <= gridUnit(py2 + dy);
+            y++
+          ) {
+            if (isDead || obj.isDead) break;
+            let gridSpace = newlvl[x]?.[y];
+            if (gridSpace === undefined) {
+              if (x < 0 || x > level.length - 1) continue;
+              gridSpace = [new Block(0, x * 50, y * 50, 50, true, true, 3)];
+            }
+            for (let i in gridSpace)
+              doCollision({
+                ...gridSpace[i],
+                x: gridSpace[i].x + newlvl.length * 50,
+                y: gridSpace[i].y - dy
+              });
+          }
+        }
+        if (obj.dynamic && player.currentRoom === obj.roomLink[1].currentRoom)
+          doCollision({
+            ...player,
+            x: player.x + level.length * 50,
+            y: player.y - dy,
+            isSolid: true
+          });
+        if (obj.x > level.length * 50 - obj.size / 2) {
+          rWarp = obj.roomLink[1].currentRoom;
+          xWarp = -level.length * 50;
+          yWarp = dy;
+        }
+        break;
+      case "top":
+        for (
+          let x = gridUnit(px1 + dx) - maxBlockSize / 50;
+          x <= gridUnit(px2 + dx);
+          x++
+        ) {
+          if (isDead || obj.isDead) break;
+          for (
+            let y = gridUnit(py1 + newlvl[0].length * 50) - maxBlockSize / 50;
+            y <= gridUnit(py2 + newlvl[0].length * 50);
+            y++
+          ) {
+            if (isDead || obj.isDead) break;
+            let gridSpace = newlvl[x]?.[y];
+            if (gridSpace === undefined) {
+              if (y < 0 || y > newlvl[0].length - 1) continue;
+              gridSpace = [new Block(0, x * 50, y * 50, 50, true, true, 3)];
+            }
+            for (let i in gridSpace)
+              doCollision({
+                ...gridSpace[i],
+                x: gridSpace[i].x - dx,
+                y: gridSpace[i].y - newlvl[0].length * 50
+              });
+          }
+        }
+        if (obj.dynamic && player.currentRoom === obj.roomLink[1].currentRoom)
+          doCollision({
+            ...player,
+            x: player.x - dx,
+            y: player.y - newlvl[0].length * 50,
+            isSolid: true
+          });
+        if (obj.y < -obj.size / 2) {
+          rWarp = obj.roomLink[1].currentRoom;
+          xWarp = dx;
+          yWarp = newlvl[0].length * 50;
+        }
+        break;
+      case "bottom":
+        for (
+          let x = gridUnit(px1 + dx) - maxBlockSize / 50;
+          x <= gridUnit(px2 + dx);
+          x++
+        ) {
+          if (isDead || obj.isDead) break;
+          for (
+            let y = gridUnit(py1 - level[0].length * 50) - maxBlockSize / 50;
+            y <= gridUnit(py2 - level[0].length * 50);
+            y++
+          ) {
+            if (isDead || obj.isDead) break;
+            let gridSpace = newlvl[x]?.[y];
+            if (gridSpace === undefined) {
+              if (y < 0 || y > newlvl[0].length - 1) continue;
+              gridSpace = [new Block(0, x * 50, y * 50, 50, true, true, 3)];
+            }
+            for (let i in gridSpace)
+              doCollision({
+                ...gridSpace[i],
+                x: gridSpace[i].x - dx,
+                y: gridSpace[i].y + level[0].length * 50
+              });
+          }
+        }
+        if (obj.dynamic && player.currentRoom === obj.roomLink[1].currentRoom)
+          doCollision({
+            ...player,
+            x: player.x - dx,
+            y: player.y + level[0].length * 50,
+            isSolid: true
+          });
+        if (obj.y > level[0].length * 50 - obj.size / 2) {
+          rWarp = obj.roomLink[1].currentRoom;
+          xWarp = dx;
+          yWarp = -level[0].length * 50;
+        }
+        break;
+      default:
+    }
+    if (isPlayer && rWarp !== player.currentRoom) {
+      camx -= xWarp;
+      camy -= yWarp;
+    }
+  } else if (obj.dupSprite !== null) {
+    for (let i in obj.dupSprite.children) obj.dupSprite.children[i].destroy();
+    obj.dupSprite.destroy({
+      texture: isPlayer
+        ? false
+        : obj.dupSprite.texture !== blockData[obj.type].defaultTexture
+    });
+    obj.dupSprite = null;
+  }
   // crushed
   if (
     isPlayer &&
@@ -422,6 +672,7 @@ function doPhysics(obj, t, isPlayer) {
       obj.isDead = true;
     }
     // touch events
+    obj.roomLink = [];
     let tempObj = deepCopy(obj);
     for (let i in eventList) {
       for (let j in eventList[i]) {
@@ -644,14 +895,28 @@ function doPhysics(obj, t, isPlayer) {
     }
     // change position
     if (isPlayer) {
-      obj.x += obj.xv * t + (obj.xa * t * t) / 2;
-      obj.y += obj.yv * t + (obj.ya * t * t) / 2;
+      obj.x += obj.xv * t + (obj.xa * t * t) / 2 + xWarp;
+      obj.y += obj.yv * t + (obj.ya * t * t) / 2 + yWarp;
     } else {
       moveBlock(
         obj,
-        obj.xv * t + (obj.xa * t * t) / 2,
-        obj.yv * t + (obj.ya * t * t) / 2
+        obj.xv * t + (obj.xa * t * t) / 2 + xWarp,
+        obj.yv * t + (obj.ya * t * t) / 2 + yWarp
       );
+    }
+    if (obj.currentRoom !== rWarp) {
+      if (obj.dynamic) {
+        let newObj = deepCopy(obj);
+        removeBlock(obj);
+        newObj.dupSprite = null;
+        obj = newObj;
+      }
+      obj.currentRoom = rWarp;
+      if (obj.dynamic) addBlock(obj);
+      if (isPlayer) {
+        drawLevel(true);
+        adjustLevelSize();
+      }
     }
   } else {
     if (isPlayer) {
@@ -661,8 +926,8 @@ function doPhysics(obj, t, isPlayer) {
     } else removeBlock(obj);
   }
 }
-function setLevel(lvlData) {
-  level = lvlData;
+function setLevel(name) {
+  player.currentRoom = name;
   drawLevel(true);
   adjustLevelSize();
 }
@@ -677,9 +942,14 @@ function setSpawn(start = false) {
   saveState.isDead = false;
   dynamicSave = deepCopy(dynamicObjs);
 }
-function respawn(start = false) {
+function respawn(start = false, draw = true) {
+  let prevRoom = player.currentRoom;
   deathTimer = spawnDelay;
   player.isDead = false;
+  if (player.dupSprite !== null) {
+    player.dupSprite.destroy();
+    player.dupSprite = null;
+  }
   player = deepCopy(start ? startState : saveState);
   if (!editor?.playMode ?? false) {
     dynamicInit = deepCopy(dynamicObjs);
@@ -693,7 +963,10 @@ function respawn(start = false) {
     saveState = deepCopy(startState);
     dynamicSave = deepCopy(dynamicInit);
   }
-  drawLevel();
+  if (draw) {
+    drawLevel(player.currentRoom !== prevRoom);
+    adjustLevelSize();
+  }
 }
 function gridUnit(n) {
   return Math.max(0, Math.floor(n / 50));
@@ -716,6 +989,7 @@ function createSprite(block) {
   s.y = block.y;
   s.width = block.size;
   s.height = block.size;
+  s.zIndex = block.eventPriority;
   return s;
 }
 function isColliding(blockA, blockB, areSquares = false) {
@@ -742,26 +1016,43 @@ function isColliding(blockA, blockB, areSquares = false) {
   return ax1 < bx2 && ax2 > bx1 && ay1 < by2 && ay2 > by1;
 }
 function addBlock(block) {
-  block.index = level[gridUnit(block.x)][gridUnit(block.y)].push(block) - 1;
-  let s = createSprite(block);
-  levelLayer.addChild(s);
-  block.sprite = s;
-  blockData[block.type].update(block);
-  s.renderable = !block.invisible;
-  s.alpha = block.opacity;
+  block.index =
+    levels[block.currentRoom][gridUnit(block.x)][gridUnit(block.y)].push(
+      block
+    ) - 1;
+  let s;
+  if (block.currentRoom === player.currentRoom) {
+    s = createSprite(block);
+    levelLayer.addChild(s);
+    block.sprite = s;
+    updateBlock(block);
+  }
   if (block.dynamic) dynamicObjs.push(block);
   if (animatedTypes.includes(block.type)) animatedObjs.push(block);
   return block;
 }
 function removeBlock(block) {
-  block = level[gridUnit(block.x)][gridUnit(block.y)][block.index];
+  block =
+    levels[block.currentRoom][gridUnit(block.x)][gridUnit(block.y)][
+      block.index
+    ];
   let s = block.sprite;
-  for (let i in s.children) s.children[i].destroy();
-  s.destroy({ texture: s.texture !== blockData[block.type].defaultTexture });
+  if (block.currentRoom === player.currentRoom) {
+    for (let i in s.children) s.children[i].destroy();
+    s.destroy({ texture: s.texture !== blockData[block.type].defaultTexture });
+  }
+  if (block.dupSprite !== null) {
+    for (let i in block.dupSprite.children)
+      block.dupSprite.children[i].destroy();
+    block.dupSprite.destroy({
+      texture: block.dupSprite.texture !== blockData[block.type].defaultTexture
+    });
+  }
   if (block.dynamic) dynamicObjs.splice(dynamicObjs.indexOf(block), 1);
   if (animatedTypes.includes(block.type))
     animatedObjs.splice(animatedObjs.indexOf(block), 1);
-  let gridSpace = level[gridUnit(block.x)][gridUnit(block.y)];
+  let gridSpace =
+    levels[block.currentRoom][gridUnit(block.x)][gridUnit(block.y)];
   for (let i = parseInt(block.index) + 1; i < gridSpace.length; i++) {
     gridSpace[i].index--;
   }
@@ -780,22 +1071,17 @@ function scaleBlock(block, factor, focusX, focusY, draw = true) {
   }
 }
 function moveBlock(block, dx, dy) {
+  let level = levels[block.currentRoom];
   let gx = gridUnit(block.x);
   let gy = gridUnit(block.y);
   let gridSpace = level[gx][gy];
   let sprite = block.sprite;
   block.x += dx;
   block.y += dy;
-  if (block.x < 0 || block.x > level.length * 50 - block.size) {
-    block.x = Math.min(Math.max(block.x, 0), level.length * 50 - block.size);
-    block.xv = 0;
+  if (block.currentRoom === player.currentRoom) {
+    sprite.x = block.x;
+    sprite.y = block.y;
   }
-  if (block.y < 0 || block.y > level[0].length * 50 - block.size) {
-    block.y = Math.min(Math.max(block.y, 0), level[0].length * 50 - block.size);
-    block.yv = 0;
-  }
-  sprite.x = block.x;
-  sprite.y = block.y;
   let dgx = gridUnit(block.x) - gx;
   let dgy = gridUnit(block.y) - gy;
   let newGridSpace = level[gridUnit(block.x)][gridUnit(block.y)];
@@ -806,6 +1092,8 @@ function moveBlock(block, dx, dy) {
     gridSpace.splice(block.index, 1);
     block.index = newGridSpace.push(block) - 1;
   }
+  if (block.currentRoom === player.currentRoom && block.type === 23)
+    updateBlock(block);
 }
 function arraysEqual(a, b) {
   if (typeof a !== "object" || typeof b !== "object") return a === b;
@@ -827,7 +1115,7 @@ function deepCopy(inObject) {
   outObject = Array.isArray(inObject) ? [] : {};
   for (key in inObject) {
     value = inObject[key];
-    if (key === "lastCollided" || key === "sprite") {
+    if (key === "lastCollided" || key === "sprite" || key === "dupSprite") {
       outObject[key] = value;
     } else {
       outObject[key] = deepCopy(value);

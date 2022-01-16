@@ -96,6 +96,11 @@ body::after {
   width: 25px;
   height: 25px;
 }
+.tabButton {
+  width:50px;
+  height:25px;
+  background: white;
+}
 .buttonOn {
   background-color: #88ff88;
   background-blend-mode: multiply;
@@ -111,7 +116,7 @@ body::after {
   text-align: center;
   overflow-x: hidden;
 }
-.saveMenu > div {
+.saveMenu > div > div {
   background: #ffffff88;
 }
 .playDisp {

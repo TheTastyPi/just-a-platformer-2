@@ -26,6 +26,9 @@ class Block {
     this.crushPlayer = true;
     this.invincible = false;
     this.lastCollided = [];
+    this.roomLink = [];
+    this.dupSprite = null;
+    this.alwaysActive = false;
   }
 }
 class BlockType {
@@ -140,6 +143,7 @@ new BlockType(
     }
   ],
   (block, sprite = block.sprite, app = display) => {
+    if (sprite._destroyed) return;
     let colliding = isColliding(saveState, block, true);
     sprite.tint = colliding ? 0xffffff : 0x888888;
     if (canSave && !colliding) {
@@ -273,7 +277,8 @@ new BlockType(
     () => {},
     () => {},
     () => {},
-    (obj, block) => {
+    (obj, block, tempObj, isPlayer, isEntering, isExiting) => {
+      if (isExiting) return;
       obj.xv = Math.min(Math.max(obj.xv, -block.maxSpeed), block.maxSpeed);
       obj.yv = Math.min(Math.max(obj.yv, -block.maxSpeed), block.maxSpeed);
     }
@@ -334,13 +339,14 @@ new BlockType(
     }
     if (block.rightSpeed !== 0) {
       sprite.children[i].y = ((((t * block.rightSpeed) % 10) + 10) % 10) - 4;
-      i++
+      i++;
     }
     if (block.topSpeed !== 0) {
       sprite.children[i].x = ((((t * block.topSpeed) % 10) + 10) % 10) - 4;
-      i++
+      i++;
     }
-    if (block.bottomSpeed !== 0) sprite.children[i].x = ((((t * block.bottomSpeed) % 10) + 10) % 10) - 4;
+    if (block.bottomSpeed !== 0)
+      sprite.children[i].x = ((((t * block.bottomSpeed) % 10) + 10) % 10) - 4;
   },
   {
     leftSpeed: [() => -2000, () => 2000],
@@ -1293,7 +1299,8 @@ new BlockType(
       sprite.children[i].x = ((((t * block.topSpeed) % 10) + 10) % 10) - 4;
       i++;
     }
-    if (block.bottomWall && block.bottomSpeed !== 0) sprite.children[i].x = ((((t * block.bottomSpeed) % 10) + 10) % 10) - 4;
+    if (block.bottomWall && block.bottomSpeed !== 0)
+      sprite.children[i].x = ((((t * block.bottomSpeed) % 10) + 10) % 10) - 4;
   },
   {
     leftWall: [],
@@ -1305,11 +1312,184 @@ new BlockType(
     topSpeed: [() => -2000, () => 2000],
     bottomSpeed: [() => -2000, () => 2000]
   },
-  [
-    "leftWall",
-    "rightWall",
-    "topWall",
-    "bottomWall",
-  ]
+  ["leftWall", "rightWall", "topWall", "bottomWall"]
 );
-// bruh moment
+new BlockType(
+  "Teleporter",
+  {
+    ...new Block(22, 0, 0, 50, false, false, 1),
+    newPos: []
+  },
+  (block, app = display) => {
+    let g = new PIXI.Graphics();
+    g.beginFill(0xffbbff);
+    g.drawRect(0, 0, 50, 50);
+    g.endFill();
+    g.lineStyle({
+      width: 5,
+      color: 0x000000
+    });
+    g.drawCircle(25, 25, 20);
+    return app.renderer.generateTexture(g);
+  },
+  [
+    () => {},
+    () => {},
+    () => {},
+    () => {},
+    (obj, block) => {
+      if (block.newPos[0] === undefined) return;
+      let draw = obj.currentRoom !== block.newPos[0];
+      obj.currentRoom = block.newPos[0];
+      obj.x = block.newPos[1];
+      obj.y = block.newPos[2];
+      if (draw) drawLevel(true);
+    }
+  ],
+  () => {},
+  {
+    newPos: []
+  }
+);
+new BlockType(
+  "Boundary Warp",
+  {
+    ...new Block(23, 0, 0, 50, false, false, 1),
+    newRoom: "",
+    id: 0,
+    targetId: 0,
+    forceVert: false
+  },
+  (block, app = display) => {
+    let g = new PIXI.Graphics();
+    g.alpha = 0.5;
+    g.lineStyle({
+      width: 5,
+      color: 0x000000
+    });
+    if ((block.x === 0 && !block.forceVert) || app !== display) {
+      g.moveTo(25, 15);
+      g.lineTo(15, 25);
+      g.lineTo(25, 35);
+    } else if (
+      block.x + block.size === levels[player.currentRoom].length * 50 &&
+      !block.forceVert
+    ) {
+      g.moveTo(25, 15);
+      g.lineTo(35, 25);
+      g.lineTo(25, 35);
+    } else if (block.y === 0) {
+      g.moveTo(15, 25);
+      g.lineTo(25, 15);
+      g.lineTo(35, 25);
+    } else if (
+      block.y + block.size ===
+      levels[player.currentRoom][0].length * 50
+    ) {
+      g.moveTo(15, 25);
+      g.lineTo(25, 35);
+      g.lineTo(35, 25);
+    } else {
+      g.moveTo(10,10);
+      g.lineTo(40,40);
+      g.moveTo(10,40);
+      g.lineTo(40,10);
+    }
+    return app.renderer.generateTexture(
+      g,
+      undefined,
+      undefined,
+      new PIXI.Rectangle(0, 0, 50, 50)
+    );
+  },
+  [
+    () => {},
+    () => {},
+    () => {},
+    () => {},
+    (obj, block, tempObj, isPlayer, isEntering, isExiting) => {
+      let newlvl = levels[block.newRoom];
+      if (newlvl === undefined) return;
+      if (obj.roomLink[0] === undefined) {
+        obj.roomLink.push(block);
+        if (block.x === 0 && !block.forceVert) {
+          obj.roomLink.push(
+            newlvl[newlvl.length - 1]
+              .flat()
+              .find(
+                (b) =>
+                  b.type === 23 &&
+                  b.x + b.size === newlvl.length * 50 &&
+                  block.targetId === b.id &&
+                  !b.forceVert
+              )
+          );
+          obj.roomLink.push("left");
+        } else if (
+          block.x + block.size === levels[block.currentRoom].length * 50 &&
+          !block.forceVert
+        ) {
+          obj.roomLink.push(
+            newlvl[0]
+              .flat()
+              .find(
+                (b) =>
+                  b.type === 23 &&
+                  b.x === 0 &&
+                  block.targetId === b.id &&
+                  !b.forceVert
+              )
+          );
+          obj.roomLink.push("right");
+        } else if (block.y === 0) {
+          let link;
+          for (let x in newlvl) {
+            for (let i in newlvl[x][newlvl[x].length - 1]) {
+              let b = newlvl[x][newlvl[x].length - 1][i];
+              if (
+                b.type === 23 &&
+                b.y + b.size === newlvl[0].length * 50 &&
+                block.targetId === b.id &&
+                (b.forceVert || (b.x !== 0 && b.x + b.size !== newlvl.length * 50))
+              ) {
+                link = b;
+                break;
+              }
+            }
+            if (link !== undefined) break;
+          }
+          obj.roomLink.push(link);
+          obj.roomLink.push("top");
+        } else if (block.y + block.size === levels[block.currentRoom][0].length * 50) {
+          let link;
+          for (let x in newlvl) {
+            for (let i in newlvl[x][0]) {
+              let b = newlvl[x][0][i];
+              if (b.type === 23 && b.y === 0 && block.targetId === b.id  &&
+                (b.forceVert || (b.x !== 0 && b.x + b.size !== newlvl.length * 50))) {
+                link = b;
+                break;
+              }
+            }
+            if (link !== undefined) break;
+          }
+          obj.roomLink.push(link);
+          obj.roomLink.push("bottom");
+        }
+      }
+      if (obj.roomLink[1] === undefined) obj.roomLink = [];
+    }
+  ],
+  (block, sprite = block.sprite, app) => {
+    if (sprite.texture !== blockData[block.type].defaultTexture)
+      sprite.texture.destroy(true);
+    sprite.texture = blockData[block.type].getTexture(block, app);
+  },
+  {
+    newRoom: [],
+    id: [],
+    targetId: [],
+    forceVert: []
+  },
+  ["x", "y", "forceVert"]
+);

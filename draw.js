@@ -1,4 +1,5 @@
 var playerDisp = new PIXI.Sprite(blockData[0].defaultTexture);
+playerDisp.zIndex = -1;
 levelLayer.addChild(playerDisp);
 function drawPlayer() {
   let ratio = player.currentJump / player.maxJump;
@@ -11,9 +12,18 @@ function drawPlayer() {
   playerDisp.y = player.y;
   playerDisp.width = player.size;
   playerDisp.height = player.size;
+  if (player.dupSprite !== null) {
+    player.dupSprite.tint = PIXI.utils.rgb2hex([1 - ratio, 0, ratio]);
+    if (editor?.invincible)
+      player.dupSprite.tint = PIXI.utils.rgb2hex([1, 0, 1]);
+    player.dupSprite.alpha = player.isDead ? 0.5 : 1;
+    player.dupSprite.width = player.size;
+    player.dupSprite.height = player.size;
+  }
 }
 var prevLevel = [];
 function drawLevel(clear = false) {
+  let level = levels[player.currentRoom];
   if (clear) {
     prevLevel = [];
     levelLayer.removeChildren();
@@ -53,6 +63,7 @@ var lvlxOffset = 0;
 var lvlyOffset = 0;
 var camxPrev = 0;
 var camyPrev = 0;
+var camsPrev = 1;
 var camx = 0;
 var camy = 0;
 var cams = 1;
@@ -60,6 +71,7 @@ var camDelay = 10;
 var camFocused = true;
 var gridVisPrev;
 function adjustScreen(instant = false) {
+  let level = levels[player.currentRoom];
   let lvlx = level.length * 50 * cams;
   let lvly = level[0].length * 50 * cams;
   if (camFocused) {
@@ -95,6 +107,7 @@ function adjustScreen(instant = false) {
   if (
     camx !== camxPrev ||
     camy !== camyPrev ||
+    cams !== camsPrev ||
     gridDisp?.visible !== gridVisPrev
   ) {
     id("background").style.left =
@@ -109,6 +122,14 @@ function adjustScreen(instant = false) {
       ) + "px";
     levelLayer.x = camx;
     levelLayer.y = camy;
+    levelMask.x = Math.min(
+      Math.max(0, camx),
+      camx + Math.max(0, level.length * 50 * cams - window.innerWidth)
+    );
+    levelMask.y = Math.min(
+      Math.max(0, camy),
+      camy + Math.max(0, level[0].length * 50 * cams - window.innerHeight)
+    );
     if (editor !== undefined && gridDisp.visible) {
       gridDisp.x =
         Math.min(
@@ -125,24 +146,36 @@ function adjustScreen(instant = false) {
     }
     updateSelectDisp();
     for (
-      let x = Math.max(Math.min(gridUnit(-camx) - 1, gridUnit(-camxPrev)), 0);
+      let x = Math.max(
+        Math.min(
+          gridUnit(-camx / cams) - maxBlockSize / 50,
+          gridUnit(-camxPrev / camsPrev)
+        ),
+        0
+      );
       x <=
       Math.min(
         Math.max(
-          gridUnit(-camx + window.innerWidth),
-          gridUnit(-camxPrev + window.innerWidth)
+          gridUnit((-camx + window.innerWidth) / cams),
+          gridUnit((-camxPrev + window.innerWidth) / cams)
         ),
         level.length - 1
       );
       x++
     ) {
       for (
-        let y = Math.max(Math.min(gridUnit(-camy), gridUnit(-camxPrev)), 0);
+        let y = Math.max(
+          Math.min(
+            gridUnit(-camy / cams) - maxBlockSize / 50,
+            gridUnit(-camxPrev / camsPrev)
+          ),
+          0
+        );
         y <=
         Math.min(
           Math.max(
-            gridUnit(-camy + window.innerHeight),
-            gridUnit(-camyPrev + window.innerHeight)
+            gridUnit((-camy + window.innerHeight) / cams),
+            gridUnit((-camyPrev + window.innerHeight) / camsPrev)
           ),
           level[0].length - 1
         );
@@ -154,10 +187,12 @@ function adjustScreen(instant = false) {
   }
   camxPrev = camx;
   camyPrev = camy;
+  camsPrev = cams;
   gridVisPrev = gridDisp?.visible;
   drawPlayer();
 }
 function adjustLevelSize() {
+  let level = levels[player.currentRoom];
   let w = Math.min(level.length * 50 * cams, window.innerWidth);
   let h = Math.min(level[0].length * 50 * cams, window.innerHeight);
   gridDisp.width = Math.min(level.length * 50, window.innerWidth / cams);
@@ -166,6 +201,10 @@ function adjustLevelSize() {
   id("background").style.height = h + "px";
   levelLayer.scale.set(cams, cams);
   selectLayer?.scale?.set(cams, cams);
+  levelMask.clear();
+  levelMask.beginFill(0xff0000);
+  levelMask.drawRect(0, 0, w, h);
+  levelMask.endFill();
   adjustScreen(true);
 }
 function cullBlock(block) {

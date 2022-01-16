@@ -39,13 +39,28 @@ var editor = {
   invincible: false,
   showMenus: true,
   playMode: false,
-  doAnimation: true
+  doAnimation: true,
+  rightTab: "save",
+  choosePos: false,
+  chooseFor: undefined,
+  currentRoom: "default",
+  roomOrder: ["default"]
 };
 const propData = {
   // general
   type: ["blockType", "t"],
-  x: ["num", "x", () => 0, (block) => level.length * 50 - block.size],
-  y: ["num", "y", () => 0, (block) => level[0].length * 50 - block.size],
+  x: [
+    "num",
+    "x",
+    () => 0,
+    (block) => levels[player.currentRoom].length * 50 - block.size
+  ],
+  y: [
+    "num",
+    "y",
+    () => 0,
+    (block) => levels[player.currentRoom][0].length * 50 - block.size
+  ],
   size: ["num", "s", () => 6.25, () => maxBlockSize],
   isSolid: ["bool", "so"],
   giveJump: ["bool", "j"],
@@ -55,6 +70,7 @@ const propData = {
   friction: ["bool", "fr"],
   dynamic: ["bool", "dy"],
   interactive: ["bool", "i"],
+  currentRoom: ["str", "cR"],
   // solid only
   floorLeniency: ["num", "fl", () => 0, () => 50],
   // dynamic props
@@ -65,6 +81,7 @@ const propData = {
   pushable: ["bool", "u"],
   crushPlayer: ["bool", "csh"],
   invincible: ["bool", "iv"],
+  alwaysActive: ["bool", "aA"],
   // special
   power: ["num", "p"],
   color: ["color", "c"],
@@ -93,18 +110,25 @@ const propData = {
   leftWall: ["bool", "lW"],
   rightWall: ["bool", "rW"],
   topWall: ["bool", "tW"],
-  bottomWall: ["bool", "bW"]
+  bottomWall: ["bool", "bW"],
+  newPos: ["pos", "nP"],
+  newRoom: ["str", "nR"],
+  id: ["int", "id"],
+  targetId: ["int", "tId"],
+  forceVert: ["bool", "fV"]
 };
 const propAliasReverse = {};
 const blockList = {
-  Special: [2, 11],
+  Special: [2, 11, 22, 23],
   Basic: [0, 16, 1, 17],
   Dynamic: [4, 5],
   Movement: [3, 18, 15, 19, 6, 20, 8, 21, 7, 12],
   Status: [9, 10, 13, 14]
 };
-var level =
-  "NrDeCIBcE8AcFNwC4AMAacAPZAmArBtLngL5oQwLLrhFJ4pkVyKqHICMKj5UL17JBwZM+VNrVzdRlVjTr4ezcfOQBmab1kDJSNSK38JdNQHYCWYjKM1s9JWLkY7DQQBZNyp5aGfHOuy5VJEVrFWdOfEEcczDvQO53P20JQIMvAM5zQQ4o8ABnK0Nwn2FgjjMAOgtCoRxquMyhV11cmsiG4vjOFroOXOqMWoHSLqaynMSCjtGM1M4ANnqLPqnh5cb5oWzWtZnN204ADlNB3Zp1zrnDoROzvpGh-bGtidb0-1fe9WSbCObgh4HCkbjhfiU7GDghpgUZ+v8oYJ9DRIJhIMhwAAFABO8Hy+QABMAABIAXQJkAA9gTKQgAHYUgAW8AJzIANrACQBbeB0gCuAEJwAcEVM6ECRT5Qi9QTs+nlavhJZC7itOI9pnUrp9QarJhdntcEXLOHstbMdQilvdTQbzcriOUzSMHSFvkINZcLSCEe62k97TLfeUqu1A0apX6Pj6pSaQrEg5HoeDum7ASmmjDXTDotG-j4c7oJYm7Mjs3GlSX1HGzN786X3cWI3YgYI8xDkK3zq6u3126ne1JYR2kIO0z2xT9hwPJ3oRKS0ABOJekoA";
+var levels = {
+  default:
+    "NrDeCIBcE8AcFNwC4AMAacAPZAmArBtLgeAMYBKy4AJvAGYCGArgDaTgC+aEMCy64IkjwCKVWo1bsuPOIlSFkARhSjKSGvWZtO3KHP6KkSkRjEaJ26Xt7yBQnKrPrNknTP18Fg4mvFapXVkve2QAZicyF0tAj1tDHyQw0yj-N2tguyMwgHYSbCR8ZzSrIM8srGQU81dSuINvApShABZImpj3GwaBApU-CwCuzIS+yIdq6KGM8tHlIsScPOLB9LL4xuVx5DaB2tjukIw+yZKDkc3jZcSlBYBnYhX94dnLk1DjXIA6EgfjHB+T06Mw2vWUzXmv3mgNSqzqhwqJw+SluML+qJIHWm6x6x3ByMi6IBmKma3qR0qxgAbMSjP0MESYViyQi5lcSEJ6eBGSSzi9QXjjAAOHIwzmE6G8uHnV5g4WijnKDEMyVA7HkxH4umnaX83GU97Zdqk+EXOWGxK7NUss2Cxx7YE4ikFe1Gh3q1nGJR27ZJFKQTDsDQABQATvA7ncAATAAASAF0o5AAPZR5MIAB2SYAFvAo7mWLAowBbeAZpgAQnA1tNsp9HytsOeIP1Lp1zadmsK10590eTcdGrZOBFYqVtO5qoHHttlJHCrpEv+TJNMoFc57WwEPJra9buBpY+MS+V05tdbnEOP26nzNr67byNPO7P9-3hSvtyhy6lHaHl3wZFvm-U87z3Z1fG1d1zwfXBN27X9B09OVALdXc9Qgj8G2NPkW0wiJoLffDfVQ19wK7AijEbMCMIo9skNnApckVD90Lwij4OYtjOzZZJsMI8i2UbIR6JnC8CmErduP-OVJOMUSYPfOTXTI2ihJIhSiK7OTKNU9j1I+PjpPjNAAE4zPjIA"
+};
 var blockSelect = new Vue({
   el: "#blockSelect",
   data: {
@@ -138,7 +162,8 @@ var blockEdit = new Vue({
       "xg",
       "pushable",
       "crushPlayer",
-      "invincible"
+      "invincible",
+      "alwaysActive"
     ],
     propData: propData,
     inputType: {
@@ -148,7 +173,8 @@ var blockEdit = new Vue({
       bool: "checkbox",
       blockType: "select",
       color: "color",
-      hidden: "none"
+      hidden: "none",
+      pos: "button"
     },
     blocks: blockList
   }
@@ -160,6 +186,8 @@ gridDisp.visible = false;
 selectLayer.addChild(gridDisp);
 var buildDisp = new PIXI.Graphics();
 selectLayer.addChild(buildDisp);
+var tpDisp = new PIXI.Graphics();
+selectLayer.addChild(tpDisp);
 var selectDisp = new PIXI.ParticleContainer(
   1500,
   { vertices: true },
@@ -260,6 +288,47 @@ document.addEventListener("keydown", function (event) {
     case "KeyP":
       if (!mouseDown.includes(true)) togglePlayMode();
       break;
+    case "ControlLeft":
+    case "ControlRight":
+      if (!event.shiftKey) {
+        tpDisp.visible = true;
+        updateTpDisp(
+          (editor.mousePos[0] - camx) / cams,
+          (editor.mousePos[1] - camy) / cams
+        );
+        buildDisp.visible = false;
+        selectBox.visible = false;
+      }
+      break;
+    case "ShiftLeft":
+    case "ShiftRight":
+      tpDisp.visible = false;
+      buildDisp.visible = !editor.editMode;
+      break;
+    default:
+  }
+});
+document.addEventListener("keyup", function (event) {
+  event.preventDefault();
+  let key = event.code;
+  switch (key) {
+    case "ControlLeft":
+    case "ControlRight":
+      tpDisp.visible = false;
+      buildDisp.visible = !editor.editMode;
+      break;
+    case "ShiftLeft":
+    case "ShiftRight":
+      if (event.ctrlKey) {
+        tpDisp.visible = true;
+        updateTpDisp(
+          (editor.mousePos[0] - camx) / cams,
+          (editor.mousePos[1] - camy) / cams
+        );
+        buildDisp.visible = false;
+        selectBox.visible = false;
+      }
+      break;
     default:
   }
 });
@@ -273,9 +342,19 @@ id("display").addEventListener("mousedown", function (event) {
     case 0: // left
       if (editor.playMode) return;
       if ((event.ctrlKey || event.metaKey) && !event.shiftKey) {
-        player.x = xPos - player.size / 2;
-        player.y = yPos - player.size / 2;
+        let loc = getTpLocation(xPos, yPos);
+        player.x = loc[0];
+        player.y = loc[1];
         player.isDead = false;
+        if (editor.choosePos) {
+          editor.editBlock[editor.chooseFor] = [
+            player.currentRoom,
+            player.x,
+            player.y
+          ];
+          editor.choosePos = false;
+          confirmEditAll();
+        }
       } else if (!(event.ctrlKey || event.metaKey)) {
         if (editor.editMode) {
           editor.selectStart = [event.clientX, event.clientY];
@@ -283,6 +362,7 @@ id("display").addEventListener("mousedown", function (event) {
           selectBox.clear();
         } else {
           updateBuildLocation(xPos, yPos);
+          editor.buildSelect.currentRoom = player.currentRoom;
           addAction("addBlock", [
             deepCopy(addBlock(deepCopy(editor.buildSelect)))
           ]);
@@ -402,6 +482,7 @@ document.addEventListener("mousemove", function (event) {
     default:
   }
   if (!editor.editMode) updateBuildLocation(xPos, yPos);
+  if (event.ctrlKey && !event.shiftKey) updateTpDisp(xPos, yPos);
 });
 document.addEventListener("mouseup", function (event) {
   let button = event.button;
@@ -505,6 +586,7 @@ function changeBuildSelect(block) {
   updateBuildDisp();
 }
 function updateBuildLocation(x, y) {
+  let level = levels[player.currentRoom];
   editor.buildSelect.x = Math.min(
     Math.max(x - editor.buildSelect.size / 2, 0),
     level.length * 50 - editor.buildSelect.size
@@ -532,8 +614,31 @@ function updateBuildDisp() {
   buildDisp.drawRect(0, 0, block.size, block.size);
   buildDisp.lineStyle(2, 0xffffff, 0.5, 0);
   buildDisp.drawRect(0, 0, block.size, block.size);
-  buildDisp.x = editor.buildSelect.x + camx / cams;
-  buildDisp.y = editor.buildSelect.y + camy / cams;
+  buildDisp.x = block.x + camx / cams;
+  buildDisp.y = block.y + camy / cams;
+}
+function getTpLocation(x, y) {
+  let level = levels[player.currentRoom];
+  let nx = Math.min(
+    Math.max(x - player.size / 2, 0),
+    level.length * 50 - player.size
+  );
+  let ny = Math.min(
+    Math.max(y - player.size / 2, 0),
+    level[0].length * 50 - player.size
+  );
+  let snapPos = getSnapPos({ ...player, x: nx, y: ny });
+  return [snapPos[0], snapPos[1]];
+}
+function updateTpDisp(x, y) {
+  let loc = getTpLocation(x, y);
+  tpDisp.clear();
+  tpDisp.lineStyle(2, 0x000000, 0.5, 1);
+  tpDisp.drawRect(0, 0, player.size, player.size);
+  tpDisp.lineStyle(2, 0xffffff, 0.5, 0);
+  tpDisp.drawRect(0, 0, player.size, player.size);
+  tpDisp.x = loc[0] + camx / cams;
+  tpDisp.y = loc[1] + camy / cams;
 }
 function confirmPropEdit(block) {
   let newBlock = deepCopy(block);
@@ -544,7 +649,8 @@ function confirmPropEdit(block) {
         ...blockData[editBlock.type].defaultBlock,
         x: newBlock.x,
         y: newBlock.y,
-        size: newBlock.size
+        size: newBlock.size,
+        currentRoom: newBlock.currentRoom
       };
       break;
     }
@@ -593,16 +699,16 @@ function select(selectRect, single = false, prev, build = false) {
   let found = prev === undefined;
   let cycled = false;
   for (
-    let x = gridUnit(selectRect.x) - maxBlockSize/50;
+    let x = gridUnit(selectRect.x) - maxBlockSize / 50;
     x <= gridUnit(selectRect.x + selectRect.width);
     x++
   ) {
     for (
-      let y = gridUnit(selectRect.y) - maxBlockSize/50;
+      let y = gridUnit(selectRect.y) - maxBlockSize / 50;
       y <= gridUnit(selectRect.y + selectRect.height);
       y++
     ) {
-      let gridSpace = level[x]?.[y];
+      let gridSpace = levels[player.currentRoom][x]?.[y];
       if (gridSpace === undefined) continue;
       for (let i in gridSpace) {
         let block = gridSpace[i];
@@ -664,6 +770,7 @@ function deselect() {
   selectDisp.removeChildren();
   editor.editBlock = undefined;
   editor.editBlockProp = [];
+  editor.choosePos = false;
 }
 function reselect() {
   for (let j in editor.editSelect) {
@@ -783,6 +890,7 @@ function createGridTexture() {
   );
 }
 function getSnapPos(box) {
+  let level = levels[player.currentRoom];
   let width = box.size;
   if (width === undefined) width = box.width;
   let height = box.size;
@@ -857,6 +965,7 @@ function getSnapPos(box) {
   return [newX, newY];
 }
 function changeLevelSize(dir, num, action = true) {
+  let level = levels[player.currentRoom];
   let prevX = level.length;
   let prevY = level[0].length;
   let removed = [];
@@ -895,8 +1004,9 @@ function changeLevelSize(dir, num, action = true) {
           })
         )
       );
-      startState.x += 50 * num;
-      saveState.x += 50 * num;
+      if (startState.currentRoom === player.currentRoom)
+        startState.x += 50 * num;
+      if (saveState.currentRoom === player.currentRoom) saveState.x += 50 * num;
       player.x += 50 * num;
       dynamicSave = deepCopy(dynamicObjs);
       dynamicInit = deepCopy(dynamicObjs);
@@ -961,8 +1071,9 @@ function changeLevelSize(dir, num, action = true) {
           })
         )
       );
-      startState.y += 50 * num;
-      saveState.y += 50 * num;
+      if (startState.currentRoom === player.currentRoom)
+        startState.y += 50 * num;
+      if (saveState.currentRoom === player.currentRoom) saveState.y += 50 * num;
       player.y += 50 * num;
       dynamicSave = deepCopy(dynamicObjs);
       dynamicInit = deepCopy(dynamicObjs);
@@ -1142,6 +1253,11 @@ function lvl2str(lvl) {
   let str = JSON.stringify([lvl, w, h]);
   return LZString.compressToEncodedURIComponent(str);
 }
+function lvls2str(lvls) {
+  lvls = deepCopy(lvls);
+  for (let i in lvls) lvls[i] = lvl2str(lvls[i]);
+  return JSON.stringify(lvls);
+}
 function str2lvl(str) {
   let lvlData = JSON.parse(LZString.decompressFromEncodedURIComponent(str));
   let blocks = lvlData[0];
@@ -1181,6 +1297,19 @@ function str2lvl(str) {
   }
   return [lvl, dynBlocks, aniBlocks];
 }
+function str2lvls(str) {
+  let lvls = JSON.parse(str);
+  let dynBlocks = [];
+  let aniBlocks = [];
+  for (let i in lvls) {
+    let lvl = lvls[i];
+    lvl = str2lvl(lvl);
+    lvls[i] = lvl[0];
+    dynBlocks.push(...lvl[1]);
+    aniBlocks.push(...lvl[2]);
+  }
+  return [lvls, dynBlocks, aniBlocks];
+}
 function pState2str(pState) {
   pState = deepCopy(pState);
   for (let prop in pState) {
@@ -1203,9 +1332,9 @@ function storeSave() {
 }
 function addSave() {
   let name = prompt("Please input save name.");
-  if (name === null) return;
   while (editor.saveOrder.includes(name))
     name = prompt("Name taken. Please input new save name.");
+  if (name === null) return;
   editor.saveOrder.push(name);
   editor.currentSave = name;
   save();
@@ -1213,20 +1342,52 @@ function addSave() {
 function save() {
   if (editor.playMode) return;
   if (editor.currentSave !== undefined)
-    editor.saves[editor.currentSave] = [lvl2str(level), pState2str(startState)];
+    editor.saves[editor.currentSave] = [
+      lvls2str(levels),
+      pState2str(startState),
+      deepCopy(editor.roomOrder)
+    ];
   storeSave();
 }
 function load(name) {
   let save = editor.saves[name];
   if (save) {
-    let saveData = str2lvl(save[0]);
-    setLevel(saveData[0]);
+    let saveData;
+    if (save[0][0] === "{") {
+      saveData = str2lvls(save[0]);
+      levels = saveData[0];
+    } else {
+      saveData = str2lvl(save[0]);
+      levels = { [name]: saveData[0] };
+      levels[name].map((x) =>
+        x.map((y) =>
+          y.map((b) => {
+            b.currentRoom = name;
+          })
+        )
+      );
+      for (let i in saveData[1]) saveData[1][i].currentRoom = name;
+      for (let i in saveData[2]) saveData[2][i].currentRoom = name;
+    }
     animatedObjs = saveData[2];
     startState = str2pState(save[1]);
+    if (save[0][0] !== "{") {
+      startState.currentRoom = name;
+      player.currentRoom = name;
+    }
+    if (save[2] === undefined) {
+      editor.roomOrder = Object.keys(levels);
+    } else editor.roomOrder = save[2];
+    if (!editor.roomOrder.includes(startState.currentRoom)) {
+      startState.currentRoom = editor.roomOrder[0];
+      player.currentRoom = editor.roomOrder[0];
+    }
     togglePlayMode();
     dynamicInit = saveData[1];
     dynamicObjs = [];
-    respawn(true);
+    respawn(true, false);
+    drawLevel(true);
+    adjustLevelSize();
     updateGrid();
     deselect();
     editor.currentSave = name;
@@ -1282,23 +1443,90 @@ function moveSave(name, dir) {
   editor.saveOrder.splice(index + dir, 0, name);
   storeSave();
 }
+function addRoom() {
+  let name = prompt("Please input room name.");
+  while (editor.roomOrder.includes(name))
+    name = prompt("Name taken. Please input new save name.");
+  if (name === null) return;
+  editor.roomOrder.push(name);
+  levels[name] = deepCopy(levels[player.currentRoom]);
+  levels[name].map((x) =>
+    x.map((y) =>
+      y.map((b) => {
+        b.currentRoom = name;
+        if (b.dynamic) dynamicObjs.push(b);
+      })
+    )
+  );
+  player.currentRoom = name;
+  save();
+}
+function deleteRoom(name) {
+  if (editor.roomOrder.length === 1) {
+    alert("Cannot remove room when only one room remains.");
+    return;
+  }
+  if (!confirm(`Are you sure you want to delete ${name}?`)) return;
+  levels[name].map((x) =>
+    x.map((y) =>
+      y.map((b) => {
+        removeBlock(b);
+      })
+    )
+  );
+  delete levels[name];
+  editor.roomOrder.splice(editor.roomOrder.indexOf(name), 1);
+  if (player.currentRoom === name) {
+    player.currentRoom = editor.roomOrder[0];
+    drawLevel(true);
+  }
+  save();
+}
+function renameRoom(name) {
+  let newName = prompt("Please input new name.");
+  if (newName !== null && newName !== name) {
+    editor.roomOrder.splice(editor.roomOrder.indexOf(name), 1, newName);
+    levels[newName] = deepCopy(levels[name]);
+    levels[newName].map((x) =>
+      x.map((y) =>
+        y.map((b) => {
+          b.currentRoom = newName;
+        })
+      )
+    );
+    delete levels[name];
+    if (player.currentRoom === name) player.currentRoom = newName;
+    save();
+  }
+}
+function moveRoom(name, dir) {
+  let index = editor.roomOrder.indexOf(name);
+  if (index + dir < 0 || index + dir >= editor.roomOrder.length) return;
+  editor.roomOrder.splice(index, 1);
+  editor.roomOrder.splice(index + dir, 0, name);
+  save();
+}
+function showTooltips(text) {
+  if (editor.showTooltips) {
+    id("tooltip").textContent = text;
+    id("tooltip").style.display = "block";
+    id("tooltip").style.left =
+      Math.min(
+        event.clientX + 5,
+        window.innerWidth - id("tooltip").clientWidth
+      ) + "px";
+    id("tooltip").style.top =
+      Math.max(event.clientY - id("tooltip").clientHeight - 5, 0) + "px";
+  }
+}
+function hideTooltips() {
+  id("tooltip").style.display = "none";
+}
 function addTooltip(elem, text) {
   elem.addEventListener("mousemove", function (event) {
-    if (editor.showTooltips) {
-      id("tooltip").textContent = text;
-      id("tooltip").style.display = "block";
-      id("tooltip").style.left =
-        Math.min(
-          event.clientX + 5,
-          window.innerWidth - id("tooltip").clientWidth
-        ) + "px";
-      id("tooltip").style.top =
-        Math.max(event.clientY - id("tooltip").clientHeight - 5, 0) + "px";
-    }
+    showTooltips(text);
   });
-  elem.addEventListener("mouseleave", function () {
-    id("tooltip").style.display = "none";
-  });
+  elem.addEventListener("mouseleave", hideTooltips);
 }
 function blurAll() {
   id("exportArea").style.display = "inline";
@@ -1341,14 +1569,12 @@ function updateMenus() {
   }
 }
 function init() {
-  document.querySelectorAll(".hasTooltip").forEach(function (ele) {
-    addTooltip(ele, ele.dataset.tooltip);
-  });
   setInterval(function () {
     if (editor.autoSave) save();
   }, 5000);
   startState.x = 215;
   startState.y = 280;
+  startState.currentRoom = "default";
   for (let i in blockData) {
     let btn = new PIXI.Application({
       width: 50,
@@ -1364,7 +1590,8 @@ function init() {
     btn.stage.addChild(s);
   }
   for (let i in propData) propAliasReverse[propData[i][1]] = i;
-  setLevel(str2lvl(level)[0]);
+  levels.default = str2lvl(levels.default)[0];
+  player.currentRoom = "default";
   drawLevel(true);
   adjustLevelSize();
   updateGrid();
@@ -1372,3 +1599,4 @@ function init() {
   changeBuildSelect(deepCopy(blockData[0].defaultBlock));
   window.requestAnimationFrame(nextFrame);
 }
+init();
