@@ -202,7 +202,7 @@
 - Fixed a bug where you sometimes can't select a block over size 50
 - Fixed a bug where removing blocks via undo/redo can cause the game to crash
 
-## ?? ???. 2022
+## 16 Jan. 2022
 
 - Added rooms
   - Access room controls through the 'rooms' tab beside 'saves'
