@@ -205,7 +205,6 @@ function adjustLevelSize() {
   levelMask.beginFill(0xff0000);
   levelMask.drawRect(0, 0, w, h);
   levelMask.endFill();
-  adjustScreen(true);
 }
 function cullBlock(block) {
   block.sprite.visible =

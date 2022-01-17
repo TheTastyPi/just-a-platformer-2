@@ -1384,6 +1384,7 @@ function load(name) {
     respawn(true, false);
     drawLevel(true);
     adjustLevelSize();
+    adjustScreen(true);
     updateGrid();
     deselect();
     editor.currentSave = name;
@@ -1590,6 +1591,7 @@ function init() {
   player.currentRoom = "default";
   drawLevel(true);
   adjustLevelSize();
+  adjustScreen(true);
   updateGrid();
   respawn(true);
   changeBuildSelect(deepCopy(blockData[0].defaultBlock));

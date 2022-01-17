@@ -235,3 +235,7 @@
 - Dynamic blocks no longer die if the player is inside of them
 - All dynamic blocks are now centered after using a Teleporter
 - Fixed a bug where respawning after a dynamic block interacts with a Teleporter causes the game to crash
+
+#### 17 Jan. 2022 #2
+
+- Fixed screen transitions, which were supposed to be in the game, but no one noticed since it didn't exist in jap1
