@@ -347,11 +347,7 @@ id("display").addEventListener("mousedown", function (event) {
         player.y = loc[1];
         player.isDead = false;
         if (editor.choosePos) {
-          editor.editBlock[editor.chooseFor] = [
-            player.currentRoom,
-            player.x,
-            player.y
-          ];
+          editor.editBlock[editor.chooseFor] = [player.currentRoom, xPos, yPos];
           editor.choosePos = false;
           confirmEditAll();
         }

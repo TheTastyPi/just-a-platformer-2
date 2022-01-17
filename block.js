@@ -1337,13 +1337,17 @@ new BlockType(
     () => {},
     () => {},
     () => {},
-    (obj, block) => {
+    (obj, block, tempObj, isPlayer) => {
       if (block.newPos[0] === undefined) return;
       let draw = obj.currentRoom !== block.newPos[0];
       obj.currentRoom = block.newPos[0];
-      obj.x = block.newPos[1];
-      obj.y = block.newPos[2];
-      if (draw) drawLevel(true);
+      let nx = block.newPos[1] - obj.size / 2;
+      let ny = block.newPos[2] - obj.size / 2;
+      if (isPlayer) {
+        obj.x = nx;
+        obj.y = ny;
+        if (draw) drawLevel(true);
+      } else moveBlock(obj, nx - obj.x, ny - obj.y);
     }
   ],
   () => {},
@@ -1390,10 +1394,10 @@ new BlockType(
       g.lineTo(25, 35);
       g.lineTo(35, 25);
     } else {
-      g.moveTo(10,10);
-      g.lineTo(40,40);
-      g.moveTo(10,40);
-      g.lineTo(40,10);
+      g.moveTo(10, 10);
+      g.lineTo(40, 40);
+      g.moveTo(10, 40);
+      g.lineTo(40, 10);
     }
     return app.renderer.generateTexture(
       g,
@@ -1450,7 +1454,8 @@ new BlockType(
                 b.type === 23 &&
                 b.y + b.size === newlvl[0].length * 50 &&
                 block.targetId === b.id &&
-                (b.forceVert || (b.x !== 0 && b.x + b.size !== newlvl.length * 50))
+                (b.forceVert ||
+                  (b.x !== 0 && b.x + b.size !== newlvl.length * 50))
               ) {
                 link = b;
                 break;
@@ -1460,13 +1465,21 @@ new BlockType(
           }
           obj.roomLink.push(link);
           obj.roomLink.push("top");
-        } else if (block.y + block.size === levels[block.currentRoom][0].length * 50) {
+        } else if (
+          block.y + block.size ===
+          levels[block.currentRoom][0].length * 50
+        ) {
           let link;
           for (let x in newlvl) {
             for (let i in newlvl[x][0]) {
               let b = newlvl[x][0][i];
-              if (b.type === 23 && b.y === 0 && block.targetId === b.id  &&
-                (b.forceVert || (b.x !== 0 && b.x + b.size !== newlvl.length * 50))) {
+              if (
+                b.type === 23 &&
+                b.y === 0 &&
+                block.targetId === b.id &&
+                (b.forceVert ||
+                  (b.x !== 0 && b.x + b.size !== newlvl.length * 50))
+              ) {
                 link = b;
                 break;
               }

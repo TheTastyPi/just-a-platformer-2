@@ -198,11 +198,24 @@ function doPhysics(obj, t, isPlayer) {
       let isBottom = by1 < py2 && by2 > py2 && by1 > py1;
       // block inside
       if (
+        block !== player &&
         !oneWayBlocks.includes(block.type) &&
         bx1 >= px1 &&
         bx2 <= px2 &&
         by1 >= py1 &&
         by2 <= py2
+      ) {
+        obj.isDead = true;
+        return;
+      }
+      // inside block
+      if (
+        block !== player &&
+        !oneWayBlocks.includes(block.type) &&
+        bx1 <= px1 &&
+        bx2 >= px2 &&
+        by1 <= py1 &&
+        by2 >= py2
       ) {
         obj.isDead = true;
         return;

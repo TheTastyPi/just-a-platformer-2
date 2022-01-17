@@ -228,3 +228,10 @@
 - Fixed a bug where canceling renaming a save after adding a save with a duplicate name causes a save with an empty name to be created
 - Fixed a bug where moving the camera while zoomed in/out does not correctly cull surrounding blocks
 - Fixed a bug where deleting a Check Point while the player is touching it causes the game to crash
+
+### 17 Jan. 2022
+
+- Dynamic objects (including the player) now dies if fully inside a block
+- Dynamic blocks no longer die if the player is inside of them
+- All dynamic blocks are now centered after using a Teleporter
+- Fixed a bug where respawning after a dynamic block interacts with a Teleporter causes the game to crash
