@@ -722,11 +722,16 @@ function select(selectRect, single = false, prev, build = false) {
           }
           if (single || editor.editBlock === undefined) {
             editor.editBlock = deepCopy(block);
-            editor.editBlockProp = Object.keys(blockData[block.type].props);
+            for (let i in blockData[block.type].props) {
+              if (propData[i] !== undefined) editor.editBlockProp.push(i);
+            }
           } else {
             for (let i in block) {
               if (editor.editBlock[i] === "MIXED") continue;
-              if (editor.editBlock[i] === undefined) {
+              if (
+                editor.editBlock[i] === undefined &&
+                propData[i] !== undefined
+              ) {
                 editor.editBlock[i] = block[i];
                 editor.editBlockProp.push(i);
               }

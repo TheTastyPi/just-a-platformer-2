@@ -239,3 +239,7 @@
 #### 17 Jan. 2022 #2
 
 - Fixed screen transitions, which were supposed to be in the game, but no one noticed since it didn't exist in jap1
+
+#### 18 Jan. 2022
+
+- Fixed a bug where selecting a Jump Restore Field causes an error
