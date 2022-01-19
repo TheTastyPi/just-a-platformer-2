@@ -243,3 +243,7 @@
 #### 18 Jan. 2022
 
 - Fixed a bug where selecting a Jump Restore Field causes an error
+
+#### 19 Jan. 2022
+
+- Changed Boundary Warp's default eventPriority to 3

@@ -1358,7 +1358,7 @@ new BlockType(
 new BlockType(
   "Boundary Warp",
   {
-    ...new Block(23, 0, 0, 50, false, false, 1),
+    ...new Block(23, 0, 0, 50, false, false, 3),
     newRoom: "",
     id: 0,
     targetId: 0,
