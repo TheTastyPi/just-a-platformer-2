@@ -6,6 +6,7 @@ var defaultPlayer = {
   yv: 0,
   xa: 0,
   ya: 0,
+  targetSize: 20,
   size: 20,
   isDead: false,
   g: 1,
@@ -643,13 +644,18 @@ function doPhysics(obj, t, isPlayer) {
   }
   // crushed
   if (
-    isPlayer &&
-    (((leftBlock?.xv > 0 || rightBlock?.xv < 0) &&
-      leftBlock?.crushPlayer &&
-      rightBlock?.crushPlayer) ||
-      ((topBlock?.yv > 0 || bottomBlock?.yv < 0) &&
-        topBlock?.crushPlayer &&
-        bottomBlock?.crushPlayer))
+    (leftBlock?.crushPlayer &&
+      rightBlock?.crushPlayer &&
+      rightBlock.x - leftBlock.x - leftBlock.size <
+        obj.size -
+          CThreshold *
+            (isPlayer ? !(leftBlock.dynamic || rightBlock.dyanmic) : 1)) ||
+    (topBlock?.crushPlayer &&
+      bottomBlock?.crushPlayer &&
+      bottomBlock.y - topBlock.y - topBlock.size <
+        obj.size -
+          CThreshold *
+            (isPlayer ? !(topBlock.dynamic || bottomBlock.dyanmic) : 1))
   ) {
     obj.isDead = true;
   }
@@ -807,6 +813,25 @@ function doPhysics(obj, t, isPlayer) {
             break;
           default:
         }
+      }
+    }
+    // change size
+    if (obj.size !== tempObj.targetSize) {
+      let newSize =
+        (obj.size * (1 / t / 10 - 1) + tempObj.targetSize) / (1 / t / 10);
+      if (isPlayer) {
+        obj.x -= (newSize - obj.size) / 2;
+        obj.y -= (newSize - obj.size) / 2;
+        obj.size = newSize;
+        if (Math.abs(obj.size - tempObj.targetSize) < 1)
+          obj.size = tempObj.targetSize;
+      } else {
+        scaleBlock(
+          obj,
+          newSize / obj.size,
+          obj.x + obj.size / 2,
+          obj.y + obj.size / 2
+        );
       }
     }
     // change acceleration

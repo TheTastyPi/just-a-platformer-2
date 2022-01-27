@@ -115,7 +115,8 @@ const propData = {
   newRoom: ["str", "nR"],
   id: ["int", "id"],
   targetId: ["int", "tId"],
-  forceVert: ["bool", "fV"]
+  forceVert: ["bool", "fV"],
+  newSize: ["num","nS"]
 };
 const propAliasReverse = {};
 const blockList = {
@@ -123,7 +124,7 @@ const blockList = {
   Basic: [0, 16, 1, 17],
   Dynamic: [4, 5],
   Movement: [3, 18, 15, 19, 6, 20, 8, 21, 7, 12],
-  Status: [9, 10, 13, 14]
+  Status: [9, 10, 13, 14, 24]
 };
 var levels = {
   default:
@@ -673,6 +674,7 @@ function confirmPropEdit(block) {
         if (newNum !== parseFloat(editBlock[i]))
           editBlock[i] = newNum.toString();
         newBlock[i] = newNum;
+        if (i === "size") newBlock.targetSize = newNum;
       } else newBlock[i] = editBlock[i];
     }
   }

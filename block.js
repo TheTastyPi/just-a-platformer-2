@@ -4,6 +4,7 @@ class Block {
     this.type = type;
     this.x = x;
     this.y = y;
+    this.targetSize = size;
     this.size = size;
     this.isSolid = isSolid;
     this.giveJump = giveJump;
@@ -1505,4 +1506,114 @@ new BlockType(
     forceVert: []
   },
   ["x", "y", "forceVert"]
+);
+new BlockType(
+  "Size Field",
+  {
+    ...new Block(24, 0, 0, 50, false, false, 1),
+    newSize: 20,
+    temporary: false
+  },
+  (block, app = display) => {
+    let g = new PIXI.Graphics();
+    g.alpha = 0.5;
+    let factor = Math.min(block.newSize / 50, 1);
+    let level = Math.max(Math.floor(block.newSize/20) - 1, 1);
+    let color = PIXI.utils.rgb2hex([0.5, 0.5, 0.5 + 0.5 * factor]);
+    g.beginFill(color);
+    g.drawRect(0, 0, 50, 50);
+    g.endFill();
+    g.lineStyle({
+      width: 2,
+      color: PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2))
+    });
+    let dispSize = Math.min(block.newSize,45);
+    let dispPos = 25-dispSize/2;
+    let dispPos2 = dispPos + dispSize;
+    if (dispSize <= 25) {
+      g.moveTo(0,0)
+      g.lineTo(dispPos, dispPos)
+      g.moveTo(dispPos-10, dispPos)
+      g.lineTo(dispPos, dispPos)
+      g.lineTo(dispPos, dispPos-10)
+      g.moveTo(0,50)
+      g.lineTo(dispPos, dispPos2)
+      g.moveTo(dispPos-10, dispPos2)
+      g.lineTo(dispPos, dispPos2)
+      g.lineTo(dispPos, dispPos2+10)
+      g.moveTo(50,0)
+      g.lineTo(dispPos2, dispPos)
+      g.moveTo(dispPos2+10, dispPos)
+      g.lineTo(dispPos2, dispPos)
+      g.lineTo(dispPos2, dispPos-10)
+      g.moveTo(50,50)
+      g.lineTo(dispPos2, dispPos2)
+      g.moveTo(dispPos2+10, dispPos2)
+      g.lineTo(dispPos2, dispPos2)
+      g.lineTo(dispPos2, dispPos2+10)
+    } else {
+      g.moveTo(20,20)
+      g.lineTo(dispPos, dispPos)
+      for (let i = 0; i < level; i++) {
+        g.moveTo(dispPos+10+20/(level+1)*i, dispPos+20/(level+1)*i)
+        g.lineTo(dispPos+20/(level+1)*i, dispPos+20/(level+1)*i)
+        g.lineTo(dispPos+20/(level+1)*i, dispPos+10+20/(level+1)*i)
+      }
+      g.moveTo(20,30)
+      g.lineTo(dispPos, dispPos2)
+      for (let i = 0; i < level; i++) {
+        g.moveTo(dispPos+10+20/(level+1)*i, dispPos2-20/(level+1)*i)
+        g.lineTo(dispPos+20/(level+1)*i, dispPos2-20/(level+1)*i)
+        g.lineTo(dispPos+20/(level+1)*i, dispPos2-10-20/(level+1)*i)
+      }
+      g.moveTo(30,20)
+      g.lineTo(dispPos2, dispPos)
+      for (let i = 0; i < level; i++) {
+        g.moveTo(dispPos2-10-20/(level+1)*i, dispPos+20/(level+1)*i)
+        g.lineTo(dispPos2-20/(level+1)*i, dispPos+20/(level+1)*i)
+        g.lineTo(dispPos2-20/(level+1)*i, dispPos+10+20/(level+1)*i)
+      }
+      g.moveTo(30,30)
+      g.lineTo(dispPos2, dispPos2)
+      for (let i = 0; i < level; i++) {
+        g.moveTo(dispPos2-10-20/(level+1)*i, dispPos2-20/(level+1)*i)
+        g.lineTo(dispPos2-20/(level+1)*i, dispPos2-20/(level+1)*i)
+        g.lineTo(dispPos2-20/(level+1)*i, dispPos2-10-20/(level+1)*i)
+      }
+    }
+    if (!block.temporary) {
+      g.moveTo(20, 8);
+      g.lineTo(30, 8);
+      g.moveTo(25, 3);
+      g.lineTo(25, 13);
+    }
+    return app.renderer.generateTexture(
+      g,
+      undefined,
+      undefined,
+      new PIXI.Rectangle(0, 0, 50, 50)
+    );
+  },
+  [
+    () => {},
+    () => {},
+    () => {},
+    () => {},
+    (obj, block, tempObj, isPlayer) => {
+      if (!block.temporary) {
+        obj.targetSize = block.newSize;
+      }
+      tempObj.targetSize = block.newSize;
+    }
+  ],
+  (block, sprite = block.sprite, app) => {
+    if (sprite.texture !== blockData[block.type].defaultTexture)
+      sprite.texture.destroy(true);
+    sprite.texture = blockData[block.type].getTexture(block, app);
+  },
+  {
+    newSize: [() => 6.25, () => maxBlockSize],
+    temporary: []
+  },
+  ["newSpeed", "temporary"]
 );

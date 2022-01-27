@@ -247,3 +247,9 @@
 #### 19 Jan. 2022
 
 - Changed Boundary Warp's default eventPriority to 3
+
+## 27 Jan. 2022
+
+- Added Size Field
+  - Works on dynamic blocks too!
+- Improved player/dyanmic objects crushing detection
