@@ -252,4 +252,4 @@
 
 - Added Size Field
   - Works on dynamic blocks too!
-- Improved player/dyanmic objects crushing detection
+- Improved player/dynamic objects crushing detection
