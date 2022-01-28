@@ -636,7 +636,6 @@ new BlockType(
   "Force Field",
   {
     ...new Block(12, 0, 0, 50, false, false, 1),
-    friction: false,
     newxv: 200,
     newyv: 0,
     xOnly: false,

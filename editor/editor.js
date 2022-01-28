@@ -291,6 +291,8 @@ document.addEventListener("keydown", function (event) {
       break;
     case "ControlLeft":
     case "ControlRight":
+    case "MetaLeft":
+    case "MetaRight":
       if (!event.shiftKey) {
         tpDisp.visible = true;
         updateTpDisp(
@@ -315,12 +317,14 @@ document.addEventListener("keyup", function (event) {
   switch (key) {
     case "ControlLeft":
     case "ControlRight":
+    case "MetaLeft":
+    case "MetaRight":
       tpDisp.visible = false;
       buildDisp.visible = !editor.editMode;
       break;
     case "ShiftLeft":
     case "ShiftRight":
-      if (event.ctrlKey) {
+      if (event.ctrlKey || event.metaKey) {
         tpDisp.visible = true;
         updateTpDisp(
           (editor.mousePos[0] - camx) / cams,
@@ -479,7 +483,7 @@ document.addEventListener("mousemove", function (event) {
     default:
   }
   if (!editor.editMode) updateBuildLocation(xPos, yPos);
-  if (event.ctrlKey && !event.shiftKey) updateTpDisp(xPos, yPos);
+  if ((event.ctrlKey || event.metaKey) && !event.shiftKey) updateTpDisp(xPos, yPos);
 });
 document.addEventListener("mouseup", function (event) {
   let button = event.button;
