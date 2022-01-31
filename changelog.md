@@ -254,7 +254,11 @@
   - Works on dynamic blocks too!
 - Improved player/dynamic objects crushing detection
 
-#### 28 Jan, 2022
+#### 28 Jan. 2022
 
 - Fixed a bug where the manual teleportation display does not work on Mac
 - Changed Force Field default 'friction' to true
+
+#### 31 Jan. 2022
+
+- Fixed a bug where coyote time still applies after switching gravity

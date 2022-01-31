@@ -691,6 +691,8 @@ function doPhysics(obj, t, isPlayer) {
       obj.isDead = true;
     }
     // touch events
+    let prevg = obj.g;
+    let prevxg = obj.xg;
     obj.roomLink = [];
     let tempObj = deepCopy(obj);
     for (let i in eventList) {
@@ -745,6 +747,7 @@ function doPhysics(obj, t, isPlayer) {
         obj.currentJump = obj.maxJump;
         coyoteTimer = coyoteTime;
       } else {
+        if (prevg !== tempObj.g || prevxg !== tempObj.xg) coyoteTimer = -1;
         if (coyoteTimer > 0) coyoteTimer -= t * 1000;
         if (coyoteTimer < 0) {
           obj.currentJump = Math.max(
