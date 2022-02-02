@@ -1614,5 +1614,5 @@ new BlockType(
     newSize: [() => 6.25, () => maxBlockSize],
     temporary: []
   },
-  ["newSpeed", "temporary"]
+  ["newSize", "temporary"]
 );
