@@ -74,10 +74,10 @@ new BlockType(
 );
 new BlockType(
   "Death Block",
-  new Block(1, 0, 0, 50, true, false, 1),
+  {...new Block(1, 0, 0, 50, true, false, 1), color:"#ff0000"},
   (block, app = display) => {
     let g = new PIXI.Graphics();
-    g.beginFill(0xff0000);
+    g.beginFill(0xffffff);
     g.drawRect(0, 0, 50, 50);
     g.endFill();
     g.lineStyle(5, 0x000000);
@@ -101,7 +101,13 @@ new BlockType(
       obj.isDead = true;
     },
     () => {}
-  ]
+  ],
+  (block, sprite = block.sprite) => {
+    sprite.tint = PIXI.utils.string2hex(block.color);
+  },
+  {
+    color: []
+  }
 );
 new BlockType(
   "Check Point",
@@ -167,7 +173,7 @@ new BlockType(
   { ...new Block(3, 0, 0, 50, true, false, 2), power: 500 },
   (block, app = display) => {
     let g = new PIXI.Graphics();
-    g.beginFill(0xffff00);
+    g.beginFill(0xffffff);
     g.drawRect(0, 0, 50, 50);
     g.endFill();
     g.lineStyle({
@@ -197,17 +203,26 @@ new BlockType(
     },
     () => {}
   ],
-  () => {},
+  (block, sprite = block.sprite) => {
+    let rgb = [2-Math.abs(block.power-1000)/500,2-Math.abs(block.power)/500,2-Math.abs(block.power-2000)/500];
+    rgb = rgb.map(x=>Math.max(Math.min(x,1),0));
+    sprite.tint = PIXI.utils.rgb2hex(rgb);
+  },
   {
     power: [() => 0, () => 2000]
   }
 );
 new BlockType(
   "Pushable Block",
-  { ...new Block(4, 0, 0, 50, true, true, 3), dynamic: true, pushable: true },
+  {
+    ...new Block(4, 0, 0, 50, true, true, 3),
+    dynamic: true,
+    pushable: true,
+    color: "#ff8800"
+  },
   (block, app = display) => {
     let g = new PIXI.Graphics();
-    g.beginFill(0xff8800);
+    g.beginFill(0xffffff);
     g.drawRect(0, 0, 50, 50);
     g.endFill();
     g.lineStyle({
@@ -217,14 +232,20 @@ new BlockType(
     g.drawRect(10, 10, 30, 30);
     return app.renderer.generateTexture(g);
   },
-  [() => {}, () => {}, () => {}, () => {}, () => {}]
+  [() => {}, () => {}, () => {}, () => {}, () => {}],
+  (block, sprite = block.sprite) => {
+    sprite.tint = PIXI.utils.string2hex(block.color);
+  },
+  {
+    color: []
+  }
 );
 new BlockType(
   "Unpushable Block",
-  { ...new Block(5, 0, 0, 50, true, true, 3), dynamic: true },
+  { ...new Block(5, 0, 0, 50, true, true, 3), dynamic: true, color: "#884400" },
   (block, app = display) => {
     let g = new PIXI.Graphics();
-    g.beginFill(0x884400);
+    g.beginFill(0xffffff);
     g.drawRect(0, 0, 50, 50);
     g.endFill();
     g.lineStyle({
@@ -238,7 +259,13 @@ new BlockType(
     g.lineTo(40, 10);
     return app.renderer.generateTexture(g);
   },
-  [() => {}, () => {}, () => {}, () => {}, () => {}]
+  [() => {}, () => {}, () => {}, () => {}, () => {}],
+  (block, sprite = block.sprite) => {
+    sprite.tint = PIXI.utils.string2hex(block.color);
+  },
+  {
+    color: []
+  }
 );
 new BlockType(
   "Ice Block",
@@ -1411,7 +1438,7 @@ new BlockType(
     () => {},
     () => {},
     () => {},
-    (obj, block, tempObj, isPlayer, isEntering, isExiting) => {
+    (obj, block) => {
       let newlvl = levels[block.newRoom];
       if (newlvl === undefined) return;
       if (obj.roomLink[0] === undefined) {
@@ -1517,7 +1544,7 @@ new BlockType(
     let g = new PIXI.Graphics();
     g.alpha = 0.5;
     let factor = Math.min(block.newSize / 50, 1);
-    let level = Math.max(Math.floor(block.newSize/20) - 1, 1);
+    let level = Math.max(Math.floor(block.newSize / 20) - 1, 1);
     let color = PIXI.utils.rgb2hex([0.5, 0.5, 0.5 + 0.5 * factor]);
     g.beginFill(color);
     g.drawRect(0, 0, 50, 50);
@@ -1526,58 +1553,94 @@ new BlockType(
       width: 2,
       color: PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2))
     });
-    let dispSize = Math.min(block.newSize,45);
-    let dispPos = 25-dispSize/2;
+    let dispSize = Math.min(block.newSize, 45);
+    let dispPos = 25 - dispSize / 2;
     let dispPos2 = dispPos + dispSize;
     if (dispSize <= 25) {
-      g.moveTo(0,0)
-      g.lineTo(dispPos, dispPos)
-      g.moveTo(dispPos-10, dispPos)
-      g.lineTo(dispPos, dispPos)
-      g.lineTo(dispPos, dispPos-10)
-      g.moveTo(0,50)
-      g.lineTo(dispPos, dispPos2)
-      g.moveTo(dispPos-10, dispPos2)
-      g.lineTo(dispPos, dispPos2)
-      g.lineTo(dispPos, dispPos2+10)
-      g.moveTo(50,0)
-      g.lineTo(dispPos2, dispPos)
-      g.moveTo(dispPos2+10, dispPos)
-      g.lineTo(dispPos2, dispPos)
-      g.lineTo(dispPos2, dispPos-10)
-      g.moveTo(50,50)
-      g.lineTo(dispPos2, dispPos2)
-      g.moveTo(dispPos2+10, dispPos2)
-      g.lineTo(dispPos2, dispPos2)
-      g.lineTo(dispPos2, dispPos2+10)
+      g.moveTo(0, 0);
+      g.lineTo(dispPos, dispPos);
+      g.moveTo(dispPos - 10, dispPos);
+      g.lineTo(dispPos, dispPos);
+      g.lineTo(dispPos, dispPos - 10);
+      g.moveTo(0, 50);
+      g.lineTo(dispPos, dispPos2);
+      g.moveTo(dispPos - 10, dispPos2);
+      g.lineTo(dispPos, dispPos2);
+      g.lineTo(dispPos, dispPos2 + 10);
+      g.moveTo(50, 0);
+      g.lineTo(dispPos2, dispPos);
+      g.moveTo(dispPos2 + 10, dispPos);
+      g.lineTo(dispPos2, dispPos);
+      g.lineTo(dispPos2, dispPos - 10);
+      g.moveTo(50, 50);
+      g.lineTo(dispPos2, dispPos2);
+      g.moveTo(dispPos2 + 10, dispPos2);
+      g.lineTo(dispPos2, dispPos2);
+      g.lineTo(dispPos2, dispPos2 + 10);
     } else {
-      g.moveTo(20,20)
-      g.lineTo(dispPos, dispPos)
+      g.moveTo(20, 20);
+      g.lineTo(dispPos, dispPos);
       for (let i = 0; i < level; i++) {
-        g.moveTo(dispPos+10+20/(level+1)*i, dispPos+20/(level+1)*i)
-        g.lineTo(dispPos+20/(level+1)*i, dispPos+20/(level+1)*i)
-        g.lineTo(dispPos+20/(level+1)*i, dispPos+10+20/(level+1)*i)
+        g.moveTo(
+          dispPos + 10 + (20 / (level + 1)) * i,
+          dispPos + (20 / (level + 1)) * i
+        );
+        g.lineTo(
+          dispPos + (20 / (level + 1)) * i,
+          dispPos + (20 / (level + 1)) * i
+        );
+        g.lineTo(
+          dispPos + (20 / (level + 1)) * i,
+          dispPos + 10 + (20 / (level + 1)) * i
+        );
       }
-      g.moveTo(20,30)
-      g.lineTo(dispPos, dispPos2)
+      g.moveTo(20, 30);
+      g.lineTo(dispPos, dispPos2);
       for (let i = 0; i < level; i++) {
-        g.moveTo(dispPos+10+20/(level+1)*i, dispPos2-20/(level+1)*i)
-        g.lineTo(dispPos+20/(level+1)*i, dispPos2-20/(level+1)*i)
-        g.lineTo(dispPos+20/(level+1)*i, dispPos2-10-20/(level+1)*i)
+        g.moveTo(
+          dispPos + 10 + (20 / (level + 1)) * i,
+          dispPos2 - (20 / (level + 1)) * i
+        );
+        g.lineTo(
+          dispPos + (20 / (level + 1)) * i,
+          dispPos2 - (20 / (level + 1)) * i
+        );
+        g.lineTo(
+          dispPos + (20 / (level + 1)) * i,
+          dispPos2 - 10 - (20 / (level + 1)) * i
+        );
       }
-      g.moveTo(30,20)
-      g.lineTo(dispPos2, dispPos)
+      g.moveTo(30, 20);
+      g.lineTo(dispPos2, dispPos);
       for (let i = 0; i < level; i++) {
-        g.moveTo(dispPos2-10-20/(level+1)*i, dispPos+20/(level+1)*i)
-        g.lineTo(dispPos2-20/(level+1)*i, dispPos+20/(level+1)*i)
-        g.lineTo(dispPos2-20/(level+1)*i, dispPos+10+20/(level+1)*i)
+        g.moveTo(
+          dispPos2 - 10 - (20 / (level + 1)) * i,
+          dispPos + (20 / (level + 1)) * i
+        );
+        g.lineTo(
+          dispPos2 - (20 / (level + 1)) * i,
+          dispPos + (20 / (level + 1)) * i
+        );
+        g.lineTo(
+          dispPos2 - (20 / (level + 1)) * i,
+          dispPos + 10 + (20 / (level + 1)) * i
+        );
       }
-      g.moveTo(30,30)
-      g.lineTo(dispPos2, dispPos2)
+      g.moveTo(30, 30);
+      g.lineTo(dispPos2, dispPos2);
       for (let i = 0; i < level; i++) {
-        g.moveTo(dispPos2-10-20/(level+1)*i, dispPos2-20/(level+1)*i)
-        g.lineTo(dispPos2-20/(level+1)*i, dispPos2-20/(level+1)*i)
-        g.lineTo(dispPos2-20/(level+1)*i, dispPos2-10-20/(level+1)*i)
+        g.moveTo(
+          dispPos2 - 10 - (20 / (level + 1)) * i,
+          dispPos2 - (20 / (level + 1)) * i
+        );
+        g.lineTo(
+          dispPos2 - (20 / (level + 1)) * i,
+          dispPos2 - (20 / (level + 1)) * i
+        );
+        g.lineTo(
+          dispPos2 - (20 / (level + 1)) * i,
+          dispPos2 - 10 - (20 / (level + 1)) * i
+        );
       }
     }
     if (!block.temporary) {
@@ -1615,4 +1678,144 @@ new BlockType(
     temporary: []
   },
   ["newSize", "temporary"]
+);
+new BlockType(
+  "Switch",
+  {
+    ...new Block(25, 0, 0, 50, false, false, 1),
+    id: 0,
+    singleUse: false,
+    used: false,
+    global: false
+  },
+  (block, app = display) => {
+    let g = new PIXI.Graphics();
+    g.alpha = 0.5;
+    let color = PIXI.utils.rgb2hex([0.5, 1, 0.5]);
+    if (block.global) color = PIXI.utils.rgb2hex([0.5, 0.5, 1]);
+    g.beginFill(color);
+    g.drawRect(0, 0, 50, 50);
+    g.endFill();
+    g.lineStyle({
+      width: 2,
+      color: PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2))
+    });
+    drawStr(
+      g,
+      block.id.toString(),
+      PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2)),
+      3,
+      20
+    );
+    if (block.singleUse) {
+      g.moveTo(3, 3);
+      g.lineTo(13, 13);
+      g.moveTo(13, 3);
+      g.lineTo(3, 13);
+    }
+    return app.renderer.generateTexture(g);
+  },
+  [
+    () => {},
+    () => {},
+    () => {},
+    () => {},
+    (obj, block, tempObj, isPlayer, isEntering) => {
+      if (isEntering && (!block.singleUse || !block.used)) {
+        if (block.global) {
+          player.switchGlobal[block.id] = !player.switchGlobal[block.id];
+        } else {
+          if (!player.switchLocal[block.currentRoom])
+            player.switchLocal[block.currentRoom] = [];
+          player.switchLocal[block.currentRoom][block.id] = !player.switchLocal[
+            block.currentRoom
+          ][block.id];
+        }
+        if (block.singleUse) {
+          logChange(block);
+          block.used = true;
+        }
+        switchBlocks.map(updateAll);
+        forAllBlock(updateSwitchBlock, 26);
+      }
+    }
+  ],
+  (block, sprite = block.sprite, app) => {
+    if (block.used) {
+      sprite.tint = 0xff4444;
+    } else sprite.tint = 0xffffff;
+    if (!isSwitchOn(block))
+      sprite.tint = PIXI.utils.rgb2hex(
+        PIXI.utils.hex2rgb(sprite.tint).map((x) => x / 2)
+      );
+  },
+  {
+    id: [() => 0, () => Infinity],
+    singleUse: [],
+    used: [],
+    global: false
+  },
+  ["id", "singleUse", "used", "global"]
+);
+
+new BlockType(
+  "Switch Block",
+  {
+    ...new Block(26, 0, 0, 50, false, false, 1),
+    id: 0,
+    global: false,
+    blockA: null,
+    blockB: blockData[0].defaultBlock,
+    invert: false
+  },
+  (block, app = display) => {
+    let c = new PIXI.Container();
+    let s;
+    if (isSwitchOn(block)) {
+      if (block.blockB !== null) {
+        s = createSprite({ ...block.blockB, x: 0, y: 0, size: block.size });
+        if (!animatedTypes.includes(block.blockB.type))
+          blockData[block.blockB.type].update(block.blockB, s);
+      }
+    } else {
+      if (block.blockA !== null) {
+        s = createSprite({ ...block.blockA, x: 0, y: 0, size: block.size });
+        if (!animatedTypes.includes(block.blockA.type))
+          blockData[block.blockA.type].update(block.blockA, s);
+      }
+    }
+    if (s) c.addChild(s);
+    let g = new PIXI.Graphics();
+    g.alpha = 0.75;
+    let color = PIXI.utils.rgb2hex([0.5, 1, 0.5]);
+    if (block.global) color = PIXI.utils.rgb2hex([0.5, 0.5, 1]);
+    drawStr(
+      g,
+      block.id.toString(),
+      PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2)),
+      3,
+      20
+    );
+    c.addChild(g);
+    return app.renderer.generateTexture(
+      c,
+      undefined,
+      undefined,
+      new PIXI.Rectangle(0, 0, 50, 50)
+    );
+  },
+  [() => {}, () => {}, () => {}, () => {}, () => {}],
+  (block, sprite = block.sprite, app) => {
+    if (sprite.texture !== blockData[block.type].defaultTexture)
+      sprite.texture.destroy(true);
+    sprite.texture = blockData[block.type].getTexture(block, app);
+  },
+  {
+    id: [() => 0, () => Infinity],
+    global: false,
+    blockA: [],
+    blockB: [],
+    invert: []
+  },
+  ["id", "global", "blockA", "blockB", "invert"]
 );

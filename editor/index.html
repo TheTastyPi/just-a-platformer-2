@@ -87,7 +87,8 @@
               </optgroup>
             </select>
             <textarea v-else-if="inputType[propData[prop][0]] == 'textarea'"style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></textarea>
-            <button v-else-if="propData[prop][0] == 'pos'"style="width:50%" v-on:click="editor.choosePos = true; editor.chooseFor = prop; blurAll()" v-on:keydown.enter="confirmEditAll">{{editor.choosePos?"Ctrl LMB to select":editor.editBlock[prop][0]===undefined?"Select position":editor.editBlock[prop]}}</button>
+            <button v-else-if="propData[prop][0] == 'pos'"style="width:50%" v-on:click="editor.choosePos = true; editor.chooseFor = prop; blurAll()" v-on:keydown.enter="confirmEditAll">{{(editor.choosePos && editor.chooseFor === prop)?"Ctrl LMB to select":editor.editBlock[prop][0]===undefined?"Select position":editor.editBlock[prop]}}</button>
+            <button v-else-if="propData[prop][0] == 'block'"style="width:50%" v-on:click="editor.chooseBlock = true; editor.chooseBlockFor = prop; blurAll()" v-on:keydown.enter="confirmEditAll">{{(editor.chooseBlock && editor.chooseBlockFor === prop)?"Select block, or Delete to remove":editor.editBlock[prop]===null?"Select block":(editor.editBlock[prop]==="MIXED"?"MIXED":blockData[editor.editBlock[prop].type].name)}}</button>
             <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></input>
           </div>
         </div>

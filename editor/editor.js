@@ -44,7 +44,9 @@ var editor = {
   choosePos: false,
   chooseFor: undefined,
   currentRoom: "default",
-  roomOrder: ["default"]
+  roomOrder: ["default"],
+  chooseBlock: false,
+  chooseBlockFor: undefined
 };
 const propData = {
   // general
@@ -61,6 +63,7 @@ const propData = {
     () => 0,
     (block) => levels[player.currentRoom][0].length * 50 - block.size
   ],
+  targetSize: ["num","tS", ()=>6.25,()=>maxBlockSize],
   size: ["num", "s", () => 6.25, () => maxBlockSize],
   isSolid: ["bool", "so"],
   giveJump: ["bool", "j"],
@@ -82,6 +85,13 @@ const propData = {
   crushPlayer: ["bool", "csh"],
   invincible: ["bool", "iv"],
   alwaysActive: ["bool", "aA"],
+  // player
+  maxJump: ["int","mJ",()=>0,()=>Infinity],
+  currentJump: ["int","cJ",()=>0,()=>Infinity],
+  moveSpeed: ["num","mS",()=>0,()=>10],
+  switchLocal: ["idk","sL"],
+  switchGlobal: ["idk","sG"],
+  gameSpeed: ["num","gS",()=>0,()=>10],
   // special
   power: ["num", "p"],
   color: ["color", "c"],
@@ -116,7 +126,12 @@ const propData = {
   id: ["int", "id"],
   targetId: ["int", "tId"],
   forceVert: ["bool", "fV"],
-  newSize: ["num","nS"]
+  newSize: ["num", "nS"],
+  singleUse: ["bool", "sU"],
+  global: ["bool", "gbl"],
+  blockA: ["block", "bA"],
+  blockB: ["block", "bB"],
+  invert: ["bool", "ivt"]
 };
 const propAliasReverse = {};
 const blockList = {
@@ -124,7 +139,8 @@ const blockList = {
   Basic: [0, 16, 1, 17],
   Dynamic: [4, 5],
   Movement: [3, 18, 15, 19, 6, 20, 8, 21, 7, 12],
-  Status: [9, 10, 13, 14, 24]
+  Status: [9, 10, 13, 14, 24],
+  "Multi-State": [25, 26]
 };
 var levels = {
   default:
@@ -175,7 +191,8 @@ var blockEdit = new Vue({
       blockType: "select",
       color: "color",
       hidden: "none",
-      pos: "button"
+      pos: "button",
+      block: "button"
     },
     blocks: blockList
   }
@@ -307,6 +324,13 @@ document.addEventListener("keydown", function (event) {
     case "ShiftRight":
       tpDisp.visible = false;
       buildDisp.visible = !editor.editMode;
+      break;
+    case "Delete":
+      if (editor.chooseBlock) {
+        editor.editBlock[editor.chooseBlockFor] = null;
+        editor.chooseBlock = false;
+        confirmEditAll();
+      }
       break;
     default:
   }
@@ -483,7 +507,8 @@ document.addEventListener("mousemove", function (event) {
     default:
   }
   if (!editor.editMode) updateBuildLocation(xPos, yPos);
-  if ((event.ctrlKey || event.metaKey) && !event.shiftKey) updateTpDisp(xPos, yPos);
+  if ((event.ctrlKey || event.metaKey) && !event.shiftKey)
+    updateTpDisp(xPos, yPos);
 });
 document.addEventListener("mouseup", function (event) {
   let button = event.button;
@@ -499,7 +524,7 @@ document.addEventListener("mouseup", function (event) {
         editor.selectStart !== undefined
       ) {
         let prev = editor.editSelect[0];
-        if (!event.shiftKey) deselect();
+        if (!event.shiftKey && !editor.chooseBlock) deselect();
         let x = Math.min((editor.selectStart[0] - camx) / cams, xPos);
         let y = Math.min((editor.selectStart[1] - camy) / cams, yPos);
         let w = Math.abs(editor.selectStart[0] - event.clientX) / cams;
@@ -645,7 +670,7 @@ function confirmPropEdit(block) {
   let newBlock = deepCopy(block);
   let editBlock = editor.editBlock;
   for (let i in block) {
-    if (newBlock.type !== editBlock.type) {
+    if (newBlock.type !== editBlock.type && editBlock.type !== "MIXED") {
       newBlock = {
         ...blockData[editBlock.type].defaultBlock,
         x: newBlock.x,
@@ -683,10 +708,12 @@ function confirmPropEdit(block) {
     }
   }
   for (let i in blockData[newBlock.type].props) {
-    newBlock[i] ??= blockData[newBlock.type].defaultBlock[i];
+    if (newBlock[i] === undefined)
+      newBlock[i] = blockData[newBlock.type].defaultBlock[i];
   }
   removeBlock(block);
   addBlock(newBlock);
+  if (newBlock.type === 26) updateSwitchBlock(newBlock);
   return newBlock;
 }
 function confirmEditAll() {
@@ -718,6 +745,13 @@ function select(selectRect, single = false, prev, build = false) {
           isColliding(selectRect, block) &&
           !editor.editSelect.includes(block)
         ) {
+          if (editor.chooseBlock) {
+            if (editor.editSelect.includes(block)) return;
+            editor.editBlock[editor.chooseBlockFor] = deepCopy(block);
+            editor.chooseBlock = false;
+            confirmEditAll();
+            return;
+          }
           if (single) {
             first ??= block;
             if (prev === block) {
@@ -761,7 +795,9 @@ function select(selectRect, single = false, prev, build = false) {
   }
   if (single && !cycled && first !== undefined) {
     editor.editBlock = deepCopy(first);
-    editor.editBlockProp = Object.keys(blockData[first.type].props);
+    for (let i in blockData[first.type].props) {
+      if (propData[i] !== undefined) editor.editBlockProp.push(i);
+    }
     editor.editSelect = [first];
   }
   updateSelectDisp();
@@ -778,13 +814,17 @@ function deselect() {
   editor.editBlock = undefined;
   editor.editBlockProp = [];
   editor.choosePos = false;
+  editor.chooseBlock = false;
 }
 function reselect() {
   for (let j in editor.editSelect) {
     let block = editor.editSelect[j];
     if (j === "0") {
       editor.editBlock = deepCopy(block);
-      editor.editBlockProp = Object.keys(blockData[block.type].props);
+      editor.editBlockProp = [];
+      for (let i in blockData[block.type].props) {
+        if (propData[i] !== undefined) editor.editBlockProp.push(i);
+      }
       continue;
     }
     for (let i in block) {
@@ -1236,27 +1276,46 @@ function redo() {
   editor.currentAction++;
   doAction(editor.actionList[editor.currentAction]);
 }
+function compressBlock(block) {
+  for (let prop in block) {
+    if (prop === "type") continue;
+    if (
+      block[prop] === blockData[block.type].defaultBlock[prop] ||
+      propData[prop] === undefined
+    ) {
+      delete block[prop];
+      continue;
+    }
+    if (propData[prop][0] === "block") compressBlock(block[prop]);
+    if (propData[prop][1] !== prop) {
+      block[propData[prop][1]] = block[prop];
+      delete block[prop];
+    }
+  }
+}
+function decompressBlock(block) {
+  for (let prop in block) {
+    if (
+      propAliasReverse[prop] !== undefined &&
+      propAliasReverse[prop] !== prop
+    ) {
+      block[propAliasReverse[prop]] = block[prop];
+      delete block[prop];
+    }
+    
+  }
+  for (let prop in block) {
+    if (propData[prop][0] === "block") decompressBlock(block[prop]);
+  }
+  for (let prop in blockData[block.type].defaultBlock) {
+    block[prop] ??= blockData[block.type].defaultBlock[prop];
+  }
+}
 function lvl2str(lvl) {
   let w = lvl.length;
   let h = lvl[0].length;
   lvl = deepCopy(lvl).flat().flat();
-  for (let i in lvl) {
-    let block = lvl[i];
-    for (let prop in block) {
-      if (prop === "type") continue;
-      if (
-        block[prop] === blockData[block.type].defaultBlock[prop] ||
-        propData[prop] === undefined
-      ) {
-        delete block[prop];
-        continue;
-      }
-      if (propData[prop][1] !== prop) {
-        block[propData[prop][1]] = block[prop];
-        delete block[prop];
-      }
-    }
-  }
+  for (let i in lvl) compressBlock(lvl[i]);
   let str = JSON.stringify([lvl, w, h]);
   return LZString.compressToEncodedURIComponent(str);
 }
@@ -1281,18 +1340,7 @@ function str2lvl(str) {
   let aniBlocks = [];
   for (let i in blocks) {
     let block = blocks[i];
-    for (let prop in block) {
-      if (
-        propAliasReverse[prop] !== undefined &&
-        propAliasReverse[prop] !== prop
-      ) {
-        block[propAliasReverse[prop]] = block[prop];
-        delete block[prop];
-      }
-    }
-    for (let prop in blockData[block.type].defaultBlock) {
-      block[prop] ??= blockData[block.type].defaultBlock[prop];
-    }
+    decompressBlock(block);
     if (animatedTypes.includes(block.type)) {
       aniBlocks.push(block);
     }
@@ -1392,8 +1440,11 @@ function load(name) {
     togglePlayMode();
     dynamicInit = saveData[1];
     dynamicObjs = [];
+    player.blockChanged = [];
     respawn(true, false);
     drawLevel(true);
+    switchBlocks.map(updateAll);
+    forAllBlock(updateSwitchBlock, 26);
     adjustLevelSize();
     adjustScreen(true);
     updateGrid();
@@ -1549,10 +1600,38 @@ function togglePlayMode() {
     selectLayer.visible = false;
     deselect();
   } else {
-    let amt = dynamicObjs.length;
-    for (let i = 0; i < amt; i++) removeBlock(dynamicObjs[0]);
+    for (let i in player.blockChanged) {
+      let data = player.blockChanged[i];
+      let block =
+        levels[data[1].currentRoom][gridUnit(data[1].x)][gridUnit(data[1].y)][
+          data[1].index
+        ];
+      moveBlock(block, data[0].x - block.x, data[0].y - block.y);
+      Object.assign(block, data[0]);
+      let gridSpace =
+        levels[block.currentRoom][gridUnit(block.x)][gridUnit(block.y)];
+      gridSpace.splice(
+        gridSpace.findIndex((x) => x === block),
+        1
+      );
+      gridSpace.splice(block.index, 0, block);
+      for (let i = parseInt(block.index) + 1; i < gridSpace.length; i++)
+        gridSpace[i].index++;
+      updateBlock(block);
+    }
+    player.blockChanged = [];
+    for (let i in player.blockRemoved) addBlock(player.blockRemoved[i]);
+    player.blockRemoved = [];
+    for (let i = 0; i < dynamicObjs.length; i++) {
+      if (dynamicObjs[i].dynamic) {
+        removeBlock(dynamicObjs[i]);
+        i--;
+      }
+    }
     let newDynamicObjs = deepCopy(dynamicInit);
-    for (let i in newDynamicObjs) addBlock(newDynamicObjs[i]);
+    for (let i in newDynamicObjs) {
+      if (newDynamicObjs[i].dynamic) addBlock(newDynamicObjs[i]);
+    }
     dynamicSave = deepCopy(dynamicInit);
     selectLayer.visible = true;
   }

@@ -59,6 +59,34 @@ function updateBlock(block) {
   block.sprite.renderable = !block.invisible;
   block.sprite.alpha = block.opacity;
 }
+function forAllBlock(func, type) {
+  for (let j in levels) {
+    let level = levels[j];
+    for (let x = 0; x <= level.length - 1; x++) {
+      for (let y = 0; y <= level[0].length - 1; y++) {
+        for (let i in level[x][y]) {
+          let block = level[x][y][i];
+          if (block.type === type) {
+            func(block);
+          }
+        }
+      }
+    }
+  }
+}
+function updateAll(type) {
+  let level = levels[player.currentRoom];
+  for (let x = 0; x <= level.length - 1; x++) {
+    for (let y = 0; y <= level[0].length - 1; y++) {
+      for (let i in level[x][y]) {
+        let block = level[x][y][i];
+        if (block.type === type) {
+          updateBlock(block);
+        }
+      }
+    }
+  }
+}
 var lvlxOffset = 0;
 var lvlyOffset = 0;
 var camxPrev = 0;

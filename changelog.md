@@ -262,3 +262,18 @@
 #### 31 Jan. 2022
 
 - Fixed a bug where coyote time still applies after switching gravity
+
+## 10 Feb. 2022
+
+- Added Switch
+  - Switches only affect the room they're in
+  - Added 'global' property
+  - Can be toggled by dynamic blocks
+- Added Switch Block
+  - Set BlockA and BlockB property by pressing the button then selecting a block
+  - Can contain dynamic blocks
+- Added 'color' property to Death Block, Pushable Block, and Unpushable Block
+- Bounce Block now changes color based on 'power' property
+- Fixed a bug where you get an error when reselecting or editing the properties of a Jump Restore Field
+- Fixed a bug where editing two block of different types at once caused the game to crash
+- Fixed a bug where certain player properties does not save across loads
