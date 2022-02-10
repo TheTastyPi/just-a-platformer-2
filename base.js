@@ -172,7 +172,7 @@ function doPhysics(obj, t, isPlayer) {
       (block.x === obj.x && block.y === obj.y && block.index === obj.index)
     )
       return;
-    if (hasSubBlock.includes(block)) {
+    if (hasSubBlock.includes(block.type)) {
       let subBlock = getSubBlock(block);
       if (subBlock !== block) {
         block = {
