@@ -67,4 +67,4 @@ document.addEventListener("keyup", function (event) {
     default:
   }
 });
-//69
+var nothing = "literally nothing";
