@@ -1286,7 +1286,7 @@ function compressBlock(block) {
       delete block[prop];
       continue;
     }
-    if (propData[prop][0] === "block") compressBlock(block[prop]);
+    if (propData[prop][0] === "block" && block[prop]) compressBlock(block[prop]);
     if (propData[prop][1] !== prop) {
       block[propData[prop][1]] = block[prop];
       delete block[prop];
@@ -1305,7 +1305,7 @@ function decompressBlock(block) {
     
   }
   for (let prop in block) {
-    if (propData[prop][0] === "block") decompressBlock(block[prop]);
+    if (propData[prop][0] === "block" && block[prop]) decompressBlock(block[prop]);
   }
   for (let prop in blockData[block.type].defaultBlock) {
     block[prop] ??= blockData[block.type].defaultBlock[prop];

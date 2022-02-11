@@ -277,3 +277,7 @@
 - Fixed a bug where you get an error when reselecting or editing the properties of a Jump Restore Field
 - Fixed a bug where editing two block of different types at once caused the game to crash
 - Fixed a bug where certain player properties does not save across loads
+
+### 11 Feb. 2022
+
+- Fixed a bug where levels with Switch Block containing an empty block slot cannot load properly
