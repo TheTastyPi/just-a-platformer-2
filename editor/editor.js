@@ -63,7 +63,7 @@ const propData = {
     () => 0,
     (block) => levels[player.currentRoom][0].length * 50 - block.size
   ],
-  targetSize: ["num","tS", ()=>6.25,()=>maxBlockSize],
+  targetSize: ["num", "tS", () => 6.25, () => maxBlockSize],
   size: ["num", "s", () => 6.25, () => maxBlockSize],
   isSolid: ["bool", "so"],
   giveJump: ["bool", "j"],
@@ -86,12 +86,12 @@ const propData = {
   invincible: ["bool", "iv"],
   alwaysActive: ["bool", "aA"],
   // player
-  maxJump: ["int","mJ",()=>0,()=>Infinity],
-  currentJump: ["int","cJ",()=>0,()=>Infinity],
-  moveSpeed: ["num","mS",()=>0,()=>10],
-  switchLocal: ["idk","sL"],
-  switchGlobal: ["idk","sG"],
-  gameSpeed: ["num","gS",()=>0,()=>10],
+  maxJump: ["int", "mJ", () => 0, () => Infinity],
+  currentJump: ["int", "cJ", () => 0, () => Infinity],
+  moveSpeed: ["num", "mS", () => 0, () => 10],
+  switchLocal: ["idk", "sL"],
+  switchGlobal: ["idk", "sG"],
+  gameSpeed: ["num", "gS", () => 0, () => 10],
   // special
   power: ["num", "p"],
   color: ["color", "c"],
@@ -580,6 +580,7 @@ id("display").addEventListener("wheel", function (event) {
     for (let i in editor.editSelect) {
       if (factor === 1) break;
       scaleBlock(editor.editSelect[i], factor, xPos, yPos);
+      editor.editSelect[i].targetSize = editor.editSelect[i].size;
     }
     if (editor.editSelect.length > 0) {
       if (editor.scaleStart) {
@@ -604,6 +605,7 @@ id("display").addEventListener("wheel", function (event) {
     updateSelectDisp();
   } else {
     scaleBlock(editor.buildSelect, factor, undefined, undefined, false);
+    editor.buildSelect.targetSize = editor.buildSelect.size;
     updateBuildLocation(xPos, yPos);
   }
 });
@@ -899,7 +901,9 @@ function copy() {
 function paste(x, y) {
   let added = [];
   for (let i in editor.clipboard) {
-    let block = addBlock(deepCopy(editor.clipboard[i]));
+    let block = deepCopy(editor.clipboard[i]);
+    block.currentRoom = player.currentRoom;
+    addBlock(block);
     moveBlock(block, x, y);
     editor.editSelect.push(block);
     added.push(block);
@@ -1196,6 +1200,7 @@ function doAction(action) {
       for (let i in action[1]) {
         let block = action[1][i];
         scaleBlock(block, action[2], action[3], action[4]);
+        block.targetSize = block.size;
       }
       editor.scaleStart = false;
       editor.editSelect = action[1];
@@ -1246,6 +1251,7 @@ function undoAction(action) {
       for (let i in action[1]) {
         let block = action[1][i];
         scaleBlock(block, 1 / action[2], action[3], action[4]);
+        block.targetSize = block.size;
       }
       editor.scaleStart = false;
       editor.editSelect = action[1];
@@ -1286,7 +1292,8 @@ function compressBlock(block) {
       delete block[prop];
       continue;
     }
-    if (propData[prop][0] === "block" && block[prop]) compressBlock(block[prop]);
+    if (propData[prop][0] === "block" && block[prop])
+      compressBlock(block[prop]);
     if (propData[prop][1] !== prop) {
       block[propData[prop][1]] = block[prop];
       delete block[prop];
@@ -1302,10 +1309,10 @@ function decompressBlock(block) {
       block[propAliasReverse[prop]] = block[prop];
       delete block[prop];
     }
-    
   }
   for (let prop in block) {
-    if (propData[prop][0] === "block" && block[prop]) decompressBlock(block[prop]);
+    if (propData[prop][0] === "block" && block[prop])
+      decompressBlock(block[prop]);
   }
   for (let prop in blockData[block.type].defaultBlock) {
     block[prop] ??= blockData[block.type].defaultBlock[prop];
@@ -1554,6 +1561,8 @@ function renameRoom(name) {
       )
     );
     delete levels[name];
+    if (startState.currentRoom === name) startState.currentRoom = newName;
+    if (saveState.currentRoom === name) saveState.currentRoom = newName;
     if (player.currentRoom === name) player.currentRoom = newName;
     save();
   }

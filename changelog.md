@@ -281,3 +281,11 @@
 ### 11 Feb. 2022
 
 - Fixed a bug where levels with Switch Block containing an empty block slot cannot load properly
+
+### 11 Feb. 2022 #2
+
+- Fixed a bug where respawning/restarting after renaming a room without setting your spawn/startpoint crashes the game
+- Fixed a visual bug with Switch Block of different sizes
+- Fixed a bug where changing the size of a block using the scroll wheel does not change their targetSize
+- Fixed a visual bug with dynamic blocks crossing a boundary warp
+- Fixed a bug where dynamic objects cannot interactive with a dynamic block across a boundary warp

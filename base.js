@@ -168,7 +168,6 @@ function doPhysics(obj, t, isPlayer) {
     let colliding = isColliding(obj, block, true);
     if (
       !colliding ||
-      (block.dynamic && !prevDynObjs.includes(block)) ||
       (block.x === obj.x && block.y === obj.y && block.index === obj.index)
     )
       return;
@@ -452,7 +451,11 @@ function doPhysics(obj, t, isPlayer) {
           continue;
         gridSpace = [new Block(0, x * 50, y * 50, 50, true, true, 3)];
       }
-      for (let i in gridSpace) doCollision(gridSpace[i]);
+      for (let i in gridSpace) {
+        if (gridSpace[i].dynamic && !prevDynObjs.includes(gridSpace[i]))
+          continue;
+        doCollision(gridSpace[i]);
+      }
     }
   }
   if (
@@ -480,7 +483,10 @@ function doPhysics(obj, t, isPlayer) {
         if (isPlayer) {
           s = new PIXI.Sprite(blockData[0].defaultTexture);
           s.zIndex = -1;
-        } else s = createSprite(obj);
+        } else {
+          s = createSprite(obj);
+          blockData[obj.type].update(obj, s);
+        }
         levelLayer.addChild(s);
         obj.dupSprite = s;
       }
@@ -531,13 +537,26 @@ function doPhysics(obj, t, isPlayer) {
               if (x < 0 || x > newlvl.length - 1) continue;
               gridSpace = [new Block(0, x * 50, y * 50, 50, true, true, 3)];
             }
-            for (let i in gridSpace)
+            for (let i in gridSpace) {
+              if (gridSpace[i].dynamic && !prevDynObjs.includes(gridSpace[i]))
+                continue;
               doCollision({
                 ...gridSpace[i],
                 x: gridSpace[i].x - newlvl.length * 50,
                 y: gridSpace[i].y - dy
               });
+            }
           }
+        }
+        for (let i in prevDynObjs) {
+          let block = prevDynObjs[i];
+          if (block.currentRoom === obj.roomLink[1].currentRoom)
+            doCollision({
+              ...block,
+              x: block.x - newlvl.length * 50,
+              y: block.y - dy,
+              isSolid: true
+            });
         }
         if (
           actingObj.dynamic &&
@@ -573,13 +592,26 @@ function doPhysics(obj, t, isPlayer) {
               if (x < 0 || x > level.length - 1) continue;
               gridSpace = [new Block(0, x * 50, y * 50, 50, true, true, 3)];
             }
-            for (let i in gridSpace)
+            for (let i in gridSpace) {
+              if (gridSpace[i].dynamic && !prevDynObjs.includes(gridSpace[i]))
+                continue;
               doCollision({
                 ...gridSpace[i],
                 x: gridSpace[i].x + newlvl.length * 50,
                 y: gridSpace[i].y - dy
               });
+            }
           }
+        }
+        for (let i in prevDynObjs) {
+          let block = prevDynObjs[i];
+          if (block.currentRoom === obj.roomLink[1].currentRoom)
+            doCollision({
+              ...block,
+              x: block.x + level.length * 50,
+              y: block.y - dy,
+              isSolid: true
+            });
         }
         if (
           actingObj.dynamic &&
@@ -615,13 +647,26 @@ function doPhysics(obj, t, isPlayer) {
               if (y < 0 || y > newlvl[0].length - 1) continue;
               gridSpace = [new Block(0, x * 50, y * 50, 50, true, true, 3)];
             }
-            for (let i in gridSpace)
+            for (let i in gridSpace) {
+              if (gridSpace[i].dynamic && !prevDynObjs.includes(gridSpace[i]))
+                continue;
               doCollision({
                 ...gridSpace[i],
                 x: gridSpace[i].x - dx,
                 y: gridSpace[i].y - newlvl[0].length * 50
               });
+            }
           }
+        }
+        for (let i in prevDynObjs) {
+          let block = prevDynObjs[i];
+          if (block.currentRoom === obj.roomLink[1].currentRoom)
+            doCollision({
+              ...block,
+              x: block.x - dx,
+              y: block.y - newlvl[0].length * 50,
+              isSolid: true
+            });
         }
         if (
           actingObj.dynamic &&
@@ -657,13 +702,26 @@ function doPhysics(obj, t, isPlayer) {
               if (y < 0 || y > newlvl[0].length - 1) continue;
               gridSpace = [new Block(0, x * 50, y * 50, 50, true, true, 3)];
             }
-            for (let i in gridSpace)
+            for (let i in gridSpace) {
+              if (gridSpace[i].dynamic && !prevDynObjs.includes(gridSpace[i]))
+                continue;
               doCollision({
                 ...gridSpace[i],
                 x: gridSpace[i].x - dx,
                 y: gridSpace[i].y + level[0].length * 50
               });
+            }
           }
+        }
+        for (let i in prevDynObjs) {
+          let block = prevDynObjs[i];
+          if (block.currentRoom === obj.roomLink[1].currentRoom)
+            doCollision({
+              ...block,
+              x: block.x - dx,
+              y: block.y + level[0].length * 50,
+              isSolid: true
+            });
         }
         if (
           actingObj.dynamic &&

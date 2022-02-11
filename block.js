@@ -74,7 +74,7 @@ new BlockType(
 );
 new BlockType(
   "Death Block",
-  {...new Block(1, 0, 0, 50, true, false, 1), color:"#ff0000"},
+  { ...new Block(1, 0, 0, 50, true, false, 1), color: "#ff0000" },
   (block, app = display) => {
     let g = new PIXI.Graphics();
     g.beginFill(0xffffff);
@@ -204,8 +204,12 @@ new BlockType(
     () => {}
   ],
   (block, sprite = block.sprite) => {
-    let rgb = [2-Math.abs(block.power-1000)/500,2-Math.abs(block.power)/500,2-Math.abs(block.power-2000)/500];
-    rgb = rgb.map(x=>Math.max(Math.min(x,1),0));
+    let rgb = [
+      2 - Math.abs(block.power - 1000) / 500,
+      2 - Math.abs(block.power) / 500,
+      2 - Math.abs(block.power - 2000) / 500
+    ];
+    rgb = rgb.map((x) => Math.max(Math.min(x, 1), 0));
     sprite.tint = PIXI.utils.rgb2hex(rgb);
   },
   {
@@ -1773,13 +1777,13 @@ new BlockType(
     let s;
     if (isSwitchOn(block)) {
       if (block.blockB !== null) {
-        s = createSprite({ ...block.blockB, x: 0, y: 0, size: block.size });
+        s = createSprite({ ...block.blockB, x: 0, y: 0, size:50 });
         if (!animatedTypes.includes(block.blockB.type))
           blockData[block.blockB.type].update(block.blockB, s);
       }
     } else {
       if (block.blockA !== null) {
-        s = createSprite({ ...block.blockA, x: 0, y: 0, size: block.size });
+        s = createSprite({ ...block.blockA, x: 0, y: 0, size:50 });
         if (!animatedTypes.includes(block.blockA.type))
           blockData[block.blockA.type].update(block.blockA, s);
       }
