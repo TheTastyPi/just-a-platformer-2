@@ -505,11 +505,13 @@ new BlockType(
       if (block.dirOnly && block.magOnly) return; // bruh
       if (!block.temporary) {
         if (block.dirOnly) {
-          obj.g = Math.sign(block.newg) * Math.abs(obj.g);
+          getSubBlock(obj).g =
+            Math.sign(block.newg) * Math.abs(getSubBlock(obj).g);
         } else if (block.magOnly) {
-          obj.g = Math.sign(obj.g) * Math.abs(block.newg);
-        } else obj.g = block.newg;
-        if (!block.magOnly) obj.xg = block.newxg;
+          getSubBlock(obj).g =
+            Math.sign(getSubBlock(obj).g) * Math.abs(block.newg);
+        } else getSubBlock(obj).g = block.newg;
+        if (!block.magOnly) getSubBlock(obj).xg = block.newxg;
       }
       if (block.dirOnly) {
         tempObj.g = Math.sign(block.newg) * Math.abs(obj.g);
@@ -970,11 +972,12 @@ new BlockType(
     leftWall: false,
     rightWall: false,
     topWall: true,
-    bottomWall: false
+    bottomWall: false,
+    color: "#000000"
   },
   (block, app = display) => {
     let g = new PIXI.Graphics();
-    g.beginFill(0x000000);
+    g.beginFill(PIXI.utils.string2hex(block.color));
     if (block.leftWall) g.drawRect(0, 0, 5, 50);
     if (block.rightWall) g.drawRect(45, 0, 5, 50);
     if (block.topWall) g.drawRect(0, 0, 50, 5);
@@ -1003,9 +1006,10 @@ new BlockType(
     leftWall: [],
     rightWall: [],
     topWall: [],
-    bottomWall: []
+    bottomWall: [],
+    color: []
   },
-  ["leftWall", "rightWall", "topWall", "bottomWall"]
+  ["leftWall", "rightWall", "topWall", "bottomWall", "color"]
 );
 new BlockType(
   "Death Panel",
@@ -1014,11 +1018,12 @@ new BlockType(
     leftWall: false,
     rightWall: false,
     topWall: true,
-    bottomWall: false
+    bottomWall: false,
+    color: "#ff0000"
   },
   (block, app = display) => {
     let g = new PIXI.Graphics();
-    g.beginFill(0xff0000);
+    g.beginFill(0xffffff);
     if (block.leftWall) g.drawRect(0, 0, 5, 50);
     if (block.rightWall) g.drawRect(45, 0, 5, 50);
     if (block.topWall) g.drawRect(0, 0, 50, 5);
@@ -1052,18 +1057,17 @@ new BlockType(
     },
     () => {}
   ],
-  (block, sprite = block.sprite, app) => {
-    if (sprite.texture !== blockData[block.type].defaultTexture)
-      sprite.texture.destroy(true);
-    sprite.texture = blockData[block.type].getTexture(block, app);
+  (block, sprite = block.sprite) => {
+    sprite.tint = PIXI.utils.string2hex(block.color);
   },
   {
     leftWall: [],
     rightWall: [],
     topWall: [],
-    bottomWall: []
+    bottomWall: [],
+    color: []
   },
-  ["leftWall", "rightWall", "topWall", "bottomWall"]
+  ["leftWall", "rightWall", "topWall", "bottomWall", "color"]
 );
 new BlockType(
   "Bounce Panel",
@@ -1077,7 +1081,7 @@ new BlockType(
   },
   (block, app = display) => {
     let g = new PIXI.Graphics();
-    g.beginFill(0xffff00);
+    g.beginFill(0xffffff);
     if (block.leftWall) g.drawRect(0, 0, 5, 50);
     if (block.rightWall) g.drawRect(45, 0, 5, 50);
     if (block.topWall) g.drawRect(0, 0, 50, 5);
@@ -1112,9 +1116,13 @@ new BlockType(
     () => {}
   ],
   (block, sprite = block.sprite, app) => {
-    if (sprite.texture !== blockData[block.type].defaultTexture)
-      sprite.texture.destroy(true);
-    sprite.texture = blockData[block.type].getTexture(block, app);
+    let rgb = [
+      2 - Math.abs(block.power - 1000) / 500,
+      2 - Math.abs(block.power) / 500,
+      2 - Math.abs(block.power - 2000) / 500
+    ];
+    rgb = rgb.map((x) => Math.max(Math.min(x, 1), 0));
+    sprite.tint = PIXI.utils.rgb2hex(rgb);
   },
   {
     leftWall: [],
@@ -1667,7 +1675,7 @@ new BlockType(
     () => {},
     (obj, block, tempObj, isPlayer) => {
       if (!block.temporary) {
-        obj.targetSize = block.newSize;
+        getSubBlock(obj).targetSize = block.newSize;
       }
       tempObj.targetSize = block.newSize;
     }
@@ -1777,13 +1785,13 @@ new BlockType(
     let s;
     if (isSwitchOn(block)) {
       if (block.blockB !== null) {
-        s = createSprite({ ...block.blockB, x: 0, y: 0, size:50 });
+        s = createSprite({ ...block.blockB, x: 0, y: 0, size: 50 });
         if (!animatedTypes.includes(block.blockB.type))
           blockData[block.blockB.type].update(block.blockB, s);
       }
     } else {
       if (block.blockA !== null) {
-        s = createSprite({ ...block.blockA, x: 0, y: 0, size:50 });
+        s = createSprite({ ...block.blockA, x: 0, y: 0, size: 50 });
         if (!animatedTypes.includes(block.blockA.type))
           blockData[block.blockA.type].update(block.blockA, s);
       }

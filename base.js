@@ -26,6 +26,7 @@ var defaultPlayer = {
   dupSprite: null,
   switchLocal: {},
   switchGlobal: [],
+  blockAdded: [],
   blockChanged: [],
   blockRemoved: []
 };
@@ -103,8 +104,10 @@ function nextFrame(timeStamp) {
         if ((editor?.playMode ?? true) && !justDied) {
           for (let j in dynamicObjs) {
             if (
-              dynamicObjs[j].alwaysActive ||
+              getSubBlock(dynamicObjs[j]).alwaysActive ||
               dynamicObjs[j].currentRoom === player.currentRoom ||
+              dynamicObjs[j].roomLink[0]?.currentRoom === player.currentRoom ||
+              dynamicObjs[j].roomLink[1]?.currentRoom === player.currentRoom ||
               dynamicObjs[j].currentRoom === player.roomLink[1]?.currentRoom
             )
               doPhysics(dynamicObjs[j], interval / 1000 / simReruns, false);
@@ -142,7 +145,12 @@ function nextFrame(timeStamp) {
   window.requestAnimationFrame(nextFrame);
 }
 function doPhysics(obj, t, isPlayer) {
-  if (!obj.dynamic && !isPlayer) logChange(obj);
+  if (
+    !obj.dynamic &&
+    !isPlayer &&
+    player.blockAdded.findIndex((x) => x === obj) === -1
+  )
+    logChange(obj);
   let level = levels[obj.currentRoom];
   let px1 = obj.x;
   let px2 = px1 + obj.size;
@@ -162,8 +170,19 @@ function doPhysics(obj, t, isPlayer) {
   let topPriority = [0, 0, 0, 0, 0];
   let gdxv = 0;
   let gdyv = 0;
-  let actingObj = deepCopy(obj);
-  if (hasSubBlock.includes(obj.type)) actingObj = getSubBlock(obj);
+  let subObj = deepCopy(obj);
+  if (hasSubBlock.includes(obj.type)) {
+    subObj = {
+      ...getSubBlock(subObj),
+      x: obj.x,
+      y: obj.y,
+      xv: obj.xv,
+      yv: obj.yv,
+      xa: obj.xv,
+      ya: obj.yv,
+      size: obj.size
+    };
+  }
   let doCollision = function (block) {
     let colliding = isColliding(obj, block, true);
     if (
@@ -178,6 +197,10 @@ function doPhysics(obj, t, isPlayer) {
           ...getSubBlock(block),
           x: block.x,
           y: block.y,
+          xv: block.xv,
+          yv: block.yv,
+          xa: block.xv,
+          ya: block.yv,
           size: block.size
         };
       }
@@ -246,14 +269,14 @@ function doPhysics(obj, t, isPlayer) {
         obj.isDead = true;
         return;
       }
-      if (actingObj.xg && actingObj.g < 0 && block.floorLeniency >= bx2 - px1) {
+      if (subObj.xg && subObj.g < 0 && block.floorLeniency >= bx2 - px1) {
         isLeft = true;
         isRight = false;
         isTop = false;
         isBottom = false;
       } else if (
-        actingObj.xg &&
-        actingObj.g > 0 &&
+        subObj.xg &&
+        subObj.g > 0 &&
         block.floorLeniency >= px2 - bx1
       ) {
         isLeft = false;
@@ -261,8 +284,8 @@ function doPhysics(obj, t, isPlayer) {
         isTop = false;
         isBottom = false;
       } else if (
-        !actingObj.xg &&
-        actingObj.g < 0 &&
+        !subObj.xg &&
+        subObj.g < 0 &&
         block.floorLeniency >= by2 - py1
       ) {
         isLeft = false;
@@ -270,8 +293,8 @@ function doPhysics(obj, t, isPlayer) {
         isTop = true;
         isBottom = false;
       } else if (
-        !actingObj.xg &&
-        actingObj.g > 0 &&
+        !subObj.xg &&
+        subObj.g > 0 &&
         block.floorLeniency >= py2 - by1
       ) {
         isLeft = false;
@@ -459,8 +482,8 @@ function doPhysics(obj, t, isPlayer) {
     }
   }
   if (
-    actingObj.dynamic &&
-    actingObj.pushable &&
+    subObj.dynamic &&
+    subObj.pushable &&
     obj.currentRoom === player.currentRoom
   ) {
     doCollision(player);
@@ -559,7 +582,8 @@ function doPhysics(obj, t, isPlayer) {
             });
         }
         if (
-          actingObj.dynamic &&
+          subObj.dynamic &&
+          subObj.pushable &&
           player.currentRoom === obj.roomLink[1].currentRoom
         )
           doCollision({
@@ -614,7 +638,8 @@ function doPhysics(obj, t, isPlayer) {
             });
         }
         if (
-          actingObj.dynamic &&
+          subObj.dynamic &&
+          subObj.pushable &&
           player.currentRoom === obj.roomLink[1].currentRoom
         )
           doCollision({
@@ -669,7 +694,8 @@ function doPhysics(obj, t, isPlayer) {
             });
         }
         if (
-          actingObj.dynamic &&
+          subObj.dynamic &&
+          subObj.pushable &&
           player.currentRoom === obj.roomLink[1].currentRoom
         )
           doCollision({
@@ -724,7 +750,8 @@ function doPhysics(obj, t, isPlayer) {
             });
         }
         if (
-          actingObj.dynamic &&
+          subObj.dynamic &&
+          subObj.pushable &&
           player.currentRoom === obj.roomLink[1].currentRoom
         )
           doCollision({
@@ -771,8 +798,7 @@ function doPhysics(obj, t, isPlayer) {
   ) {
     obj.isDead = true;
   }
-  if (actingObj.invincible || (isPlayer && editor?.invincible))
-    obj.isDead = false;
+  if (subObj.invincible || (isPlayer && editor?.invincible)) obj.isDead = false;
   // MOVEMENT & EVENTS
   if (!isDead && !obj.isDead) {
     // collision
@@ -804,10 +830,10 @@ function doPhysics(obj, t, isPlayer) {
       obj.isDead = true;
     }
     // touch events
-    let prevg = actingObj.g;
-    let prevxg = actingObj.xg;
+    let prevg = subObj.g;
+    let prevxg = subObj.xg;
     obj.roomLink = [];
-    let tempObj = deepCopy(actingObj);
+    let tempObj = deepCopy(subObj);
     for (let i in eventList) {
       for (let j in eventList[i]) {
         let block = eventList[i][j][0];
@@ -980,11 +1006,11 @@ function doPhysics(obj, t, isPlayer) {
     if (conveyorBlocks.includes(bottomBlock?.type)) dbv += bottomBlock.topSpeed;
     if (conveyorBlocks.includes(leftBlock?.type)) dlv += leftBlock.rightSpeed;
     if (conveyorBlocks.includes(rightBlock?.type)) drv += rightBlock.leftSpeed;
-    if (conveyorBlocks.includes(actingObj.type)) {
-      if (topBlock) dtv -= actingObj.topSpeed;
-      if (bottomBlock) dbv -= actingObj.bottomSpeed;
-      if (leftBlock) dlv -= actingObj.leftSpeed;
-      if (rightBlock) drv -= actingObj.rightSpeed;
+    if (conveyorBlocks.includes(subObj.type)) {
+      if (topBlock) dtv -= subObj.topSpeed;
+      if (bottomBlock) dbv -= subObj.bottomSpeed;
+      if (leftBlock) dlv -= subObj.leftSpeed;
+      if (rightBlock) drv -= subObj.rightSpeed;
     }
     let dxv = obj.xv - dtv - dbv - gdxv;
     let dyv = obj.yv - dlv - drv - gdyv;
@@ -1059,14 +1085,12 @@ function doPhysics(obj, t, isPlayer) {
       );
     }
     if (obj.currentRoom !== rWarp) {
-      if (actingObj.dynamic) {
-        let newObj = deepCopy(obj);
+      if (subObj.dynamic) {
         removeBlock(obj);
-        newObj.dupSprite = null;
-        obj = newObj;
+        obj.dupSprite = null;
       }
       obj.currentRoom = rWarp;
-      if (actingObj.dynamic) addBlock(obj);
+      if (subObj.dynamic) addBlock(obj);
       if (isPlayer) {
         drawLevel(true);
         adjustLevelSize();
@@ -1105,12 +1129,45 @@ function respawn(start = false, draw = true) {
     player.dupSprite.destroy();
     player.dupSprite = null;
   }
+  rollBack();
+  player = deepCopy(start ? startState : saveState);
+  if (!editor?.playMode ?? false) {
+    dynamicInit = deepCopy(dynamicObjs);
+    dynamicSave = deepCopy(dynamicObjs);
+  }
+  for (let i = 0; i < dynamicObjs.length; i++) {
+    if (dynamicObjs[i].dynamic) {
+      removeBlock(dynamicObjs[i], false);
+      i--;
+    }
+  }
+  let newDynamicObjs = deepCopy(start ? dynamicInit : dynamicSave);
+  for (let i in newDynamicObjs) {
+    if (newDynamicObjs[i].dynamic) addBlock(newDynamicObjs[i], false);
+  }
+  if (start) {
+    saveState = deepCopy(startState);
+    dynamicSave = deepCopy(dynamicInit);
+  }
+  rollForward();
+  forAllBlock(updateSwitchBlock, 26);
+  if (draw) {
+    drawLevel(player.currentRoom !== prevRoom);
+    if (
+      !arraysEqual([player.switchLocal, player.switchGlobal], prevSwitch, false)
+    )
+      switchBlocks.map(updateAll);
+    adjustLevelSize();
+  }
+}
+function rollBack() {
   for (let i in player.blockChanged) {
     let data = player.blockChanged[i];
     let block =
       levels[data[1].currentRoom][gridUnit(data[1].x)][gridUnit(data[1].y)][
         data[1].index
       ];
+    scaleBlock(block, data[0].size / block.size, block.x, block.y);
     moveBlock(block, data[0].x - block.x, data[0].y - block.y);
     Object.assign(block, data[0]);
     let gridSpace =
@@ -1122,32 +1179,28 @@ function respawn(start = false, draw = true) {
     gridSpace.splice(block.index, 0, block);
     for (let i = parseInt(block.index) + 1; i < gridSpace.length; i++)
       gridSpace[i].index++;
-    updateBlock(block);
   }
-  for (let i in player.blockRemoved) addBlock(player.blockRemoved[i]);
-  player = deepCopy(start ? startState : saveState);
-  if (!editor?.playMode ?? false) {
-    dynamicInit = deepCopy(dynamicObjs);
-    dynamicSave = deepCopy(dynamicObjs);
+  player.blockChanged = [];
+  for (let i in player.blockRemoved) addBlock(player.blockRemoved[i], false);
+  player.blockRemoved = [];
+  for (let i in player.blockAdded) removeBlock(player.blockAdded[i], false);
+  player.blockAdded = [];
+}
+function rollForward() {
+  for (let i in player.blockRemoved) {
+    let data = player.blockRemoved[i];
+    let block =
+      levels[data.currentRoom][gridUnit(data.x)][gridUnit(data.y)][data.index];
+    removeBlock(block, false);
   }
-  let amt = dynamicObjs.length;
-  for (let i = 0; i < amt; i++) {
-    if (dynamicObjs[0].dynamic) removeBlock(dynamicObjs[0]);
-  }
-  let newDynamicObjs = deepCopy(start ? dynamicInit : dynamicSave);
-  for (let i in newDynamicObjs) {
-    if (newDynamicObjs[0].dynamic) addBlock(newDynamicObjs[i]);
-  }
-  if (start) {
-    saveState = deepCopy(startState);
-    dynamicSave = deepCopy(dynamicInit);
-  }
+  for (let i in player.blockAdded) addBlock(player.blockAdded[i], false);
   for (let i in player.blockChanged) {
     let data = player.blockChanged[i];
     let block =
       levels[data[0].currentRoom][gridUnit(data[0].x)][gridUnit(data[0].y)][
         data[0].index
       ];
+    scaleBlock(block, data[1].size / block.size, block.x, block.y);
     moveBlock(block, data[1].x - block.x, data[1].y - block.y);
     Object.assign(block, data[1]);
     let gridSpace =
@@ -1159,22 +1212,6 @@ function respawn(start = false, draw = true) {
     gridSpace.splice(block.index, 0, block);
     for (let i = parseInt(block.index) + 1; i < gridSpace.length; i++)
       gridSpace[i].index++;
-    updateBlock(block);
-  }
-  for (let i in player.blockRemoved) {
-    let data = player.blockChanged[i];
-    let block =
-      levels[data.currentRoom][gridUnit(data.x)][gridUnit(data.y)][data.index];
-    removeBlock(block);
-  }
-  forAllBlock(updateSwitchBlock, 26);
-  if (draw) {
-    drawLevel(player.currentRoom !== prevRoom);
-    if (
-      !arraysEqual([player.switchLocal, player.switchGlobal], prevSwitch, false)
-    )
-      switchBlocks.map(updateAll);
-    adjustLevelSize();
   }
 }
 function gridUnit(n) {
@@ -1238,7 +1275,7 @@ function getSubBlock(block) {
     return getSubBlock(subBlock);
   } else return block;
 }
-function addBlock(block) {
+function addBlock(block, log = true) {
   block.index =
     levels[block.currentRoom][gridUnit(block.x)][gridUnit(block.y)].push(
       block
@@ -1250,12 +1287,13 @@ function addBlock(block) {
     block.sprite = s;
     updateBlock(block);
   }
-  if (block.dynamic) dynamicObjs.push(block);
-  if (animatedTypes.includes(block.type)) animatedObjs.push(block);
-  if (block.type === 26) updateSwitchBlock(block);
+  if (getSubBlock(block).dynamic) dynamicObjs.push(block);
+  if (animatedTypes.includes(getSubBlock(block).type)) animatedObjs.push(block);
+  if ((!editor || editor.playMode) && !block.dynamic && log)
+    player.blockAdded.push(block);
   return block;
 }
-function removeBlock(block) {
+function removeBlock(block, log = true) {
   block =
     levels[block.currentRoom][gridUnit(block.x)][gridUnit(block.y)][
       block.index
@@ -1281,10 +1319,15 @@ function removeBlock(block) {
   for (let i = parseInt(block.index) + 1; i < gridSpace.length; i++) {
     gridSpace[i].index--;
   }
-  let logIndex = player.blockChanged.findIndex((x) => x[1] === block);
-  if (logIndex > -1) {
-    let removed = player.blockChanged.splice(logIndex, 1);
-    if (!editor || editor.playMode) player.blockRemoved.push(removed[0][0]);
+  if (log) {
+    let logIndex = player.blockChanged.findIndex((x) => x[1] === block);
+    if (logIndex > -1) {
+      let removed = player.blockChanged.splice(logIndex, 1);
+      if ((!editor || editor.playMode) && !block.dynamic)
+        player.blockRemoved.push(removed[0][0]);
+    }
+    logIndex = player.blockAdded.findIndex((x) => x === block);
+    if (logIndex > -1) player.blockAdded.splice(logIndex, 1);
   }
   gridSpace.splice(block.index, 1);
 }
@@ -1295,7 +1338,7 @@ function scaleBlock(block, factor, focusX, focusY, draw = true) {
     let dy = focusY - block.y;
     moveBlock(block, dx * (1 - factor), dy * (1 - factor));
   }
-  if (draw) {
+  if (block.currentRoom === player.currentRoom && draw) {
     block.sprite.width = block.size;
     block.sprite.height = block.size;
   }
@@ -1317,6 +1360,13 @@ function moveBlock(block, dx, dy) {
   let newGridSpace = level[gridUnit(block.x)][gridUnit(block.y)];
   if (dgx !== 0 || dgy !== 0) {
     for (let i = parseInt(block.index) + 1; i < gridSpace.length; i++) {
+      let find = prevDynObjs.find(
+        (x) =>
+          x.x === gridSpace[i].x &&
+          x.y === gridSpace[i].y &&
+          x.index === gridSpace[i].index
+      );
+      if (find) find.index--;
       gridSpace[i].index--;
     }
     gridSpace.splice(block.index, 1);

@@ -284,8 +284,22 @@
 
 ### 11 Feb. 2022 #2
 
+- Pasting blocks from one room to another now works
 - Fixed a bug where respawning/restarting after renaming a room without setting your spawn/startpoint crashes the game
 - Fixed a visual bug with Switch Block of different sizes
 - Fixed a bug where changing the size of a block using the scroll wheel does not change their targetSize
 - Fixed a visual bug with dynamic blocks crossing a boundary warp
 - Fixed a bug where dynamic objects cannot interactive with a dynamic block across a boundary warp
+
+### 13 Feb. 2022
+
+- Fixed a bug where Switch Blocks containing dynamic blocks with alwaysActive true are not always active
+- Fixed a bug where respawning or toggling play mode after a dynamic Switch Block exits the screen via a boundary warp causes the game to crash
+- Fixed a bug where weird shit goes down when a Switch Block does anything with a boundary warp
+- Fixed a bug where dynamic blocks with 'pushable' false can still be pushed when across a boundary warp
+- Fixed a bug where dynamic blocks with 'alwaysActive' false abruptly disappear when going through a boundary warp the player is not interacting with
+- Fixed a bug where having Switch Blocks in a level may cause dynamic blocks to not reset properly on respawn/restart
+- Fixed a visual issue where scaled Switch Blocks does not display correctly after a respawn or toggling play mode
+- Bounce Panels now also changes color like Bounce Blocks
+- Solid Panels and Death Panels now has the 'color' property like their block counterpart
+- Fixed a bug where the player doesn't move while standing on a moving Switch Block

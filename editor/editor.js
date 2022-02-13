@@ -1609,28 +1609,7 @@ function togglePlayMode() {
     selectLayer.visible = false;
     deselect();
   } else {
-    for (let i in player.blockChanged) {
-      let data = player.blockChanged[i];
-      let block =
-        levels[data[1].currentRoom][gridUnit(data[1].x)][gridUnit(data[1].y)][
-          data[1].index
-        ];
-      moveBlock(block, data[0].x - block.x, data[0].y - block.y);
-      Object.assign(block, data[0]);
-      let gridSpace =
-        levels[block.currentRoom][gridUnit(block.x)][gridUnit(block.y)];
-      gridSpace.splice(
-        gridSpace.findIndex((x) => x === block),
-        1
-      );
-      gridSpace.splice(block.index, 0, block);
-      for (let i = parseInt(block.index) + 1; i < gridSpace.length; i++)
-        gridSpace[i].index++;
-      updateBlock(block);
-    }
-    player.blockChanged = [];
-    for (let i in player.blockRemoved) addBlock(player.blockRemoved[i]);
-    player.blockRemoved = [];
+    rollBack();
     for (let i = 0; i < dynamicObjs.length; i++) {
       if (dynamicObjs[i].dynamic) {
         removeBlock(dynamicObjs[i]);
