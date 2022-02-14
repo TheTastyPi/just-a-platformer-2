@@ -977,25 +977,25 @@ function doPhysics(obj, t, isPlayer) {
       }
     }
     // change acceleration
-    let dtv = tempObj.g < 0 ? topBlock?.xv ?? 0 : 0;
+    let dtv = (tempObj.g < 0 && topBlock?.dynamic) ? topBlock?.xv ?? 0 : 0;
     if (dtv !== 0 && topBlock?.g > 0 && !topBlock.xg) {
       if (topBlock === player && (control.left || control.right)) {
         dtv = -topBlock.xv;
       }
     }
-    let dbv = tempObj.g > 0 ? bottomBlock?.xv ?? 0 : 0;
+    let dbv = (tempObj.g > 0 && bottomBlock?.dynamic) ? bottomBlock?.xv ?? 0 : 0;
     if (dbv !== 0 && bottomBlock?.g < 0 && !bottomBlock.xg) {
       if (bottomBlock === player && (control.left || control.right)) {
         dbv = -bottomBlock.xv;
       }
     }
-    let dlv = tempObj.g < 0 ? leftBlock?.yv ?? 0 : 0;
+    let dlv = (tempObj.g < 0 && leftBlock?.dynamic) ? leftBlock?.yv ?? 0 : 0;
     if (dlv !== 0 && leftBlock?.g > 0 && leftBlock.xg) {
       if (topBlock === player && (control.up || control.down)) {
         dlv = -leftBlock.yv;
       }
     }
-    let drv = tempObj.g > 0 ? rightBlock?.yv ?? 0 : 0;
+    let drv = (tempObj.g > 0 && rightBlock?.dynamic) ? rightBlock?.yv ?? 0 : 0;
     if (drv !== 0 && rightBlock?.g < 0 && rightBlock.xg) {
       if (rightBlock === player && (control.up || control.down)) {
         drv = -rightBlock.yv;

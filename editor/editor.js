@@ -1461,7 +1461,7 @@ function load(name) {
 }
 function exportSave(name) {
   let exportData = [...editor.saves[name], name];
-  id("exportArea").value = JSON.stringify(exportData);
+  id("exportArea").value = JSON.stringify(exportData).replaceAll("\"","&");
   id("exportArea").style.display = "inline";
   id("exportArea").focus();
   id("exportArea").select();
@@ -1470,7 +1470,7 @@ function exportSave(name) {
   alert("Level data copied to clipboard!");
 }
 function importSave() {
-  let exportData = JSON.parse(prompt("Please input export data."));
+  let exportData = JSON.parse(prompt("Please input export data.").replaceAll("&","\""));
   if (exportData === null) return;
   let name = exportData.pop();
   while (
@@ -1520,7 +1520,8 @@ function addRoom() {
     x.map((y) =>
       y.map((b) => {
         b.currentRoom = name;
-        if (b.dynamic) dynamicObjs.push(b);
+        if (getSubBlock(b).dynamic) dynamicObjs.push(b);
+        if (animatedTypes.includes(getSubBlock(b).type)) animatedObjs.push(b);
       })
     )
   );

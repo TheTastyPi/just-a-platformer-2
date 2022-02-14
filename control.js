@@ -67,6 +67,3 @@ document.addEventListener("keyup", function (event) {
     default:
   }
 });
-function bruh() {
-  console.log("bruh");
-}
