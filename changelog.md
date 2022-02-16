@@ -309,3 +309,9 @@
 - Fixed a bug where the player moves while on a non-dynamic, non-moving block with a non-zero velocity
 - Fixed a bug where if you create a new room while in a room with dynamic Switch Blocks or animated block, then the new room's copy of those blocks will not have the appropriate properties
 - Export code no longer has backslashes in them so that Discord won't break them (don't worry, previous codes still work)
+
+#### 15 Feb. 2022
+
+- Fixed a bug where Teleporters crashes the game when their destination doesn't exist
+- Added 'color' property to Check Points, cuz why the hell not
+- Fixed a bug where blocks peeking out from beyond a Boundary Warp does not display properly

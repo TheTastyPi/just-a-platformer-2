@@ -28,6 +28,7 @@ function drawLevel(clear = false) {
     prevLevel = [];
     levelLayer.removeChildren();
     levelLayer.addChild(playerDisp);
+    forAllBlock((x) => (x.dupSprite = null));
   }
   for (let x = 0; x <= level.length - 1; x++) {
     for (let y = 0; y <= level[0].length - 1; y++) {
@@ -51,11 +52,46 @@ function drawLevel(clear = false) {
       }
     }
   }
+  forAllBlock((block) => {
+    if (block.roomLink[1]?.currentRoom === player.currentRoom) {
+      if (block.dupSprite === null) {
+        let s;
+        s = createSprite(block);
+        blockData[block.type].update(block, s);
+        levelLayer.addChild(s);
+        block.dupSprite = s;
+      }
+      let newlvl = levels[block.roomLink[1].currentRoom];
+      let dx = block.roomLink[1].x - block.roomLink[0].x;
+      let dy = block.roomLink[1].y - block.roomLink[0].y;
+      switch (block.roomLink[2]) {
+        case "left":
+          block.dupSprite.x = block.x + newlvl.length * 50;
+          block.dupSprite.y = block.y + dy;
+          break;
+        case "right":
+          block.dupSprite.x = block.x - level.length * 50;
+          block.dupSprite.y = block.y + dy;
+          break;
+        case "top":
+          block.dupSprite.x = block.x + dx;
+          block.dupSprite.y = block.y + newlvl[0].length * 50;
+          break;
+        case "bottom":
+          block.dupSprite.x = block.x + dx;
+          block.dupSprite.y = block.y + level[0].length * 50;
+          break;
+        default:
+      }
+    }
+  });
   prevLevel = deepCopy(level);
   if (clear) adjustScreen();
 }
 function updateBlock(block) {
-  blockData[block.type].update(block);
+  if (block.currentRoom === player.currentRoom)
+    blockData[block.type].update(block);
+  if (block.dupSprite) blockData[block.type].update(block, block.dupSprite);
   block.sprite.renderable = !block.invisible;
   block.sprite.alpha = block.opacity;
 }
@@ -66,7 +102,7 @@ function forAllBlock(func, type) {
       for (let y = 0; y <= level[0].length - 1; y++) {
         for (let i in level[x][y]) {
           let block = level[x][y][i];
-          if (block.type === type) {
+          if (!type || block.type === type) {
             func(block);
           }
         }
@@ -75,17 +111,9 @@ function forAllBlock(func, type) {
   }
 }
 function updateAll(type) {
-  let level = levels[player.currentRoom];
-  for (let x = 0; x <= level.length - 1; x++) {
-    for (let y = 0; y <= level[0].length - 1; y++) {
-      for (let i in level[x][y]) {
-        let block = level[x][y][i];
-        if (block.type === type) {
-          updateBlock(block);
-        }
-      }
-    }
-  }
+  forAllBlock((b) => {
+    if (b.sprite || b.dupSprite) updateBlock(b);
+  }, type);
 }
 var lvlxOffset = 0;
 var lvlyOffset = 0;

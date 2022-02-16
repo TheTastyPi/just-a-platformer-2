@@ -111,11 +111,11 @@ new BlockType(
 );
 new BlockType(
   "Check Point",
-  new Block(2, 0, 0, 50, false, false, 1),
+  {...new Block(2, 0, 0, 50, false, false, 1),color:"#00ffff"},
   (block, app = display) => {
     let g = new PIXI.Graphics();
     g.alpha = 0.5;
-    g.beginFill(0x00ffff);
+    g.beginFill(0xffffff);
     g.drawRect(0, 0, 50, 50);
     g.endFill();
     if (
@@ -123,9 +123,9 @@ new BlockType(
       !isColliding(saveState, block, true) &&
       app === display
     ) {
-      drawStr(g, "shft", 0x008888);
+      drawStr(g, "shft", 0x888888);
     } else {
-      g.lineStyle(5, 0x008888);
+      g.lineStyle(5, 0x888888);
       g.moveTo(5, 25);
       g.lineTo(25, 45);
       g.lineTo(45, 5);
@@ -152,7 +152,7 @@ new BlockType(
   (block, sprite = block.sprite, app = display) => {
     if (sprite._destroyed) return;
     let colliding = isColliding(saveState, block, true);
-    sprite.tint = colliding ? 0xffffff : 0x888888;
+    sprite.tint = colliding ? PIXI.utils.string2hex(block.color) : PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(PIXI.utils.string2hex(block.color)).map((x) => x / 2));
     if (canSave && !colliding) {
       if (sprite.texture !== blockData[block.type].defaultTexture)
         sprite.texture.destroy(true);
@@ -165,8 +165,10 @@ new BlockType(
       sprite.texture = blockData[block.type].defaultTexture;
     }
   },
-  {},
-  ["idkman"]
+  {
+    color:[]
+  },
+  ["color"]
 );
 new BlockType(
   "Bounce Block",
@@ -1377,7 +1379,7 @@ new BlockType(
     () => {},
     () => {},
     (obj, block, tempObj, isPlayer) => {
-      if (block.newPos[0] === undefined) return;
+      if (levels[block.newPos[0]] === undefined) return;
       let draw = obj.currentRoom !== block.newPos[0];
       obj.currentRoom = block.newPos[0];
       let nx = block.newPos[1] - obj.size / 2;
