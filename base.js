@@ -1013,21 +1013,21 @@ function doPhysics(obj, t, isPlayer) {
       if (leftBlock) dlv -= subObj.leftSpeed;
       if (rightBlock) drv -= subObj.rightSpeed;
     }
-    let dxv = obj.xv - dtv - dbv - gdxv;
-    let dyv = obj.yv - dlv - drv - gdyv;
+    let dxv = obj.xv - dtv - dbv;
+    let dyv = obj.yv - dlv - drv;
     if (tempObj.xg) {
       obj.xa += 1000 * tempObj.g;
       if (isPlayer)
         dyv -= (control.down - control.up) * tempObj.moveSpeed * 200;
       if (isPlayer && (control.up || control.down)) friction = true;
-      let fricAcc = -dyv * friction;
+      let fricAcc = -dyv * friction + gdyv;
       if (!(topBlock?.yv > 0) && !(bottomBlock?.yv < 0)) obj.ya += fricAcc;
     } else {
       obj.ya += 1000 * tempObj.g;
       if (isPlayer)
         dxv -= (control.right - control.left) * tempObj.moveSpeed * 200;
       if (isPlayer && (control.right || control.left)) friction = true;
-      let fricAcc = -dxv * friction;
+      let fricAcc = -dxv * friction + gdxv;
       if (!(leftBlock?.xv > 0) && !(rightBlock?.xv < 0)) obj.xa += fricAcc;
     }
     // change velocity

@@ -142,10 +142,8 @@ const blockList = {
   Status: [9, 10, 13, 14, 24],
   "Multi-State": [25, 26]
 };
-var levels = {
-  default:
-    "NrDeCIBcE8AcFNwC4AMAacAPZAmArBtLgeAMYBKy4AJvAGYCGArgDaTgC+aEMCy64IkjwCKVWo1bsuPOIlSFkARhSjKSGvWZtO3KHP6KkSkRjEaJ26Xt7yBQnKrPrNknTP18Fg4mvFapXVkve2QAZicyF0tAj1tDHyQw0yj-N2tguyMwgHYSbCR8ZzSrIM8srGQU81dSuINvApShABZImpj3GwaBApU-CwCuzIS+yIdq6KGM8tHlIsScPOLB9LL4xuVx5DaB2tjukIw+yZKDkc3jZcSlBYBnYhX94dnLk1DjXIA6EgfjHB+T06Mw2vWUzXmv3mgNSqzqhwqJw+SluML+qJIHWm6x6x3ByMi6IBmKma3qR0qxgAbMSjP0MESYViyQi5lcSEJ6eBGSSzi9QXjjAAOHIwzmE6G8uHnV5g4WijnKDEMyVA7HkxH4umnaX83GU97Zdqk+EXOWGxK7NUss2Cxx7YE4ikFe1Gh3q1nGJR27ZJFKQTDsDQABQATvA7ncAATAAASAF0o5AAPZR5MIAB2SYAFvAo7mWLAowBbeAZpgAQnA1tNsp9HytsOeIP1Lp1zadmsK10590eTcdGrZOBFYqVtO5qoHHttlJHCrpEv+TJNMoFc57WwEPJra9buBpY+MS+V05tdbnEOP26nzNr67byNPO7P9-3hSvtyhy6lHaHl3wZFvm-U87z3Z1fG1d1zwfXBN27X9B09OVALdXc9Qgj8G2NPkW0wiJoLffDfVQ19wK7AijEbMCMIo9skNnApckVD90Lwij4OYtjOzZZJsMI8i2UbIR6JnC8CmErduP-OVJOMUSYPfOTXTI2ihJIhSiK7OTKNU9j1I+PjpPjNAAE4zPjIA"
-};
+var levels =
+  "N4IgJgpgZghgrgGwC4gFwgNoeAHREgTwAcI9UAGAGjwA8yAmAVmpAIebwGMAlMvSWIiR4AvpVz5ipNFTxs0jWSB59w0eMlHi8hEmSXzUARnJKVafuqFaJu6RRaGjiludSXBmkGNtT9jhlNXXgs1T2FvbUk9GQC0JjMQ9zCNCJ8dP1i5MgBmIK4kj1SbDJiHbLQclwLVAWLI3zKDXIB2DhA6ePa3IusG0vslTtRq5UKUvvTowZZh0cMAFnyx2qsvKbt-WjITRNXwkumtjp3lwwTg-fqNzPKTtCMmONR6NsvQusmozaz74zOyEs9h81mlvrchjtRj0JutwU1Zjs3hVjE88ABndjvZKfOGNGbbB7zHY5FoAOnamIe9Ap2N6eIGx2Gzma1MpOxp3XGuLB+KZUNZxketIxHJFKxBB36R1+zOJD2WVNR4phPMOPzuzIAbJznrsWErhVyrl8+bKke0nIqxcbJdd4QS-kYABzky2nJSG3U1O2mxnmh6u8VOI0Gm102G8-2agV66Hc0HqiGIomCvLAnGJ6UayGp55AiNq7PJwkvZaqrM3BGl+gAyrlhNSqv2IxGFNltOjJA0CLJAAKACcIOj0QACDAACQAuqOkAB7UdzkgAO1nAAsIKONwgiKOALYQZdwACEeELlYd-PiddQBZ9mabl4DL3jJoZMpj8WRrA57K658fM1PxeIN3QeUNRWpFVG3tIDcxAt09WtKDbQfWDo3g14wP+T1w3vekow-TCdWDD0wxQgD0KI9sLhRfVIOVVCCKTas-lon9wO9EAvWgt9CJzGj5VRP9GMov1qJrISjFJcUeKYyMWMdYZ2KcV9fXfASa2-c5vwrQCMMEtMGz4xSrxfQU7wlNDxM0v50zEjSSzsm92L0qjbOGeyUUstybKczy1OsxzWM87SsXwhTixC1psNJeSi2bMyqgs4z1P4-zARvQLmKipTMsFeirJyxLn0s1SM2Kp9gLKwIKsikrqpc7L6qq+CavrOqEta9t2tQZKHLSKdKAAThGqdvCAA";
 var blockSelect = new Vue({
   el: "#blockSelect",
   data: {
@@ -1324,15 +1322,17 @@ function lvl2str(lvl) {
   lvl = deepCopy(lvl).flat().flat();
   for (let i in lvl) compressBlock(lvl[i]);
   let str = JSON.stringify([lvl, w, h]);
-  return LZString.compressToEncodedURIComponent(str);
+  return str;
 }
 function lvls2str(lvls) {
   lvls = deepCopy(lvls);
   for (let i in lvls) lvls[i] = lvl2str(lvls[i]);
-  return JSON.stringify(lvls);
+  return LZString.compressToEncodedURIComponent(JSON.stringify(lvls));
 }
 function str2lvl(str) {
-  let lvlData = JSON.parse(LZString.decompressFromEncodedURIComponent(str));
+  let newStr = LZString.decompressFromEncodedURIComponent(str);
+  if (LZString.compressToEncodedURIComponent(newStr) === str) str = newStr;
+  let lvlData = JSON.parse(str);
   let blocks = lvlData[0];
   let w = lvlData[1];
   let h = lvlData[2];
@@ -1360,6 +1360,8 @@ function str2lvl(str) {
   return [lvl, dynBlocks, aniBlocks];
 }
 function str2lvls(str) {
+  let newStr = LZString.decompressFromEncodedURIComponent(str);
+  if (LZString.compressToEncodedURIComponent(newStr) === str) str = newStr;
   let lvls = JSON.parse(str);
   let dynBlocks = [];
   let aniBlocks = [];
@@ -1415,10 +1417,10 @@ function load(name) {
   let save = editor.saves[name];
   if (save) {
     let saveData;
-    if (save[0][0] === "{") {
+    try {
       saveData = str2lvls(save[0]);
       levels = saveData[0];
-    } else {
+    } catch (err) {
       saveData = str2lvl(save[0]);
       levels = { [name]: saveData[0] };
       levels[name].map((x) =>
@@ -1461,7 +1463,7 @@ function load(name) {
 }
 function exportSave(name) {
   let exportData = [...editor.saves[name], name];
-  id("exportArea").value = JSON.stringify(exportData).replaceAll("\"","&");
+  id("exportArea").value = JSON.stringify(exportData);
   id("exportArea").style.display = "inline";
   id("exportArea").focus();
   id("exportArea").select();
@@ -1470,7 +1472,7 @@ function exportSave(name) {
   alert("Level data copied to clipboard!");
 }
 function importSave() {
-  let exportData = JSON.parse(prompt("Please input export data.").replaceAll("&","\""));
+  let exportData = JSON.parse(prompt("Please input export data."));
   if (exportData === null) return;
   let name = exportData.pop();
   while (
@@ -1666,7 +1668,7 @@ function init() {
     btn.stage.addChild(s);
   }
   for (let i in propData) propAliasReverse[propData[i][1]] = i;
-  levels.default = str2lvl(levels.default)[0];
+  levels = str2lvls(levels)[0];
   player.currentRoom = "default";
   drawLevel(true);
   adjustLevelSize();

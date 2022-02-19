@@ -321,3 +321,8 @@
 - Redesigned the visual of all Panels
 - Added the 'color' property to Wall-Jump Blocks, Wall-Jump Panels, Ice Blocks, and Ice Panels
 - Fixed a bug where after wall-jumping you can still do a buffered jump
+
+### 19 Feb. 2022 #2
+
+- Fixed a bug where a Force Field with 'friction' false will not work if the affected object is not touching a block with 'friction' true
+- Actually removed backslashes from export code
