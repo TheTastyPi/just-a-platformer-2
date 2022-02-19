@@ -955,6 +955,7 @@ function doPhysics(obj, t, isPlayer) {
             break;
           default:
         }
+        canJump = false;
       }
     }
     // change size

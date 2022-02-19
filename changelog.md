@@ -315,3 +315,9 @@
 - Fixed a bug where Teleporters crashes the game when their destination doesn't exist
 - Added 'color' property to Check Points, cuz why the hell not
 - Fixed a bug where blocks peeking out from beyond a Boundary Warp does not display properly
+
+### 19 Feb. 2022
+
+- Redesigned the visual of all Panels
+- Added the 'color' property to Wall-Jump Blocks, Wall-Jump Panels, Ice Blocks, and Ice Panels
+- Fixed a bug where after wall-jumping you can still do a buffered jump

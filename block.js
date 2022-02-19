@@ -70,7 +70,8 @@ new BlockType(
   },
   {
     color: []
-  }
+  },
+  ["color"]
 );
 new BlockType(
   "Death Block",
@@ -107,11 +108,12 @@ new BlockType(
   },
   {
     color: []
-  }
+  },
+  ["color"]
 );
 new BlockType(
   "Check Point",
-  {...new Block(2, 0, 0, 50, false, false, 1),color:"#00ffff"},
+  { ...new Block(2, 0, 0, 50, false, false, 1), color: "#00ffff" },
   (block, app = display) => {
     let g = new PIXI.Graphics();
     g.alpha = 0.5;
@@ -152,7 +154,13 @@ new BlockType(
   (block, sprite = block.sprite, app = display) => {
     if (sprite._destroyed) return;
     let colliding = isColliding(saveState, block, true);
-    sprite.tint = colliding ? PIXI.utils.string2hex(block.color) : PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(PIXI.utils.string2hex(block.color)).map((x) => x / 2));
+    sprite.tint = colliding
+      ? PIXI.utils.string2hex(block.color)
+      : PIXI.utils.rgb2hex(
+          PIXI.utils
+            .hex2rgb(PIXI.utils.string2hex(block.color))
+            .map((x) => x / 2)
+        );
     if (canSave && !colliding) {
       if (sprite.texture !== blockData[block.type].defaultTexture)
         sprite.texture.destroy(true);
@@ -166,7 +174,7 @@ new BlockType(
     }
   },
   {
-    color:[]
+    color: []
   },
   ["color"]
 );
@@ -216,7 +224,8 @@ new BlockType(
   },
   {
     power: [() => 0, () => 2000]
-  }
+  },
+  ["power"]
 );
 new BlockType(
   "Pushable Block",
@@ -244,7 +253,8 @@ new BlockType(
   },
   {
     color: []
-  }
+  },
+  ["color"]
 );
 new BlockType(
   "Unpushable Block",
@@ -271,14 +281,19 @@ new BlockType(
   },
   {
     color: []
-  }
+  },
+  ["color"]
 );
 new BlockType(
   "Ice Block",
-  { ...new Block(6, 0, 0, 50, true, true, 3), friction: false },
+  {
+    ...new Block(6, 0, 0, 50, true, true, 3),
+    friction: false,
+    color: "#8888ff"
+  },
   (block, app = display) => {
     let g = new PIXI.Graphics();
-    g.beginFill(0x8888ff);
+    g.beginFill(0xffffff);
     g.drawRect(0, 0, 50, 50);
     g.endFill();
     g.lineStyle({
@@ -293,7 +308,14 @@ new BlockType(
     g.lineTo(25, 45);
     return app.renderer.generateTexture(g);
   },
-  [() => {}, () => {}, () => {}, () => {}, () => {}]
+  [() => {}, () => {}, () => {}, () => {}, () => {}],
+  (block, sprite = block.sprite) => {
+    sprite.tint = PIXI.utils.string2hex(block.color);
+  },
+  {
+    color: []
+  },
+  ["color"]
 );
 new BlockType(
   "Water Block",
@@ -918,10 +940,10 @@ new BlockType(
 );
 new BlockType(
   "Wall-Jump Block",
-  new Block(15, 0, 0, 50, true, true, 3),
+  { ...new Block(15, 0, 0, 50, true, true, 3), color: "#8844ff" },
   (block, app = display) => {
     let g = new PIXI.Graphics();
-    g.beginFill(0x8844ff);
+    g.beginFill(0xffffff);
     g.drawRect(0, 0, 50, 50);
     g.endFill();
     g.lineStyle({
@@ -965,7 +987,14 @@ new BlockType(
       }
     },
     () => {}
-  ]
+  ],
+  (block, sprite = block.sprite) => {
+    sprite.tint = PIXI.utils.string2hex(block.color);
+  },
+  {
+    color: []
+  },
+  ["color"]
 );
 new BlockType(
   "Solid Panel",
@@ -1032,10 +1061,14 @@ new BlockType(
     if (block.bottomWall) g.drawRect(0, 45, 50, 5);
     g.endFill();
     g.beginFill(0x000000);
-    if (block.leftWall) g.drawPolygon(0, 25, 5, 30, 5, 20);
-    if (block.rightWall) g.drawPolygon(50, 25, 45, 20, 45, 30);
-    if (block.topWall) g.drawPolygon(25, 0, 30, 5, 20, 5);
-    if (block.bottomWall) g.drawPolygon(25, 50, 20, 45, 30, 45);
+    if (block.leftWall)
+      g.drawPolygon(5, 10, 0, 15, 0, 35, 5, 40, 5, 30, 0, 25, 5, 20);
+    if (block.rightWall)
+      g.drawPolygon(45, 40, 50, 35, 50, 15, 45, 10, 45, 20, 50, 25, 45, 30);
+    if (block.topWall)
+      g.drawPolygon(10, 5, 15, 0, 35, 0, 40, 5, 30, 5, 25, 0, 20, 5);
+    if (block.bottomWall)
+      g.drawPolygon(40, 45, 35, 50, 15, 50, 10, 45, 20, 45, 25, 50, 30, 45);
     g.endFill();
     return app.renderer.generateTexture(
       g,
@@ -1090,10 +1123,14 @@ new BlockType(
     if (block.bottomWall) g.drawRect(0, 45, 50, 5);
     g.endFill();
     g.beginFill(0x000000);
-    if (block.leftWall) g.drawPolygon(0, 25, 5, 30, 5, 20);
-    if (block.rightWall) g.drawPolygon(50, 25, 45, 20, 45, 30);
-    if (block.topWall) g.drawPolygon(25, 0, 30, 5, 20, 5);
-    if (block.bottomWall) g.drawPolygon(25, 50, 20, 45, 30, 45);
+    if (block.leftWall)
+      g.drawPolygon(5, 10, 0, 15, 5, 20, 0, 25, 5, 30, 0, 35, 5, 40);
+    if (block.rightWall)
+      g.drawPolygon(45, 40, 50, 35, 45, 30, 50, 25, 45, 20, 50, 15, 45, 10);
+    if (block.topWall)
+      g.drawPolygon(10, 5, 15, 0, 20, 5, 25, 0, 30, 5, 35, 0, 40, 5);
+    if (block.bottomWall)
+      g.drawPolygon(40, 45, 35, 50, 30, 45, 25, 50, 20, 45, 15, 50, 10, 45);
     g.endFill();
     return app.renderer.generateTexture(
       g,
@@ -1142,21 +1179,22 @@ new BlockType(
     leftWall: false,
     rightWall: false,
     topWall: true,
-    bottomWall: false
+    bottomWall: false,
+    color: "#8844ff"
   },
   (block, app = display) => {
     let g = new PIXI.Graphics();
-    g.beginFill(0x8844ff);
+    g.beginFill(0xffffff);
     if (block.leftWall) g.drawRect(0, 0, 5, 50);
     if (block.rightWall) g.drawRect(45, 0, 5, 50);
     if (block.topWall) g.drawRect(0, 0, 50, 5);
     if (block.bottomWall) g.drawRect(0, 45, 50, 5);
     g.endFill();
     g.beginFill(0x000000);
-    if (block.leftWall) g.drawPolygon(0, 25, 5, 30, 5, 20);
-    if (block.rightWall) g.drawPolygon(50, 25, 45, 20, 45, 30);
-    if (block.topWall) g.drawPolygon(25, 0, 30, 5, 20, 5);
-    if (block.bottomWall) g.drawPolygon(25, 50, 20, 45, 30, 45);
+    if (block.leftWall) g.drawPolygon(5, 10, 0, 15, 0, 35, 5, 40);
+    if (block.rightWall) g.drawPolygon(45, 40, 50, 35, 50, 15, 45, 10);
+    if (block.topWall) g.drawPolygon(10, 5, 15, 0, 35, 0, 40, 5);
+    if (block.bottomWall) g.drawPolygon(40, 45, 35, 50, 15, 50, 10, 45);
     g.endFill();
     return app.renderer.generateTexture(
       g,
@@ -1192,18 +1230,17 @@ new BlockType(
     },
     () => {}
   ],
-  (block, sprite = block.sprite, app) => {
-    if (sprite.texture !== blockData[block.type].defaultTexture)
-      sprite.texture.destroy(true);
-    sprite.texture = blockData[block.type].getTexture(block, app);
+  (block, sprite = block.sprite) => {
+    sprite.tint = PIXI.utils.string2hex(block.color);
   },
   {
     leftWall: [],
     rightWall: [],
     topWall: [],
-    bottomWall: []
+    bottomWall: [],
+    color: []
   },
-  ["leftWall", "rightWall", "topWall", "bottomWall"]
+  ["leftWall", "rightWall", "topWall", "bottomWall", "color"]
 );
 new BlockType(
   "Ice Panel",
@@ -1212,21 +1249,26 @@ new BlockType(
     leftWall: false,
     rightWall: false,
     topWall: true,
-    bottomWall: false
+    bottomWall: false,
+    color: "#8888ff"
   },
   (block, app = display) => {
     let g = new PIXI.Graphics();
-    g.beginFill(0x8888ff);
+    g.beginFill(0xffffff);
     if (block.leftWall) g.drawRect(0, 0, 5, 50);
     if (block.rightWall) g.drawRect(45, 0, 5, 50);
     if (block.topWall) g.drawRect(0, 0, 50, 5);
     if (block.bottomWall) g.drawRect(0, 45, 50, 5);
     g.endFill();
     g.beginFill(0x000000);
-    if (block.leftWall) g.drawPolygon(0, 25, 5, 30, 5, 20);
-    if (block.rightWall) g.drawPolygon(50, 25, 45, 20, 45, 30);
-    if (block.topWall) g.drawPolygon(25, 0, 30, 5, 20, 5);
-    if (block.bottomWall) g.drawPolygon(25, 50, 20, 45, 30, 45);
+    if (block.leftWall)
+      g.drawPolygon(5, 10, 0, 20, 5, 20, 0, 30, 5, 30, 0, 40, 5, 40);
+    if (block.rightWall)
+      g.drawPolygon(45, 40, 50, 30, 45, 30, 50, 20, 45, 20, 50, 10, 45, 10);
+    if (block.topWall)
+      g.drawPolygon(10, 5, 20, 0, 20, 5, 30, 0, 30, 5, 40, 0, 40, 5);
+    if (block.bottomWall)
+      g.drawPolygon(40, 45, 30, 50, 30, 45, 20, 50, 20, 45, 10, 50, 10, 45);
     g.endFill();
     return app.renderer.generateTexture(
       g,
@@ -1251,17 +1293,16 @@ new BlockType(
     () => {}
   ],
   (block, sprite = block.sprite, app) => {
-    if (sprite.texture !== blockData[block.type].defaultTexture)
-      sprite.texture.destroy(true);
-    sprite.texture = blockData[block.type].getTexture(block, app);
+    sprite.tint = PIXI.utils.string2hex(block.color);
   },
   {
     leftWall: [],
     rightWall: [],
     topWall: [],
-    bottomWall: []
+    bottomWall: [],
+    color: []
   },
-  ["leftWall", "rightWall", "topWall", "bottomWall"]
+  ["leftWall", "rightWall", "topWall", "bottomWall", "color"]
 );
 new BlockType(
   "Conveyor Panel",
