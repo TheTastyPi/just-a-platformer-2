@@ -1355,7 +1355,7 @@ function str2lvl(str) {
       dynBlocks.push(block);
       continue;
     }
-    lvl[gridUnit(block.x)][gridUnit(block.y)].push(block);
+    getGridSpace(block,lvl).push(block);
   }
   return [lvl, dynBlocks, aniBlocks];
 }

@@ -978,25 +978,25 @@ function doPhysics(obj, t, isPlayer) {
       }
     }
     // change acceleration
-    let dtv = (tempObj.g < 0 && topBlock?.dynamic) ? topBlock?.xv ?? 0 : 0;
+    let dtv = tempObj.g < 0 && topBlock?.dynamic ? topBlock?.xv ?? 0 : 0;
     if (dtv !== 0 && topBlock?.g > 0 && !topBlock.xg) {
       if (topBlock === player && (control.left || control.right)) {
         dtv = -topBlock.xv;
       }
     }
-    let dbv = (tempObj.g > 0 && bottomBlock?.dynamic) ? bottomBlock?.xv ?? 0 : 0;
+    let dbv = tempObj.g > 0 && bottomBlock?.dynamic ? bottomBlock?.xv ?? 0 : 0;
     if (dbv !== 0 && bottomBlock?.g < 0 && !bottomBlock.xg) {
       if (bottomBlock === player && (control.left || control.right)) {
         dbv = -bottomBlock.xv;
       }
     }
-    let dlv = (tempObj.g < 0 && leftBlock?.dynamic) ? leftBlock?.yv ?? 0 : 0;
+    let dlv = tempObj.g < 0 && leftBlock?.dynamic ? leftBlock?.yv ?? 0 : 0;
     if (dlv !== 0 && leftBlock?.g > 0 && leftBlock.xg) {
       if (topBlock === player && (control.up || control.down)) {
         dlv = -leftBlock.yv;
       }
     }
-    let drv = (tempObj.g > 0 && rightBlock?.dynamic) ? rightBlock?.yv ?? 0 : 0;
+    let drv = tempObj.g > 0 && rightBlock?.dynamic ? rightBlock?.yv ?? 0 : 0;
     if (drv !== 0 && rightBlock?.g < 0 && rightBlock.xg) {
       if (rightBlock === player && (control.up || control.down)) {
         drv = -rightBlock.yv;
@@ -1164,15 +1164,11 @@ function respawn(start = false, draw = true) {
 function rollBack() {
   for (let i in player.blockChanged) {
     let data = player.blockChanged[i];
-    let block =
-      levels[data[1].currentRoom][gridUnit(data[1].x)][gridUnit(data[1].y)][
-        data[1].index
-      ];
+    let block = getGridBlock(data[1]);
     scaleBlock(block, data[0].size / block.size, block.x, block.y);
     moveBlock(block, data[0].x - block.x, data[0].y - block.y);
     Object.assign(block, data[0]);
-    let gridSpace =
-      levels[block.currentRoom][gridUnit(block.x)][gridUnit(block.y)];
+    let gridSpace = getGridSpace(block);
     gridSpace.splice(
       gridSpace.findIndex((x) => x === block),
       1
@@ -1190,22 +1186,17 @@ function rollBack() {
 function rollForward() {
   for (let i in player.blockRemoved) {
     let data = player.blockRemoved[i];
-    let block =
-      levels[data.currentRoom][gridUnit(data.x)][gridUnit(data.y)][data.index];
+    let block = getGridBlock(data);
     removeBlock(block, false);
   }
   for (let i in player.blockAdded) addBlock(player.blockAdded[i], false);
   for (let i in player.blockChanged) {
     let data = player.blockChanged[i];
-    let block =
-      levels[data[0].currentRoom][gridUnit(data[0].x)][gridUnit(data[0].y)][
-        data[0].index
-      ];
+    let block = getGridBlock(data[0]);
     scaleBlock(block, data[1].size / block.size, block.x, block.y);
     moveBlock(block, data[1].x - block.x, data[1].y - block.y);
     Object.assign(block, data[1]);
-    let gridSpace =
-      levels[block.currentRoom][gridUnit(block.x)][gridUnit(block.y)];
+    let gridSpace = getGridSpace(block);
     gridSpace.splice(
       gridSpace.findIndex((x) => x === block),
       1
@@ -1215,8 +1206,24 @@ function rollForward() {
       gridSpace[i].index++;
   }
 }
-function gridUnit(n) {
-  return Math.max(0, Math.floor(n / 50));
+function gridUnit(n, bound = false, x = true) {
+  level = levels[player.currentRoom];
+  if (bound && level) {
+    return Math.max(
+      Math.min(Math.floor(n / 50), x ? level.length - 1 : level[0].length - 1),
+      0
+    );
+  }
+  return Math.floor(n / 50);
+}
+function getGridSpace(
+  block,
+  lvl = levels[block.currentRoom ?? player.currentRoom]
+) {
+  return lvl[gridUnit(block.x, true, true)][gridUnit(block.y, true, false)];
+}
+function getGridBlock(block) {
+  return getGridSpace(block)[block.index];
 }
 function createSprite(block) {
   let t;
@@ -1277,10 +1284,7 @@ function getSubBlock(block) {
   } else return block;
 }
 function addBlock(block, log = true) {
-  block.index =
-    levels[block.currentRoom][gridUnit(block.x)][gridUnit(block.y)].push(
-      block
-    ) - 1;
+  block.index = getGridSpace(block).push(block) - 1;
   let s;
   if (block.currentRoom === player.currentRoom) {
     s = createSprite(block);
@@ -1295,10 +1299,7 @@ function addBlock(block, log = true) {
   return block;
 }
 function removeBlock(block, log = true) {
-  block =
-    levels[block.currentRoom][gridUnit(block.x)][gridUnit(block.y)][
-      block.index
-    ];
+  block = getGridBlock(block);
   let s = block.sprite;
   if (block.currentRoom === player.currentRoom) {
     for (let i in s.children) s.children[i].destroy();
@@ -1315,8 +1316,7 @@ function removeBlock(block, log = true) {
     dynamicObjs.splice(dynamicObjs.indexOf(block), 1);
   if (animatedObjs.includes(block))
     animatedObjs.splice(animatedObjs.indexOf(block), 1);
-  let gridSpace =
-    levels[block.currentRoom][gridUnit(block.x)][gridUnit(block.y)];
+  let gridSpace = getGridSpace(block);
   for (let i = parseInt(block.index) + 1; i < gridSpace.length; i++) {
     gridSpace[i].index--;
   }
@@ -1345,10 +1345,7 @@ function scaleBlock(block, factor, focusX, focusY, draw = true) {
   }
 }
 function moveBlock(block, dx, dy) {
-  let level = levels[block.currentRoom];
-  let gx = gridUnit(block.x);
-  let gy = gridUnit(block.y);
-  let gridSpace = level[gx][gy];
+  let gridSpace = getGridSpace(block);
   let sprite = block.sprite;
   block.x += dx;
   block.y += dy;
@@ -1356,10 +1353,8 @@ function moveBlock(block, dx, dy) {
     sprite.x = block.x;
     sprite.y = block.y;
   }
-  let dgx = gridUnit(block.x) - gx;
-  let dgy = gridUnit(block.y) - gy;
-  let newGridSpace = level[gridUnit(block.x)][gridUnit(block.y)];
-  if (dgx !== 0 || dgy !== 0) {
+  let newGridSpace = getGridSpace(block);
+  if (gridSpace !== newGridSpace) {
     for (let i = parseInt(block.index) + 1; i < gridSpace.length; i++) {
       let find = prevDynObjs.find(
         (x) =>

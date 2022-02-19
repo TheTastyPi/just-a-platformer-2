@@ -326,3 +326,8 @@
 
 - Fixed a bug where a Force Field with 'friction' false will not work if the affected object is not touching a block with 'friction' true
 - Actually removed backslashes from export code
+
+### 19 Feb. 2022 #3
+
+- Fixed a bug where pasting blocks outside the current room causes the game to crash
+- Refactored the code a tiny bit
