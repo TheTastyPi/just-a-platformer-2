@@ -331,3 +331,7 @@
 
 - Fixed a bug where pasting blocks outside the current room causes the game to crash
 - Refactored the code a tiny bit
+
+#### 21 Feb. 2022
+
+- Fixed a bug where you can't jump for the first input after sliding off a Wall-Jump Block/Panel

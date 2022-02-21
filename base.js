@@ -933,29 +933,33 @@ function doPhysics(obj, t, isPlayer) {
             if (vert && control.right) {
               obj.yv = Math.sign(tempObj.g) * -375;
               obj.xv = obj.moveSpeed * 400;
+              canJump = false;
             }
             break;
           case 1:
             if (vert && control.left) {
               obj.yv = Math.sign(tempObj.g) * -375;
               obj.xv = -obj.moveSpeed * 400;
+              canJump = false;
             }
             break;
           case 2:
             if (hori && control.down) {
               obj.xv = Math.sign(tempObj.g) * -375;
               obj.yv = obj.moveSpeed * 400;
+              canJump = false;
             }
             break;
           case 3:
             if (hori && control.up) {
               obj.xv = Math.sign(tempObj.g) * -375;
               obj.yv = -obj.moveSpeed * 400;
+              canJump = false;
             }
+            canJump = false;
             break;
           default:
         }
-        canJump = false;
       }
     }
     // change size
