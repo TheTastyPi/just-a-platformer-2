@@ -335,3 +335,4 @@
 #### 21 Feb. 2022
 
 - Fixed a bug where you can't jump for the first input after sliding off a Wall-Jump Block/Panel
+- Fixed a bug where levels can load incorrectly

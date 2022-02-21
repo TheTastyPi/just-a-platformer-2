@@ -1210,11 +1210,10 @@ function rollForward() {
       gridSpace[i].index++;
   }
 }
-function gridUnit(n, bound = false, x = true) {
-  level = levels[player.currentRoom];
-  if (bound && level) {
+function gridUnit(n, bound = false, x = true, lvl = levels[player.currentRoom]) {
+  if (bound && lvl) {
     return Math.max(
-      Math.min(Math.floor(n / 50), x ? level.length - 1 : level[0].length - 1),
+      Math.min(Math.floor(n / 50), x ? lvl.length - 1 : lvl[0].length - 1),
       0
     );
   }
@@ -1224,7 +1223,7 @@ function getGridSpace(
   block,
   lvl = levels[block.currentRoom ?? player.currentRoom]
 ) {
-  return lvl[gridUnit(block.x, true, true)][gridUnit(block.y, true, false)];
+  return lvl[gridUnit(block.x, true, true, lvl)][gridUnit(block.y, true, false, lvl)];
 }
 function getGridBlock(block) {
   return getGridSpace(block)[block.index];
