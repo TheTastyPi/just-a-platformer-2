@@ -337,7 +337,7 @@
 - Fixed a bug where you can't jump for the first input after sliding off a Wall-Jump Block/Panel
 - Fixed a bug where levels can load incorrectly
 
-## ?? Feb. 2022
+## 24 Feb. 2022
 
 - Added Jump Block
 - Added a border to Switch Blocks to match Jump Blocks
