@@ -1791,7 +1791,7 @@ new BlockType(
           block.used = true;
         }
         switchBlocks.map(updateAll);
-        forAllBlock(updateSwitchBlock, 26);
+        forAllBlock(updateSubBlock, 26);
       }
     }
   ],
@@ -1851,6 +1851,11 @@ new BlockType(
       3,
       20
     );
+    g.lineStyle(
+      5,
+      PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2))
+    );
+    g.drawRect(0, 0, 50, 50);
     c.addChild(g);
     return app.renderer.generateTexture(
       c,
@@ -1866,11 +1871,60 @@ new BlockType(
     sprite.texture = blockData[block.type].getTexture(block, app);
   },
   {
-    id: [() => 0, () => Infinity],
-    global: false,
     blockA: [],
     blockB: [],
     invert: []
   },
   ["id", "global", "blockA", "blockB", "invert"]
+);
+new BlockType(
+  "Jump Block",
+  {
+    ...new Block(27, 0, 0, 50, false, false, 1),
+    blockA: null,
+    blockB: blockData[0].defaultBlock,
+    invert: false
+  },
+  (block, app = display) => {
+    let c = new PIXI.Container();
+    let s;
+    if (player.jumpOn ^ block.invert) {
+      if (block.blockB !== null) {
+        s = createSprite({ ...block.blockB, x: 0, y: 0, size: 50 });
+        if (!animatedTypes.includes(block.blockB.type))
+          blockData[block.blockB.type].update(block.blockB, s);
+      }
+    } else {
+      if (block.blockA !== null) {
+        s = createSprite({ ...block.blockA, x: 0, y: 0, size: 50 });
+        if (!animatedTypes.includes(block.blockA.type))
+          blockData[block.blockA.type].update(block.blockA, s);
+      }
+    }
+    if (s) c.addChild(s);
+    let g = new PIXI.Graphics();
+    g.alpha = 0.5;
+    let color = PIXI.utils.rgb2hex([0.5, 0.25, 0]);
+    g.lineStyle(5, color);
+    g.drawRect(0, 0, 50, 50);
+    c.addChild(g);
+    return app.renderer.generateTexture(
+      c,
+      undefined,
+      undefined,
+      new PIXI.Rectangle(0, 0, 50, 50)
+    );
+  },
+  [() => {}, () => {}, () => {}, () => {}, () => {}],
+  (block, sprite = block.sprite, app) => {
+    if (sprite.texture !== blockData[block.type].defaultTexture)
+      sprite.texture.destroy(true);
+    sprite.texture = blockData[block.type].getTexture(block, app);
+  },
+  {
+    blockA: [],
+    blockB: [],
+    invert: []
+  },
+  ["blockA", "blockB", "invert"]
 );

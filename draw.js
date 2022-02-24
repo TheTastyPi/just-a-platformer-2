@@ -28,7 +28,7 @@ function drawLevel(clear = false) {
     prevLevel = [];
     levelLayer.removeChildren();
     levelLayer.addChild(playerDisp);
-    forAllBlock((x) => (x.dupSprite = null));
+    forAllVisible((x) => (x.dupSprite = null));
   }
   for (let x = 0; x <= level.length - 1; x++) {
     for (let y = 0; y <= level[0].length - 1; y++) {
@@ -52,7 +52,7 @@ function drawLevel(clear = false) {
       }
     }
   }
-  forAllBlock((block) => {
+  forAllVisible((block) => {
     if (block.roomLink[1]?.currentRoom === player.currentRoom) {
       if (block.dupSprite === null) {
         let s;
@@ -110,8 +110,35 @@ function forAllBlock(func, type) {
     }
   }
 }
+function forAllVisible(func, type) {
+  let level = levels[player.currentRoom];
+  for (let x = 0; x <= level.length - 1; x++) {
+    for (let y = 0; y <= level[0].length - 1; y++) {
+      for (let i in level[x][y]) {
+        let block = level[x][y][i];
+        if (!type || block.type === type) {
+          func(block);
+        }
+        if (block.type === 23) {
+          let level = levels[block.newRoom];
+          for (let x = 0; x <= level.length - 1; x++) {
+            for (let y = 0; y <= level[0].length - 1; y++) {
+              for (let i in level[x][y]) {
+                let block = level[x][y][i];
+                if (block.x>0&&block.y>0&&block.x+block.size<level.length*50&&block.y+block.size<level[0].length*50) continue;
+                if (!type || block.type === type) {
+                  func(block);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
 function updateAll(type) {
-  forAllBlock((b) => {
+  forAllVisible((b) => {
     if (b.sprite || b.dupSprite) updateBlock(b);
   }, type);
 }

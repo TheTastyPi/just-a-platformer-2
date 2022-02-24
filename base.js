@@ -26,6 +26,7 @@ var defaultPlayer = {
   dupSprite: null,
   switchLocal: {},
   switchGlobal: [],
+  jumpOn: false,
   blockAdded: [],
   blockChanged: [],
   blockRemoved: []
@@ -39,7 +40,7 @@ var animatedObjs = [];
 var timerList = [];
 var oneWayBlocks = [16, 17, 18, 19, 20, 21];
 var switchBlocks = [25, 26];
-var hasSubBlock = [26];
+var hasSubBlock = [26, 27];
 const maxBlockSize = 100;
 var display = new PIXI.Application({
   width: window.innerWidth,
@@ -55,6 +56,7 @@ var levelMask = new PIXI.Graphics();
 display.stage.addChild(levelMask);
 levelLayer.mask = levelMask;
 var canJump = true;
+var canWJ = true;
 var lastFrame = 0;
 var simReruns = 10;
 var timeLimit = 100;
@@ -141,6 +143,7 @@ function nextFrame(timeStamp) {
   } else {
     dt = 0;
   }
+  canWJ = true;
   if (editor) editor.currentRoom = player.currentRoom;
   window.requestAnimationFrame(nextFrame);
 }
@@ -915,48 +918,69 @@ function doPhysics(obj, t, isPlayer) {
             obj.xv = Math.sign(tempObj.g) * -375;
             obj.currentJump--;
             canJump = false;
+            player.jumpOn = !player.jumpOn;
+            updateAll(27);
+            forAllBlock(updateSubBlock, 27);
           }
         } else {
           if (vert) {
             obj.yv = Math.sign(tempObj.g) * -375;
             obj.currentJump--;
             canJump = false;
+            player.jumpOn = !player.jumpOn;
+            updateAll(27);
+            forAllBlock(updateSubBlock, 27);
           }
         }
-      } else if (tempObj.canWallJump) {
+      } else if (tempObj.canWallJump && canWJ) {
         if (tempObj.xg) {
           obj.xv = Math[obj.g < 0 ? "max" : "min"](obj.xv, tempObj.g * 100);
         } else
           obj.yv = Math[obj.g < 0 ? "max" : "min"](obj.yv, tempObj.g * 100);
         switch (tempObj.wallJumpDir) {
           case 0:
-            if (vert && control.right) {
+            if (vert && control.right && obj.xv === 0) {
               obj.yv = Math.sign(tempObj.g) * -375;
               obj.xv = obj.moveSpeed * 400;
               canJump = false;
+              canWJ = false;
+              player.jumpOn = !player.jumpOn;
+              updateAll(27);
+              forAllBlock(updateSubBlock, 27);
             }
             break;
           case 1:
-            if (vert && control.left) {
+            if (vert && control.left && obj.xv === 0) {
               obj.yv = Math.sign(tempObj.g) * -375;
               obj.xv = -obj.moveSpeed * 400;
               canJump = false;
+              canWJ = false;
+              player.jumpOn = !player.jumpOn;
+              updateAll(27);
+              forAllBlock(updateSubBlock, 27);
             }
             break;
           case 2:
-            if (hori && control.down) {
+            if (hori && control.down && obj.yv === 0) {
               obj.xv = Math.sign(tempObj.g) * -375;
               obj.yv = obj.moveSpeed * 400;
               canJump = false;
+              canWJ = false;
+              player.jumpOn = !player.jumpOn;
+              updateAll(27);
+              forAllBlock(updateSubBlock, 27);
             }
             break;
           case 3:
-            if (hori && control.up) {
+            if (hori && control.up && obj.yv === 0) {
               obj.xv = Math.sign(tempObj.g) * -375;
               obj.yv = -obj.moveSpeed * 400;
               canJump = false;
+              canWJ = false;
+              player.jumpOn = !player.jumpOn;
+              updateAll(27);
+              forAllBlock(updateSubBlock, 27);
             }
-            canJump = false;
             break;
           default:
         }
@@ -1128,6 +1152,7 @@ function setSpawn(start = false) {
 function respawn(start = false, draw = true) {
   let prevRoom = player.currentRoom;
   let prevSwitch = deepCopy([player.switchLocal, player.switchGlobal]);
+  let prevJump = player.jumpOn;
   deathTimer = spawnDelay;
   player.isDead = false;
   if (player.dupSprite !== null) {
@@ -1155,13 +1180,14 @@ function respawn(start = false, draw = true) {
     dynamicSave = deepCopy(dynamicInit);
   }
   rollForward();
-  forAllBlock(updateSwitchBlock, 26);
+  forAllBlock(updateSubBlock, 26);
   if (draw) {
     drawLevel(player.currentRoom !== prevRoom);
     if (
       !arraysEqual([player.switchLocal, player.switchGlobal], prevSwitch, false)
     )
       switchBlocks.map(updateAll);
+    if (player.jump !== prevJump) updateAll(27);
     adjustLevelSize();
   }
 }
@@ -1277,6 +1303,11 @@ function getSubBlock(block) {
   switch (block.type) {
     case 26:
       if (isSwitchOn(block)) {
+        if (block.blockB !== null) subBlock = block.blockB;
+      } else if (block.blockA !== null) subBlock = block.blockA;
+      break;
+    case 27:
+      if (player.jumpOn ^ block.invert) {
         if (block.blockB !== null) subBlock = block.blockB;
       } else if (block.blockA !== null) subBlock = block.blockA;
       break;
@@ -1698,7 +1729,7 @@ function isSwitchOn(block) {
     block.invert
   );
 }
-function updateSwitchBlock(block) {
+function updateSubBlock(block) {
   let subBlock = getSubBlock(block);
   if (subBlock.dynamic) {
     if (!dynamicObjs.includes(block)) {

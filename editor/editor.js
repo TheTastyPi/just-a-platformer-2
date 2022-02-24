@@ -140,7 +140,7 @@ const blockList = {
   Dynamic: [4, 5],
   Movement: [3, 18, 15, 19, 6, 20, 8, 21, 7, 12],
   Status: [9, 10, 13, 14, 24],
-  "Multi-State": [25, 26]
+  "Multi-State": [25, 26, 27]
 };
 var levels =
   "N4IgJgpgZghgrgGwC4gFwgNoeAHREgTwAcI9UAGAGjwA8yAmAVmpAIebwGMAlMvSWIiR4AvpVz5ipNFTxs0jWSB59w0eMlHi8hEmSXzUARnJKVafuqFaJu6RRaGjiludSXBmkGNtT9jhlNXXgs1T2FvbUk9GQC0JjMQ9zCNCJ8dP1i5MgBmIK4kj1SbDJiHbLQclwLVAWLI3zKDXIB2DhA6ePa3IusG0vslTtRq5UKUvvTowZZh0cMAFnyx2qsvKbt-WjITRNXwkumtjp3lwwTg-fqNzPKTtCMmONR6NsvQusmozaz74zOyEs9h81mlvrchjtRj0JutwU1Zjs3hVjE88ABndjvZKfOGNGbbB7zHY5FoAOnamIe9Ap2N6eIGx2Gzma1MpOxp3XGuLB+KZUNZxketIxHJFKxBB36R1+zOJD2WVNR4phPMOPzuzIAbJznrsWErhVyrl8+bKke0nIqxcbJdd4QS-kYABzky2nJSG3U1O2mxnmh6u8VOI0Gm102G8-2agV66Hc0HqiGIomCvLAnGJ6UayGp55AiNq7PJwkvZaqrM3BGl+gAyrlhNSqv2IxGFNltOjJA0CLJAAKACcIOj0QACDAACQAuqOkAB7UdzkgAO1nAAsIKONwgiKOALYQZdwACEeELlYd-PiddQBZ9mabl4DL3jJoZMpj8WRrA57K658fM1PxeIN3QeUNRWpFVG3tIDcxAt09WtKDbQfWDo3g14wP+T1w3vekow-TCdWDD0wxQgD0KI9sLhRfVIOVVCCKTas-lon9wO9EAvWgt9CJzGj5VRP9GMov1qJrISjFJcUeKYyMWMdYZ2KcV9fXfASa2-c5vwrQCMMEtMGz4xSrxfQU7wlNDxM0v50zEjSSzsm92L0qjbOGeyUUstybKczy1OsxzWM87SsXwhTixC1psNJeSi2bMyqgs4z1P4-zARvQLmKipTMsFeirJyxLn0s1SM2Kp9gLKwIKsikrqpc7L6qq+CavrOqEta9t2tQZKHLSKdKAAThGqdvCAA";
@@ -713,7 +713,7 @@ function confirmPropEdit(block) {
   }
   removeBlock(block);
   addBlock(newBlock);
-  if (newBlock.type === 26) updateSwitchBlock(newBlock);
+  if (newBlock.type === 26) updateSubBlock(newBlock);
   return newBlock;
 }
 function confirmEditAll() {
@@ -1453,7 +1453,8 @@ function load(name) {
     respawn(true, false);
     drawLevel(true);
     switchBlocks.map(updateAll);
-    forAllBlock(updateSwitchBlock, 26);
+    updateAll(27);
+    forAllBlock(updateSubBlock, 26);
     adjustLevelSize();
     adjustScreen(true);
     updateGrid();
