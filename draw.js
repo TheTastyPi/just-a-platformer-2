@@ -111,6 +111,7 @@ function forAllBlock(func, type) {
   }
 }
 function forAllVisible(func, type) {
+  let checkedRooms = [player.currentRoom];
   let level = levels[player.currentRoom];
   for (let x = 0; x <= level.length - 1; x++) {
     for (let y = 0; y <= level[0].length - 1; y++) {
@@ -120,7 +121,9 @@ function forAllVisible(func, type) {
           func(block);
         }
         if (block.type === 23) {
+          if (checkedRooms.includes(block.newRoom)) continue;
           let level = levels[block.newRoom];
+          checkedRooms.push(block.newRoom);
           for (let x = 0; x <= level.length - 1; x++) {
             for (let y = 0; y <= level[0].length - 1; y++) {
               for (let i in level[x][y]) {
