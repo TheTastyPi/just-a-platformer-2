@@ -279,7 +279,13 @@ document.addEventListener("keydown", function (event) {
     case "KeyC":
       if (editor.playMode) return;
       if (event.ctrlKey || event.metaKey) {
-        copy();
+        if (editor.chooseBlock) {
+          let block = editor.editBlock[editor.chooseBlockFor];
+          if (block) {
+            editor.clipboard = [{...block,x:0,y:0}];
+          } else editor.clipboard = [];
+          editor.chooseBlock = false;
+        } else copy();
       }
       break;
     case "KeyV":
@@ -330,6 +336,10 @@ document.addEventListener("keydown", function (event) {
         confirmEditAll();
       }
       break;
+    case "Escape":
+      if (editor.chooseBlock) {
+        editor.chooseBlock = false;
+      }
     default:
   }
 });
@@ -1355,7 +1365,7 @@ function str2lvl(str) {
       dynBlocks.push(block);
       continue;
     }
-    getGridSpace(block,lvl).push(block);
+    getGridSpace(block, lvl).push(block);
   }
   return [lvl, dynBlocks, aniBlocks];
 }

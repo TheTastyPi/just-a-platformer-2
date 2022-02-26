@@ -343,3 +343,8 @@
 - Added a border to Switch Blocks to match Jump Blocks
 - Fixed a bug where the player can sometimes wall-jump by walking off a Wall-Jump Block
 - Minor optimizations
+
+### 26 Feb. 2022
+
+- Added the ability to cancel out of sub-block selection with Esc
+- Added the ability to copy a sub-block (while in sub-block selecting) using Ctrl-C
