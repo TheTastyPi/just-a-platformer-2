@@ -21,11 +21,9 @@ function drawPlayer() {
     player.dupSprite.height = player.size;
   }
 }
-var prevLevel = [];
 function drawLevel(clear = false) {
   let level = levels[player.currentRoom];
   if (clear) {
-    prevLevel = [];
     levelLayer.removeChildren();
     levelLayer.addChild(playerDisp);
     forAllVisible((x) => (x.dupSprite = null));
@@ -34,7 +32,6 @@ function drawLevel(clear = false) {
     for (let y = 0; y <= level[0].length - 1; y++) {
       for (let i in level[x][y]) {
         let block = level[x][y][i];
-        let prevBlock = prevLevel[x]?.[y]?.[i];
         if (clear) {
           block.index = parseInt(i);
           let s = createSprite(block);
@@ -42,13 +39,7 @@ function drawLevel(clear = false) {
           block.sprite = s;
           cullBlock(block);
         }
-        if (
-          prevBlock === undefined ||
-          !arraysEqual(block, prevBlock) ||
-          block.type === 2
-        ) {
-          updateBlock(block);
-        }
+        updateBlock(block);
       }
     }
   }
@@ -85,15 +76,14 @@ function drawLevel(clear = false) {
       }
     }
   });
-  prevLevel = deepCopy(level);
   if (clear) adjustScreen();
 }
 function updateBlock(block) {
+  block.sprite.renderable = !block.invisible;
+  block.sprite.alpha = block.opacity;
   if (block.currentRoom === player.currentRoom)
     blockData[block.type].update(block);
   if (block.dupSprite) blockData[block.type].update(block, block.dupSprite);
-  block.sprite.renderable = !block.invisible;
-  block.sprite.alpha = block.opacity;
 }
 function forAllBlock(func, type) {
   for (let j in levels) {
@@ -128,7 +118,13 @@ function forAllVisible(func, type) {
             for (let y = 0; y <= level[0].length - 1; y++) {
               for (let i in level[x][y]) {
                 let block = level[x][y][i];
-                if (block.x>0&&block.y>0&&block.x+block.size<level.length*50&&block.y+block.size<level[0].length*50) continue;
+                if (
+                  block.x > 0 &&
+                  block.y > 0 &&
+                  block.x + block.size < level.length * 50 &&
+                  block.y + block.size < level[0].length * 50
+                )
+                  continue;
                 if (!type || block.type === type) {
                   func(block);
                 }
@@ -194,7 +190,8 @@ function adjustScreen(instant = false) {
     camx !== camxPrev ||
     camy !== camyPrev ||
     cams !== camsPrev ||
-    gridDisp?.visible !== gridVisPrev
+    gridDisp?.visible !== gridVisPrev ||
+    instant
   ) {
     id("background").style.left =
       Math.min(

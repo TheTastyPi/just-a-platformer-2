@@ -80,7 +80,6 @@ body::after {
   width: 200px;
   height: calc(100% - 200px);
   background: #88888888;
-  transition: 0.5s;
   text-align: center;
   overflow-x: hidden;
 }
@@ -97,8 +96,8 @@ body::after {
   height: 25px;
 }
 .tabButton {
-  width:50px;
-  height:25px;
+  width: 50px;
+  height: 25px;
   background: white;
 }
 .buttonOn {
@@ -112,7 +111,6 @@ body::after {
   width: 200px;
   height: calc(100% - 200px);
   background: #88888888;
-  transition: 0.5s;
   text-align: center;
   overflow-x: hidden;
 }
@@ -126,12 +124,24 @@ body::after {
   width: 200px;
   border-radius: 0 0 0 25px;
   background: #bbbbbbbb;
-  transition: 0.5s;
   text-align: center;
   overflow-x: hidden;
   font-size: 30px;
   height: 50px;
   line-height: 50px;
+}
+.infoDisp {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 150px;
+  border-radius: 0 0 25px 0;
+  background: #bbbbbbbb;
+  text-align: center;
+  overflow-x: hidden;
+  font-size: 15px;
+  height: 25px;
+  line-height: 25px;
 }
 .helpMenu {
   display: none;

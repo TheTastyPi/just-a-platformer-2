@@ -348,3 +348,14 @@
 
 - Added the ability to cancel out of sub-block selection with Esc
 - Added the ability to copy a sub-block (while in sub-block selecting) using Ctrl-C
+
+## 4 Mar. 2022
+
+- Added Unstable Block, Coin, and Coin Block
+- The level size editing UI now also shows the level size
+- Readded 'id' and 'global' property to Switch Block because I accidentally removed them like an idiot
+- Coveyor Blocks and Force Fields with 'addVel' true can now move you in the same axis as your gravity.
+- Fixed a bug where Jump Restore Fields stop working after editing its properties while it's cooling down
+- Fixed a bug where the game crashes under certain conditions related to having multiple multi-state blocks in a single gridspace
+- Fixed a bug where Jump Blocks doesn't reset properly after respawning
+- Fixed a bug where the level sometimes does not display correctly after changing level size
