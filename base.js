@@ -18,7 +18,7 @@ var defaultPlayer = {
   moveSpeed: 1,
   friction: true,
   gameSpeed: 1,
-  displayingText: false,
+  textDisp: null,
   lastCollided: [],
   isPlayer: true,
   currentRoom: "",
@@ -76,6 +76,7 @@ var logfps = false;
 var prevDynObjs = [];
 var justDied = false;
 var fpsTimer = 10;
+var prevTextDisp = [];
 function nextFrame(timeStamp) {
   dt += (timeStamp - lastFrame) * player.gameSpeed;
   if (logfps) {
@@ -901,10 +902,32 @@ function doPhysics(obj, t, isPlayer) {
           coyoteTimer = 0;
         }
       }
-      let s = id("textBlockText").style;
-      if (tempObj.displayingText) {
-        s.display = "inline-block";
-      } else s.display = "";
+      let style = id("textBlockText").style;
+      if (tempObj.textDisp) {
+        if (!arraysEqual(prevTextDisp, tempObj.textDisp)) {
+          style.display = "inline-block";
+          let x = tempObj.textDisp[0];
+          let y = tempObj.textDisp[1];
+          let s = tempObj.textDisp[2];
+          id("textBlockText").innerText = tempObj.textDisp[3];
+          let w = id("textBlockText").clientWidth;
+          let h = id("textBlockText").clientHeight;
+          style.left =
+            Math.max(
+              Math.min(x + camx + (s - w) / 2, window.innerWidth - w),
+              0
+            ) + "px";
+          style.top =
+            Math.max(
+              Math.min(y + camy + (s - h) / 2, window.innerHeight - h),
+              0
+            ) + "px";
+          prevTextDisp = [...tempObj.textDisp];
+        }
+      } else {
+        style.display = "";
+        prevTextDisp = [];
+      }
     }
     if (tempObj.invincible || (isPlayer && editor?.invincible)) {
       obj.isDead = false;

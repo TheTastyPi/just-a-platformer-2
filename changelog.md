@@ -363,3 +363,7 @@
 #### 5 Mar. 2022
 
 - Fixed a bug where loading a level with a Boundary Warp that doesn't lead anywhere crashes the game
+
+### 5 Mar. 2022 #2
+
+- Optimized Text Blocks

@@ -651,29 +651,7 @@ new BlockType(
     () => {},
     () => {},
     (obj, block, tempObj, isPlayer) => {
-      if (isPlayer && !tempObj.displayingText) {
-        tempObj.displayingText = true;
-        id("textBlockText").innerText = block.text;
-        let t = id("textBlockText").style;
-        let w = id("textBlockText").clientWidth;
-        let h = id("textBlockText").clientHeight;
-        t.left =
-          Math.max(
-            Math.min(
-              block.x + camx + (block.size - w) / 2,
-              window.innerWidth - w
-            ),
-            0
-          ) + "px";
-        t.top =
-          Math.max(
-            Math.min(
-              block.y + camy + (block.size - h) / 2,
-              window.innerHeight - h
-            ),
-            0
-          ) + "px";
-      }
+      if (isPlayer) tempObj.textDisp = [block.x, block.y, block.size, block.text];
     }
   ],
   () => {},
@@ -1835,8 +1813,8 @@ new BlockType(
     sprite.texture = blockData[block.type].getTexture(block, app);
   },
   {
-    id:[()=>0,()=>Infinity],
-    global:[],
+    id: [() => 0, () => Infinity],
+    global: [],
     blockA: [],
     blockB: [],
     invert: []
@@ -1969,9 +1947,12 @@ new BlockType(
   },
   (block, app = display) => {
     let g = new PIXI.Graphics();
-    let color = PIXI.utils.rgb2hex([1, block.value<0?0.5:1, 0.5]);
-    if (block.setValue) color = PIXI.utils.rgb2hex([block.value<0?1:0.5, 0.5, 1]);
-    let color2 = PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2));
+    let color = PIXI.utils.rgb2hex([1, block.value < 0 ? 0.5 : 1, 0.5]);
+    if (block.setValue)
+      color = PIXI.utils.rgb2hex([block.value < 0 ? 1 : 0.5, 0.5, 1]);
+    let color2 = PIXI.utils.rgb2hex(
+      PIXI.utils.hex2rgb(color).map((x) => x / 2)
+    );
     g.beginFill(color);
     g.drawRect(0, 0, 50, 50);
     g.endFill();
@@ -1980,13 +1961,7 @@ new BlockType(
       color: color2
     });
     g.drawRect(0, 0, 50, 50);
-    drawStr(
-      g,
-      Math.abs(block.value).toString(),
-      color2,
-      3,
-      20
-    );
+    drawStr(g, Math.abs(block.value).toString(), color2, 3, 20);
     return app.renderer.generateTexture(
       g,
       undefined,
@@ -2075,7 +2050,7 @@ new BlockType(
     sprite.texture = blockData[block.type].getTexture(block, app);
   },
   {
-    value: [()=>-Infinity,()=>Infinity],
+    value: [() => -Infinity, () => Infinity],
     blockA: [],
     blockB: [],
     invert: []
