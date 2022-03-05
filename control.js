@@ -67,4 +67,4 @@ document.addEventListener("keyup", function (event) {
     default:
   }
 });
-// bruh moment
+// please csb, stop it, get some help
