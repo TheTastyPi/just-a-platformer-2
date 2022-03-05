@@ -113,6 +113,7 @@ function forAllVisible(func, type) {
         if (block.type === 23) {
           if (checkedRooms.includes(block.newRoom)) continue;
           let level = levels[block.newRoom];
+          if (!level) continue;
           checkedRooms.push(block.newRoom);
           for (let x = 0; x <= level.length - 1; x++) {
             for (let y = 0; y <= level[0].length - 1; y++) {

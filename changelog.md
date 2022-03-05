@@ -359,3 +359,7 @@
 - Fixed a bug where the game crashes under certain conditions related to having multiple multi-state blocks in a single gridspace
 - Fixed a bug where Jump Blocks doesn't reset properly after respawning
 - Fixed a bug where the level sometimes does not display correctly after changing level size
+
+#### 5 Mar. 2022
+
+- Fixed a bug where loading a level with a Boundary Warp that doesn't lead anywhere crashes the game
