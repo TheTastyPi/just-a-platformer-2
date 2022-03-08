@@ -242,7 +242,7 @@ var playDisp = new Vue({
 var infoDisp = new Vue({
   el: "#infoDisp",
   data: {
-    player: player,
+    coins: 0,
     editor: editor
   }
 });
@@ -768,7 +768,7 @@ function select(selectRect, single = false, prev, build = false) {
         let block = gridSpace[i];
         if (
           isColliding(selectRect, block) &&
-          !editor.editSelect.includes(block)
+          (!editor.editSelect.includes(block)||build)
         ) {
           if (editor.chooseBlock) {
             if (editor.editSelect.includes(block)) return;
@@ -932,6 +932,7 @@ function paste(x, y) {
     added.push(block);
   }
   addAction("addBlock", deepCopy(added));
+  reselect();
   updateSelectDisp();
 }
 function changeGridSize(size) {
@@ -1639,8 +1640,10 @@ function blurAll() {
 function togglePlayMode() {
   editor.playMode = !editor.playMode;
   if (editor.playMode) {
+    rollBack();
     dynamicInit = deepCopy(dynamicObjs);
     dynamicSave = deepCopy(dynamicObjs);
+    rollForward();
     selectLayer.visible = false;
     deselect();
   } else {

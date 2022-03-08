@@ -1737,11 +1737,17 @@ new BlockType(
           ][block.id];
         }
         if (block.singleUse) {
-          logChange(block);
-          block.used = true;
+          let gridBlock = getGridBlock(block)
+          logChange(gridBlock);
+          gridBlock.used = true;
         }
-        switchBlocks.map(updateAll);
-        forAllBlock(updateSubBlock, 26);
+        forAllBlock(b=>{
+          if (switchBlocks.includes(b.type) && b.id === block.id && b.global === block.global) {
+            if (!block.global && obj.currentRoom !== block.currentRoom) return;
+            updateBlock(b);
+            if (b.type === 26) updateSubBlock(b);
+          }
+        });
       }
     }
   ],
@@ -1975,17 +1981,19 @@ new BlockType(
     () => {},
     () => {},
     (obj, block, tempObj, isPlayer, isEntering) => {
-      if (!block.used) {
+      if (!block.used && isEntering) {
+        let gridBlock = getGridBlock(block);
         if (block.setValue) {
           player.coins = block.value;
         } else {
           player.coins += block.value;
         }
-        logChange(block);
-        block.used = true;
-        updateBlock(block);
+        logChange(gridBlock);
+        gridBlock.used = true;
+        updateBlock(gridBlock);
         updateAll(30);
         forAllBlock(updateSubBlock, 30);
+        infoDisp.coins = player.coins;
       }
     }
   ],

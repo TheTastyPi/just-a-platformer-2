@@ -849,14 +849,14 @@ function doPhysics(obj, t, isPlayer) {
           block,
           tempObj,
           isPlayer,
-          !obj.lastCollided.find((x) => x === block),
+          !obj.lastCollided.find((x) => getGridBlock(x) === getGridBlock(block)),
           false
         );
       }
     }
     for (let i in obj.lastCollided) {
-      let block = obj.lastCollided[i];
-      if (block.isPlayer || block.isSolid) continue;
+      let block = getGridBlock(obj.lastCollided[i]);
+      if (!block || block.isPlayer || block.isSolid) continue;
       if (collided.find((x) => x === block)) continue;
       blockData[block.type].touchEvent[4](
         obj,
@@ -1069,34 +1069,36 @@ function doPhysics(obj, t, isPlayer) {
     }
     let dxv = obj.xv - dtv - dbv;
     let dyv = obj.yv - dlv - drv;
+    let xFric = true;
+    let yFric = true;
     if (tempObj.xg) {
       obj.xa += 1000 * tempObj.g;
       if (isPlayer) {
         dyv -= (control.down - control.up) * tempObj.moveSpeed * 200;
         if (control.up || control.down) friction = true;
       }
-      dxv = 0;
+      xFric = false;
     } else {
       obj.ya += 1000 * tempObj.g;
       if (isPlayer) {
         dxv -= (control.right - control.left) * tempObj.moveSpeed * 200;
         if (control.right || control.left) friction = true;
       }
-      dyv = 0;
+      yFric = false;
     }
     if (tempObj.xg || gdyv !== 0) {
-      let fricAcc = -dyv * friction + gdyv;
+      let fricAcc = -dyv * yFric*friction + gdyv;
       if (!(topBlock?.yv > 0) && !(bottomBlock?.yv < 0)) obj.ya += fricAcc;
     }
     if (!tempObj.xg || gdxv !== 0) {
-      let fricAcc = -dxv * friction + gdxv;
+      let fricAcc = -dxv * xFric*friction + gdxv;
       if (!(leftBlock?.xv > 0) && !(rightBlock?.xv < 0)) obj.xa += fricAcc;
     }
     // change velocity
     obj.xv += obj.xa * t * (!tempObj.xg * 74 + 1);
     obj.yv += obj.ya * t * (tempObj.xg * 74 + 1);
     if (
-      Math.abs(dxv - gdxv) > 5000 &&
+      Math.abs(dxv - gdxv) > Math.abs(obj.xa) &&
       Math.sign(dxv - gdxv) === Math.sign(obj.xa)
     )
       obj.xv =
@@ -1195,7 +1197,6 @@ function respawn(start = false, draw = true) {
     player.dupSprite = null;
   }
   rollBack();
-  Object.assign(player, deepCopy(start ? startState : saveState));
   if (!editor?.playMode ?? false) {
     dynamicInit = deepCopy(dynamicObjs);
     dynamicSave = deepCopy(dynamicObjs);
@@ -1206,6 +1207,7 @@ function respawn(start = false, draw = true) {
       i--;
     }
   }
+  player = deepCopy(start ? startState : saveState);
   let newDynamicObjs = deepCopy(start ? dynamicInit : dynamicSave);
   for (let i in newDynamicObjs) {
     if (newDynamicObjs[i].dynamic) addBlock(newDynamicObjs[i], false);
@@ -1215,6 +1217,7 @@ function respawn(start = false, draw = true) {
     dynamicSave = deepCopy(dynamicInit);
   }
   rollForward();
+  infoDisp.coins = player.coins;
   for (let i in hasSubBlock) forAllBlock(updateSubBlock, hasSubBlock[i]);
   if (draw) {
     drawLevel(player.currentRoom !== prevRoom);
