@@ -1872,6 +1872,7 @@ new BlockType(
   ["blockA", "blockB", "invert"]
 );
 function unstableBlock(obj, block) {
+  block = getGridBlock(block);
   if (block.timer !== 0 || !block.active) return;
   block.timer = block.lifetime;
   timerList.push([
