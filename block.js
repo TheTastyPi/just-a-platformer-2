@@ -14,6 +14,7 @@ class Block {
     this.friction = true;
     this.dynamic = false;
     this.interactive = false;
+    this.link = null;
     // solid only
     this.floorLeniency = 0;
     // dynamic props

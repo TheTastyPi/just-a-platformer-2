@@ -215,6 +215,20 @@
         style="background-image: url(../pics/doAnimation.png);"
         v-on:mousemove="showTooltips('Toggle animation')"
         v-on:mouseleave="hideTooltips"
+      ></button><br>
+      <button
+        class="optionButton"
+        onclick="linkSelected()"
+        style="background-image: url(../pics/linkSelected.png);"
+        v-on:mousemove="showTooltips('Link Selected Blocks')"
+        v-on:mouseleave="hideTooltips"
+      ></button>
+      <button
+        class="optionButton"
+        onclick="delinkSelected()"
+        style="background-image: url(../pics/delinkSelected.png);"
+        v-on:mousemove="showTooltips('Delink Selected Blocks')"
+        v-on:mouseleave="hideTooltips"
       ></button>
     </div>
     <div id="saveMenu" class="saveMenu">

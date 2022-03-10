@@ -377,3 +377,8 @@
 - Fixed a bug where the game crashes if you deactive play mode after moving a dynamic block to another room and then respawn
 - Fixed a bug where you can't use MMB to select a bulding block from a block you've already selected in edit mode
 - Fixed a bug where dynamic Switches, Unstable Blocks, and Coins doesn't work
+
+### 10 Mar. 2022
+
+- Added the ability to link and unlink blocks.
+  - Linked blocks are selected as a group

@@ -46,7 +46,8 @@ var editor = {
   currentRoom: "default",
   roomOrder: ["default"],
   chooseBlock: false,
-  chooseBlockFor: undefined
+  chooseBlockFor: undefined,
+  links: []
 };
 const propData = {
   // general
@@ -808,10 +809,18 @@ function select(selectRect, single = false, prev, build = false) {
           if (single) {
             if (build) {
               changeBuildSelect(block);
-            } else editor.editSelect = [block];
+            } else {
+              if (block.link) {
+                editor.editSelect = [...block.link];
+              } else editor.editSelect = [block];
+            }
             cycled = true;
             break;
-          } else editor.editSelect.push(block);
+          } else {
+            if (block.link) {
+              editor.editSelect.push(...block.link)
+            } else editor.editSelect.push(block);
+          }
         }
       }
       if (single && cycled) break;
@@ -823,7 +832,9 @@ function select(selectRect, single = false, prev, build = false) {
     for (let i in blockData[first.type].props) {
       if (propData[i] !== undefined) editor.editBlockProp.push(i);
     }
-    editor.editSelect = [first];
+    if (first.link) {
+      editor.editSelect = [...first.link];
+    } else editor.editSelect = [first];
   }
   updateSelectDisp();
 }
@@ -934,6 +945,28 @@ function paste(x, y) {
   addAction("addBlock", deepCopy(added));
   reselect();
   updateSelectDisp();
+}
+function linkSelected() {
+  let newLink = [];
+  editor.links.push(newLink);
+  delinkSelected();
+  for (let i in editor.editSelect) {
+    let block = editor.editSelect[i];
+    block.link = newLink;
+    newLink.push(block);
+  }
+}
+function delinkSelected() {
+  for (let i in editor.editSelect) {
+    let block = editor.editSelect[i];
+    if (block.link) {
+      for (let j in block.link) {
+        let b = editor.editSelect[j];
+        b.link = null;
+      }
+      editor.links.splice(editor.links.findIndex(l=>block.link===l),1);
+    }
+  }
 }
 function changeGridSize(size) {
   editor.gridSize = size;
