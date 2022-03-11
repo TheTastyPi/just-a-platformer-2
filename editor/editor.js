@@ -704,7 +704,7 @@ function confirmPropEdit(block) {
     }
     if (editBlock[i] !== "MIXED") {
       if (propData[i] === undefined) {
-        newBlock[i] = blockData[block.type].defaultBlock[i];
+        if (i !== "currentRoom") newBlock[i] = blockData[block.type].defaultBlock[i];
         continue;
       }
       if (parseFloat(editBlock[i]) == editBlock[i]) {
