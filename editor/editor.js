@@ -74,7 +74,6 @@ const propData = {
   friction: ["bool", "fr"],
   dynamic: ["bool", "dy"],
   interactive: ["bool", "i"],
-  currentRoom: ["str", "cR"],
   // solid only
   floorLeniency: ["num", "fl", () => 0, () => 50],
   // dynamic props
@@ -1371,6 +1370,7 @@ function decompressBlock(block) {
       block[propAliasReverse[prop]] = block[prop];
       delete block[prop];
     }
+    if (prop === "cR") delete block[prop];
   }
   for (let prop in block) {
     if (propData[prop][0] === "block" && block[prop])
@@ -1393,7 +1393,7 @@ function lvls2str(lvls) {
   for (let i in lvls) lvls[i] = lvl2str(lvls[i]);
   return LZString.compressToEncodedURIComponent(JSON.stringify(lvls));
 }
-function str2lvl(str) {
+function str2lvl(str, room) {
   let newStr = LZString.decompressFromEncodedURIComponent(str);
   if (LZString.compressToEncodedURIComponent(newStr) === str) str = newStr;
   let lvlData = JSON.parse(str);
@@ -1412,6 +1412,7 @@ function str2lvl(str) {
   for (let i in blocks) {
     let block = blocks[i];
     decompressBlock(block);
+    block.currentRoom = room;
     if (animatedTypes.includes(block.type)) {
       aniBlocks.push(block);
     }
@@ -1431,7 +1432,7 @@ function str2lvls(str) {
   let aniBlocks = [];
   for (let i in lvls) {
     let lvl = lvls[i];
-    lvl = str2lvl(lvl);
+    lvl = str2lvl(lvl, i);
     lvls[i] = lvl[0];
     dynBlocks.push(...lvl[1]);
     aniBlocks.push(...lvl[2]);

@@ -382,3 +382,7 @@
 
 - Added the ability to link and unlink blocks.
   - Linked blocks are selected as a group
+
+### 11 Mar. 2022
+
+- Fixed a bug where everything goes wrong when you save

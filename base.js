@@ -1480,7 +1480,7 @@ function deepCopy(inObject) {
   outObject = Array.isArray(inObject) ? [] : {};
   for (key in inObject) {
     value = inObject[key];
-    if (key === "lastCollided" || key === "sprite" || key === "dupSprite" || "link") {
+    if (key === "lastCollided" || key === "sprite" || key === "dupSprite" || key === "link") {
       outObject[key] = value;
     } else {
       outObject[key] = deepCopy(value);
