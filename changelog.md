@@ -391,3 +391,7 @@
 
 - Fixed a bug where transparent blocks do not display properly across boundary warps
 - Fixed a bug where the game crashes if a block not being displayed was being attempted to be updated
+
+### 13 Mar. 2022 #2
+
+- Added the passOnPush property to all Panels

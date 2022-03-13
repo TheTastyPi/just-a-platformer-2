@@ -121,6 +121,7 @@ const propData = {
   rightWall: ["bool", "rW"],
   topWall: ["bool", "tW"],
   bottomWall: ["bool", "bW"],
+  passOnPush: ["bool", "pOP"],
   newPos: ["pos", "nP"],
   newRoom: ["str", "nR"],
   id: ["int", "id"],

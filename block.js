@@ -963,6 +963,7 @@ new BlockType(
     rightWall: false,
     topWall: true,
     bottomWall: false,
+    passOnPush: false,
     color: "#000000"
   },
   (block, app = display) => {
@@ -993,6 +994,7 @@ new BlockType(
     rightWall: [],
     topWall: [],
     bottomWall: [],
+    passOnPush: [],
     color: []
   },
   ["leftWall", "rightWall", "topWall", "bottomWall", "color"]
@@ -1005,6 +1007,7 @@ new BlockType(
     rightWall: false,
     topWall: true,
     bottomWall: false,
+    passOnPush: false,
     color: "#ff0000"
   },
   (block, app = display) => {
@@ -1055,6 +1058,7 @@ new BlockType(
     rightWall: [],
     topWall: [],
     bottomWall: [],
+    passOnPush: [],
     color: []
   },
   ["leftWall", "rightWall", "topWall", "bottomWall", "color"]
@@ -1067,6 +1071,7 @@ new BlockType(
     rightWall: false,
     topWall: true,
     bottomWall: false,
+    passOnPush: false,
     power: 500
   },
   (block, app = display) => {
@@ -1123,6 +1128,7 @@ new BlockType(
     rightWall: [],
     topWall: [],
     bottomWall: [],
+    passOnPush: [],
     power: [() => 0, () => 2000]
   },
   ["leftWall", "rightWall", "topWall", "bottomWall"]
@@ -1135,6 +1141,7 @@ new BlockType(
     rightWall: false,
     topWall: true,
     bottomWall: false,
+    passOnPush: false,
     color: "#8844ff"
   },
   (block, app = display) => {
@@ -1193,6 +1200,7 @@ new BlockType(
     rightWall: [],
     topWall: [],
     bottomWall: [],
+    passOnPush: [],
     color: []
   },
   ["leftWall", "rightWall", "topWall", "bottomWall", "color"]
@@ -1205,6 +1213,7 @@ new BlockType(
     rightWall: false,
     topWall: true,
     bottomWall: false,
+    passOnPush: false,
     color: "#8888ff"
   },
   (block, app = display) => {
@@ -1255,7 +1264,8 @@ new BlockType(
     rightWall: [],
     topWall: [],
     bottomWall: [],
-    color: []
+    passOnPush: [],
+    color: [],
   },
   ["leftWall", "rightWall", "topWall", "bottomWall", "color"]
 );
@@ -1267,6 +1277,7 @@ new BlockType(
     rightWall: false,
     topWall: true,
     bottomWall: false,
+    passOnPush: false,
     leftSpeed: -100,
     rightSpeed: 100,
     topSpeed: 100,
@@ -1344,6 +1355,7 @@ new BlockType(
     rightWall: [],
     topWall: [],
     bottomWall: [],
+    passOnPush: [],
     leftSpeed: [() => -2000, () => 2000],
     rightSpeed: [() => -2000, () => 2000],
     topSpeed: [() => -2000, () => 2000],

@@ -347,11 +347,14 @@ function doPhysics(obj, t, isPlayer) {
       }
       // left
       if (isLeft) {
-        if (
-          oneWayBlocks.includes(block.type) &&
-          (!block.rightWall || obj.lastCollided.find((x) => x === block))
-        ) {
-          return;
+        if (oneWayBlocks.includes(block.type)) {
+          if (!block.rightWall || obj.lastCollided.find((x) => x === block)) {
+            return;
+          } else if (!block.passOnPush)
+            collided.splice(
+              collided.findIndex((x) => x === block),
+              1
+            );
         }
         if (colliding) {
           if (
@@ -373,11 +376,14 @@ function doPhysics(obj, t, isPlayer) {
       }
       // right
       if (isRight) {
-        if (
-          oneWayBlocks.includes(block.type) &&
-          (!block.leftWall || obj.lastCollided.find((x) => x === block))
-        ) {
-          return;
+        if (oneWayBlocks.includes(block.type)) {
+          if (!block.leftWall || obj.lastCollided.find((x) => x === block)) {
+            return;
+          } else if (!block.passOnPush)
+            collided.splice(
+              collided.findIndex((x) => x === block),
+              1
+            );
         }
         if (colliding) {
           if (
@@ -399,11 +405,14 @@ function doPhysics(obj, t, isPlayer) {
       }
       // top
       if (isTop) {
-        if (
-          oneWayBlocks.includes(block.type) &&
-          (!block.bottomWall || obj.lastCollided.find((x) => x === block))
-        ) {
-          return;
+        if (oneWayBlocks.includes(block.type)) {
+          if (!block.bottomWall || obj.lastCollided.find((x) => x === block)) {
+            return;
+          } else if (!block.passOnPush)
+            collided.splice(
+              collided.findIndex((x) => x === block),
+              1
+            );
         }
         if (colliding) {
           if (
@@ -425,11 +434,14 @@ function doPhysics(obj, t, isPlayer) {
       }
       // bottom
       if (isBottom) {
-        if (
-          oneWayBlocks.includes(block.type) &&
-          (!block.topWall || obj.lastCollided.find((x) => x === block))
-        ) {
-          return;
+        if (oneWayBlocks.includes(block.type)) {
+          if (!block.topWall || obj.lastCollided.find((x) => x === block)) {
+            return;
+          } else if (!block.passOnPush)
+            collided.splice(
+              collided.findIndex((x) => x === block),
+              1
+            );
         }
         if (colliding) {
           if (
@@ -849,7 +861,9 @@ function doPhysics(obj, t, isPlayer) {
           block,
           tempObj,
           isPlayer,
-          !obj.lastCollided.find((x) => getGridBlock(x) === getGridBlock(block)),
+          !obj.lastCollided.find(
+            (x) => getGridBlock(x) === getGridBlock(block)
+          ),
           false
         );
       }
@@ -1087,11 +1101,11 @@ function doPhysics(obj, t, isPlayer) {
       yFric = false;
     }
     if (tempObj.xg || gdyv !== 0) {
-      let fricAcc = -dyv * yFric*friction + gdyv;
+      let fricAcc = -dyv * yFric * friction + gdyv;
       if (!(topBlock?.yv > 0) && !(bottomBlock?.yv < 0)) obj.ya += fricAcc;
     }
     if (!tempObj.xg || gdxv !== 0) {
-      let fricAcc = -dxv * xFric*friction + gdxv;
+      let fricAcc = -dxv * xFric * friction + gdxv;
       if (!(leftBlock?.xv > 0) && !(rightBlock?.xv < 0)) obj.xa += fricAcc;
     }
     // change velocity
@@ -1480,7 +1494,12 @@ function deepCopy(inObject) {
   outObject = Array.isArray(inObject) ? [] : {};
   for (key in inObject) {
     value = inObject[key];
-    if (key === "lastCollided" || key === "sprite" || key === "dupSprite" || key === "link") {
+    if (
+      key === "lastCollided" ||
+      key === "sprite" ||
+      key === "dupSprite" ||
+      key === "link"
+    ) {
       outObject[key] = value;
     } else {
       outObject[key] = deepCopy(value);
