@@ -386,3 +386,8 @@
 ### 11 Mar. 2022
 
 - Fixed a bug where everything goes wrong when you save
+
+### 13 Mar. 2022
+
+- Fixed a bug where transparent blocks does not display properly across boundary warps
+- Fixed a bug where the game crashes if a block not being displayed was being attempted to be updated

@@ -79,11 +79,16 @@ function drawLevel(clear = false) {
   if (clear) adjustScreen();
 }
 function updateBlock(block) {
-  block.sprite.renderable = !block.invisible;
-  block.sprite.alpha = block.opacity;
-  if (block.currentRoom === player.currentRoom)
+  if (block.sprite) {
+    block.sprite.renderable = !block.invisible;
+    block.sprite.alpha = block.opacity;
     blockData[block.type].update(block);
-  if (block.dupSprite) blockData[block.type].update(block, block.dupSprite);
+  }
+  if (block.dupSprite) {
+    block.sprite.renderable = !block.invisible;
+    block.sprite.alpha = block.opacity;
+    blockData[block.type].update(block, block.dupSprite);
+  }
 }
 function forAllBlock(func, type) {
   for (let j in levels) {
