@@ -7,6 +7,8 @@ class Block {
     this.targetSize = size;
     this.size = size;
     this.isSolid = isSolid;
+    this.collidePlayer = true;
+    this.collideBlock = true;
     this.giveJump = giveJump;
     this.eventPriority = eventPriority;
     this.invisible = false;
@@ -24,7 +26,8 @@ class Block {
     this.ya = 0;
     this.g = 1;
     this.xg = false;
-    this.pushable = false;
+    this.playerPushable = false;
+    this.blockPushable = false;
     this.crushPlayer = true;
     this.invincible = false;
     this.lastCollided = [];
@@ -233,7 +236,8 @@ new BlockType(
   {
     ...new Block(4, 0, 0, 50, true, true, 3),
     dynamic: true,
-    pushable: true,
+    playerPushable: true,
+    blockPushable: true,
     color: "#ff8800"
   },
   (block, app = display) => {
@@ -258,8 +262,8 @@ new BlockType(
   ["color"]
 );
 new BlockType(
-  "Unpushable Block",
-  { ...new Block(5, 0, 0, 50, true, true, 3), dynamic: true, color: "#884400" },
+  "Semi-Unpushable Block",
+  { ...new Block(5, 0, 0, 50, true, true, 3), dynamic: true, color: "#884400", blockPushable: true},
   (block, app = display) => {
     let g = new PIXI.Graphics();
     g.beginFill(0xffffff);
@@ -2078,4 +2082,36 @@ new BlockType(
     invert: []
   },
   ["value", "blockA", "blockB", "invert"]
+);
+new BlockType(
+  "Unpushable Block",
+  { ...new Block(31, 0, 0, 50, true, true, 3), dynamic: true, color: "#882200"},
+  (block, app = display) => {
+    let g = new PIXI.Graphics();
+    g.beginFill(0xffffff);
+    g.drawRect(0, 0, 50, 50);
+    g.endFill();
+    g.lineStyle({
+      width: 5,
+      color: 0x000000
+    });
+    g.drawRect(10, 10, 30, 30);
+    g.moveTo(10, 10);
+    g.lineTo(40, 40);
+    g.moveTo(10, 40);
+    g.lineTo(40, 10);
+    g.moveTo(10, 25);
+    g.lineTo(40, 25);
+    g.moveTo(25, 40);
+    g.lineTo(25, 10);
+    return app.renderer.generateTexture(g);
+  },
+  [() => {}, () => {}, () => {}, () => {}, () => {}],
+  (block, sprite = block.sprite) => {
+    sprite.tint = PIXI.utils.string2hex(block.color);
+  },
+  {
+    color: []
+  },
+  ["color"]
 );

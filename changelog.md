@@ -395,3 +395,11 @@
 ### 13 Mar. 2022 #2
 
 - Added the passOnPush property to all Panels
+
+### 13 Mar. 2022 #3
+
+- Added the collidePlayer and collideBlock property to all blocks
+- The pushable property has been renamed to playerPushable
+- Added the blockPushable property to all dynamic blocks
+- Unpushable Block has been renamed to Semi-Unpushable Block
+- Added Unpushable Block, which has both playerPushable and blockPushable as false
