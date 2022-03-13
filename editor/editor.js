@@ -75,7 +75,7 @@ const propData = {
   dynamic: ["bool", "dy"],
   interactive: ["bool", "i"],
   // solid only
-  floorLeniency: ["num", "fl", () => 0, () => 50],
+  floorLeniency: ["num", "fl", () => 0, () => maxBlockSize],
   // dynamic props
   xv: ["num", "xv"],
   yv: ["num", "yv"],
