@@ -403,3 +403,10 @@
 - Added the blockPushable property to all dynamic blocks
 - Unpushable Block has been renamed to Semi-Unpushable Block
 - Added Unpushable Block, which has both playerPushable and blockPushable as false
+
+### 15 Mar. 2022
+
+- Fixed a bug where the level size display doesn't update properly
+- Fixed a bug where a blank block on the blockB property of multi-state blocks does not save properly
+- Fixed a bug where checkpoints can display incorrectly when put in different rooms
+- Fixed a bug where the game crashes if you load a level after changing the state of the level

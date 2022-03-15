@@ -125,8 +125,8 @@ new BlockType(
     g.drawRect(0, 0, 50, 50);
     g.endFill();
     if (
-      isColliding(player, block, true) &&
-      !isColliding(saveState, block, true) &&
+      isColliding(player, block, true) && player.currentRoom === block.currentRoom &&
+      !(isColliding(saveState, block, true) && saveState.currentRoom === block.currentRoom) &&
       app === display
     ) {
       drawStr(g, "shft", 0x888888);
@@ -157,7 +157,7 @@ new BlockType(
   ],
   (block, sprite = block.sprite, app = display) => {
     if (sprite._destroyed) return;
-    let colliding = isColliding(saveState, block, true);
+    let colliding = isColliding(saveState, block, true) && saveState.currentRoom === block.currentRoom;
     sprite.tint = colliding
       ? PIXI.utils.string2hex(block.color)
       : PIXI.utils.rgb2hex(

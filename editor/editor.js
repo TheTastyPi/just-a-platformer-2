@@ -1384,7 +1384,7 @@ function decompressBlock(block) {
       decompressBlock(block[prop]);
   }
   for (let prop in blockData[block.type].defaultBlock) {
-    block[prop] ??= blockData[block.type].defaultBlock[prop];
+    if (block[prop] === undefined) block[prop] = blockData[block.type].defaultBlock[prop];
   }
 }
 function lvl2str(lvl) {
@@ -1486,6 +1486,7 @@ function save() {
   storeSave();
 }
 function load(name) {
+  rollBack();
   let save = editor.saves[name];
   if (save) {
     let saveData;

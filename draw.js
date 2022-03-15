@@ -294,6 +294,8 @@ function adjustLevelSize() {
   levelMask.beginFill(0xff0000);
   levelMask.drawRect(0, 0, w, h);
   levelMask.endFill();
+  editOptions.width = level.length;
+  editOptions.height = level[0].length;
 }
 function cullBlock(block) {
   block.sprite.visible =
