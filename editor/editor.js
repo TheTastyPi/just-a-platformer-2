@@ -1749,6 +1749,7 @@ function init() {
   for (let i in propData) propAliasReverse[propData[i][1]] = i;
   levels = str2lvls(levels)[0];
   player.currentRoom = "default";
+  assignIndex();
   drawLevel(true);
   adjustLevelSize();
   adjustScreen(true);
