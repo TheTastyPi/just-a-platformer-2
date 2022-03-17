@@ -125,8 +125,12 @@ new BlockType(
     g.drawRect(0, 0, 50, 50);
     g.endFill();
     if (
-      isColliding(player, block, true) && player.currentRoom === block.currentRoom &&
-      !(isColliding(saveState, block, true) && saveState.currentRoom === block.currentRoom) &&
+      isColliding(player, block, true) &&
+      player.currentRoom === block.currentRoom &&
+      !(
+        isColliding(saveState, block, true) &&
+        saveState.currentRoom === block.currentRoom
+      ) &&
       app === display
     ) {
       drawStr(g, "shft", 0x888888);
@@ -157,7 +161,9 @@ new BlockType(
   ],
   (block, sprite = block.sprite, app = display) => {
     if (sprite._destroyed) return;
-    let colliding = isColliding(saveState, block, true) && saveState.currentRoom === block.currentRoom;
+    let colliding =
+      isColliding(saveState, block, true) &&
+      saveState.currentRoom === block.currentRoom;
     sprite.tint = colliding
       ? PIXI.utils.string2hex(block.color)
       : PIXI.utils.rgb2hex(
@@ -263,7 +269,12 @@ new BlockType(
 );
 new BlockType(
   "Semi-Unpushable Block",
-  { ...new Block(5, 0, 0, 50, true, true, 3), dynamic: true, color: "#884400", blockPushable: true},
+  {
+    ...new Block(5, 0, 0, 50, true, true, 3),
+    dynamic: true,
+    color: "#884400",
+    blockPushable: true
+  },
   (block, app = display) => {
     let g = new PIXI.Graphics();
     g.beginFill(0xffffff);
@@ -656,7 +667,8 @@ new BlockType(
     () => {},
     () => {},
     (obj, block, tempObj, isPlayer) => {
-      if (isPlayer) tempObj.textDisp = [block.x, block.y, block.size, block.text];
+      if (isPlayer)
+        tempObj.textDisp = [block.x, block.y, block.size, block.text];
     }
   ],
   () => {},
@@ -1269,7 +1281,7 @@ new BlockType(
     topWall: [],
     bottomWall: [],
     passOnPush: [],
-    color: [],
+    color: []
   },
   ["leftWall", "rightWall", "topWall", "bottomWall", "color"]
 );
@@ -1754,12 +1766,16 @@ new BlockType(
           ][block.id];
         }
         if (block.singleUse) {
-          let gridBlock = getGridBlock(block)
+          let gridBlock = getGridBlock(block);
           logChange(gridBlock);
           gridBlock.used = true;
         }
-        forAllBlock(b=>{
-          if (switchBlocks.includes(b.type) && b.id === block.id && b.global === block.global) {
+        forAllBlock((b) => {
+          if (
+            switchBlocks.includes(b.type) &&
+            b.id === block.id &&
+            b.global === block.global
+          ) {
             if (!block.global && obj.currentRoom !== block.currentRoom) return;
             updateBlock(b);
             if (b.type === 26) updateSubBlock(b);
@@ -1793,7 +1809,8 @@ new BlockType(
     global: false,
     blockA: null,
     blockB: blockData[0].defaultBlock,
-    invert: false
+    invert: false,
+    hideDetails: false
   },
   (block, app = display) => {
     let c = new PIXI.Container();
@@ -1805,23 +1822,25 @@ new BlockType(
         blockData[subBlock.type].update(subBlock, s);
     }
     if (s) c.addChild(s);
-    let g = new PIXI.Graphics();
-    g.alpha = 0.75;
-    let color = PIXI.utils.rgb2hex([0.5, 1, 0.5]);
-    if (block.global) color = PIXI.utils.rgb2hex([0.5, 0.5, 1]);
-    drawStr(
-      g,
-      block.id.toString(),
-      PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2)),
-      3,
-      20
-    );
-    g.lineStyle(
-      5,
-      PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2))
-    );
-    g.drawRect(0, 0, 50, 50);
-    c.addChild(g);
+    if (!block.hideDetails) {
+      let g = new PIXI.Graphics();
+      g.alpha = 0.75;
+      let color = PIXI.utils.rgb2hex([0.5, 1, 0.5]);
+      if (block.global) color = PIXI.utils.rgb2hex([0.5, 0.5, 1]);
+      drawStr(
+        g,
+        block.id.toString(),
+        PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2)),
+        3,
+        20
+      );
+      g.lineStyle(
+        5,
+        PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2))
+      );
+      g.drawRect(0, 0, 50, 50);
+      c.addChild(g);
+    }
     return app.renderer.generateTexture(
       c,
       undefined,
@@ -1840,9 +1859,10 @@ new BlockType(
     global: [],
     blockA: [],
     blockB: [],
-    invert: []
+    invert: [],
+    hideDetails: []
   },
-  ["id", "global", "blockA", "blockB", "invert"]
+  ["id", "global", "blockA", "blockB", "invert", "hideDetails"]
 );
 new BlockType(
   "Jump Block",
@@ -1850,7 +1870,8 @@ new BlockType(
     ...new Block(27, 0, 0, 50, false, false, 1),
     blockA: null,
     blockB: blockData[0].defaultBlock,
-    invert: false
+    invert: false,
+    hideDetails: false
   },
   (block, app = display) => {
     let c = new PIXI.Container();
@@ -1862,12 +1883,14 @@ new BlockType(
         blockData[subBlock.type].update(subBlock, s);
     }
     if (s) c.addChild(s);
-    let g = new PIXI.Graphics();
-    g.alpha = 0.5;
-    let color = PIXI.utils.rgb2hex([0.5, 0.25, 0]);
-    g.lineStyle(5, color);
-    g.drawRect(0, 0, 50, 50);
-    c.addChild(g);
+    if (!block.hideDetails) {
+      let g = new PIXI.Graphics();
+      g.alpha = 0.5;
+      let color = PIXI.utils.rgb2hex([0.5, 0.25, 0]);
+      g.lineStyle(5, color);
+      g.drawRect(0, 0, 50, 50);
+      c.addChild(g);
+    }
     return app.renderer.generateTexture(
       c,
       undefined,
@@ -1884,9 +1907,10 @@ new BlockType(
   {
     blockA: [],
     blockB: [],
-    invert: []
+    invert: [],
+    hideDetails: []
   },
-  ["blockA", "blockB", "invert"]
+  ["blockA", "blockB", "invert", "hideDetails"]
 );
 function unstableBlock(obj, block) {
   block = getGridBlock(block);
@@ -2034,7 +2058,8 @@ new BlockType(
     value: 1,
     blockA: null,
     blockB: blockData[0].defaultBlock,
-    invert: false
+    invert: false,
+    hideDetails: false
   },
   (block, app = display) => {
     let c = new PIXI.Container();
@@ -2046,22 +2071,24 @@ new BlockType(
         blockData[subBlock.type].update(subBlock, s);
     }
     if (s) c.addChild(s);
-    let g = new PIXI.Graphics();
-    g.alpha = 0.75;
-    let color = PIXI.utils.rgb2hex([1, 1, 0.5]);
-    drawStr(
-      g,
-      block.value.toString(),
-      PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2)),
-      3,
-      20
-    );
-    g.lineStyle(
-      5,
-      PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2))
-    );
-    g.drawRect(0, 0, 50, 50);
-    c.addChild(g);
+    if (!block.hideDetails) {
+      let g = new PIXI.Graphics();
+      g.alpha = 0.75;
+      let color = PIXI.utils.rgb2hex([1, 1, 0.5]);
+      drawStr(
+        g,
+        block.value.toString(),
+        PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2)),
+        3,
+        20
+      );
+      g.lineStyle(
+        5,
+        PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2))
+      );
+      g.drawRect(0, 0, 50, 50);
+      c.addChild(g);
+    }
     return app.renderer.generateTexture(
       c,
       undefined,
@@ -2079,13 +2106,18 @@ new BlockType(
     value: [() => -Infinity, () => Infinity],
     blockA: [],
     blockB: [],
-    invert: []
+    invert: [],
+    hideDetails: []
   },
-  ["value", "blockA", "blockB", "invert"]
+  ["value", "blockA", "blockB", "invert", "hideDetails"]
 );
 new BlockType(
   "Unpushable Block",
-  { ...new Block(31, 0, 0, 50, true, true, 3), dynamic: true, color: "#882200"},
+  {
+    ...new Block(31, 0, 0, 50, true, true, 3),
+    dynamic: true,
+    color: "#882200"
+  },
   (block, app = display) => {
     let g = new PIXI.Graphics();
     g.beginFill(0xffffff);

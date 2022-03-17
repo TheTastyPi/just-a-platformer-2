@@ -421,3 +421,7 @@
 ### 17 Mar. 2022 #2
 
 - Portal location selection is now affected by grid snapping
+
+### 17 Mar. 2022 #3
+
+- Added hideDetails property to all toggleable blocks

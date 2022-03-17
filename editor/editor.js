@@ -67,8 +67,8 @@ const propData = {
   targetSize: ["num", "tS", () => 6.25, () => maxBlockSize],
   size: ["num", "s", () => 6.25, () => maxBlockSize],
   isSolid: ["bool", "so"],
-  collidePlayer: ["bool","cP"],
-  collideBlock: ["bool","cB"],
+  collidePlayer: ["bool", "cP"],
+  collideBlock: ["bool", "cB"],
   giveJump: ["bool", "j"],
   eventPriority: ["int", "ep", () => 0, () => Infinity],
   invisible: ["bool", "v"],
@@ -136,6 +136,7 @@ const propData = {
   blockA: ["block", "bA"],
   blockB: ["block", "bB"],
   invert: ["bool", "ivt"],
+  hideDetails: ["bool", "hD"],
   lifetime: ["num", "lt"],
   value: ["num", "val"],
   setValue: ["bool", "sV"]
@@ -403,7 +404,11 @@ id("display").addEventListener("mousedown", function (event) {
         player.y = loc[1];
         player.isDead = false;
         if (editor.choosePos) {
-          editor.editBlock[editor.chooseFor] = [player.currentRoom, loc[0]+player.size/2, loc[1]+player.size/2];
+          editor.editBlock[editor.chooseFor] = [
+            player.currentRoom,
+            loc[0] + player.size / 2,
+            loc[1] + player.size / 2
+          ];
           editor.choosePos = false;
           confirmEditAll();
         }
@@ -711,7 +716,8 @@ function confirmPropEdit(block) {
     }
     if (editBlock[i] !== "MIXED") {
       if (propData[i] === undefined) {
-        if (i !== "currentRoom") newBlock[i] = blockData[block.type].defaultBlock[i];
+        if (i !== "currentRoom")
+          newBlock[i] = blockData[block.type].defaultBlock[i];
         continue;
       }
       if (parseFloat(editBlock[i]) == editBlock[i]) {
@@ -775,7 +781,7 @@ function select(selectRect, single = false, prev, build = false) {
         let block = gridSpace[i];
         if (
           isColliding(selectRect, block) &&
-          (!editor.editSelect.includes(block)||build)
+          (!editor.editSelect.includes(block) || build)
         ) {
           if (editor.chooseBlock) {
             if (editor.editSelect.includes(block)) return;
@@ -824,7 +830,7 @@ function select(selectRect, single = false, prev, build = false) {
             break;
           } else {
             if (block.link) {
-              editor.editSelect.push(...block.link)
+              editor.editSelect.push(...block.link);
             } else editor.editSelect.push(block);
           }
         }
@@ -970,7 +976,10 @@ function delinkSelected() {
         let b = editor.editSelect[j];
         b.link = null;
       }
-      editor.links.splice(editor.links.findIndex(l=>block.link===l),1);
+      editor.links.splice(
+        editor.links.findIndex((l) => block.link === l),
+        1
+      );
     }
   }
 }
@@ -1368,7 +1377,7 @@ function compressBlock(block) {
     }
   }
 }
-function decompressBlock(block,room) {
+function decompressBlock(block, room) {
   for (let prop in block) {
     if (
       propAliasReverse[prop] !== undefined &&
@@ -1384,7 +1393,8 @@ function decompressBlock(block,room) {
       decompressBlock(block[prop], room);
   }
   for (let prop in blockData[block.type].defaultBlock) {
-    if (block[prop] === undefined) block[prop] = blockData[block.type].defaultBlock[prop];
+    if (block[prop] === undefined)
+      block[prop] = blockData[block.type].defaultBlock[prop];
   }
   block.currentRoom = room;
 }
@@ -1419,7 +1429,7 @@ function str2lvl(str, room) {
   let aniBlocks = [];
   for (let i in blocks) {
     let block = blocks[i];
-    decompressBlock(block,room);
+    decompressBlock(block, room);
     if (animatedTypes.includes(block.type)) {
       aniBlocks.push(block);
     }
