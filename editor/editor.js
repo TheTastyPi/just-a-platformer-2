@@ -1368,7 +1368,7 @@ function compressBlock(block) {
     }
   }
 }
-function decompressBlock(block) {
+function decompressBlock(block,room) {
   for (let prop in block) {
     if (
       propAliasReverse[prop] !== undefined &&
@@ -1381,11 +1381,12 @@ function decompressBlock(block) {
   }
   for (let prop in block) {
     if (propData[prop][0] === "block" && block[prop])
-      decompressBlock(block[prop]);
+      decompressBlock(block[prop], room);
   }
   for (let prop in blockData[block.type].defaultBlock) {
     if (block[prop] === undefined) block[prop] = blockData[block.type].defaultBlock[prop];
   }
+  block.currentRoom = room;
 }
 function lvl2str(lvl) {
   let w = lvl.length;
@@ -1418,8 +1419,7 @@ function str2lvl(str, room) {
   let aniBlocks = [];
   for (let i in blocks) {
     let block = blocks[i];
-    decompressBlock(block);
-    block.currentRoom = room;
+    decompressBlock(block,room);
     if (animatedTypes.includes(block.type)) {
       aniBlocks.push(block);
     }
@@ -1519,6 +1519,7 @@ function load(name) {
       startState.currentRoom = editor.roomOrder[0];
       player.currentRoom = editor.roomOrder[0];
     }
+    assignIndex();
     togglePlayMode();
     dynamicInit = saveData[1];
     dynamicObjs = [];
@@ -1702,6 +1703,7 @@ function togglePlayMode() {
     }
     dynamicSave = deepCopy(dynamicInit);
     selectLayer.visible = true;
+    drawLevel();
   }
   updateMenus();
 }

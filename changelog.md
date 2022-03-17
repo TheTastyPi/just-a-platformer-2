@@ -410,3 +410,10 @@
 - Fixed a bug where a blank block on the blockB property of multi-state blocks does not save properly
 - Fixed a bug where checkpoints can display incorrectly when put in different rooms
 - Fixed a bug where the game crashes if you load a level after changing the state of the level
+
+### 17 Mar. 2022
+
+- Fixed a bug where state-changing blocks' display doesn't update properly after exiting and re-entering its room
+  - Nor after toggling play mode
+- Fixed a couple bugs where restarting from a checkpoint saved after the state of the level causes weird behaviors
+- Fixed a couple bugs related to importing

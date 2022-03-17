@@ -33,7 +33,6 @@ function drawLevel(clear = false) {
       for (let i in level[x][y]) {
         let block = level[x][y][i];
         if (clear) {
-          block.index = parseInt(i);
           let s = createSprite(block);
           levelLayer.addChild(s);
           block.sprite = s;
@@ -98,7 +97,7 @@ function forAllBlock(func, type) {
         for (let i in level[x][y]) {
           let block = level[x][y][i];
           if (!type || block.type === type) {
-            func(block);
+            func(block,x,y,i);
           }
         }
       }

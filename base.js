@@ -897,8 +897,7 @@ function doPhysics(obj, t, isPlayer) {
           tempObj,
           isPlayer,
           !obj.lastCollided.find(
-            (x) => getGridBlock(x) === getGridBlock(block)
-          ),
+            (x) => getGridBlock(x) === getGridBlock(block)),
           false
         );
       }
@@ -1265,7 +1264,12 @@ function respawn(start = false, draw = true) {
     saveState = deepCopy(startState);
     dynamicSave = deepCopy(dynamicInit);
   }
-  rollForward();
+  if (editor && !editor.playMode) {
+    player.blockAdded = [];
+    player.blockChanged = [];
+    player.blockRemoved = [];
+  }
+  rollForward(player.currentRoom === prevRoom);
   infoDisp.coins = player.coins;
   for (let i in hasSubBlock) forAllBlock(updateSubBlock, hasSubBlock[i]);
   if (draw) {
@@ -1285,6 +1289,11 @@ function rollBack() {
     let block = getGridBlock(data[1]);
     scaleBlock(block, data[0].size / block.size, block.x, block.y);
     moveBlock(block, data[0].x - block.x, data[0].y - block.y);
+    for (let i in data[0]) {
+      if (["lastCollided", "sprite", "dupSprite", "link"].includes(i)) {
+        delete data[0][i];
+      }
+    }
     Object.assign(block, data[0]);
     if (block.index === data[0].index) continue;
     let gridSpace = getGridSpace(block);
@@ -1302,7 +1311,7 @@ function rollBack() {
   for (let i in player.blockAdded) removeBlock(player.blockAdded[i], false);
   player.blockAdded = [];
 }
-function rollForward() {
+function rollForward(draw) {
   for (let i in player.blockRemoved) {
     let data = player.blockRemoved[i];
     let block = getGridBlock(data);
@@ -1312,18 +1321,25 @@ function rollForward() {
   for (let i in player.blockChanged) {
     let data = player.blockChanged[i];
     let block = getGridBlock(data[0]);
-    scaleBlock(block, data[1].size / block.size, block.x, block.y);
-    moveBlock(block, data[1].x - block.x, data[1].y - block.y);
+    scaleBlock(block, data[1].size / block.size, block.x, block.y, draw);
+    moveBlock(block, data[1].x - block.x, data[1].y - block.y,draw);
+    for (let i in data[1]) {
+      if (["lastCollided", "sprite", "dupSprite", "link"].includes(i)) {
+        delete data[1][i];
+      }
+    }
     Object.assign(block, data[1]);
-    if (block.index === data[1].index) continue;
-    let gridSpace = getGridSpace(block);
-    gridSpace.splice(
-      gridSpace.findIndex((x) => x === block),
-      1
-    );
-    gridSpace.splice(block.index, 0, block);
-    for (let i = parseInt(block.index) + 1; i < gridSpace.length; i++)
-      gridSpace[i].index++;
+    if (block.index !== data[1].index) {
+      let gridSpace = getGridSpace(block);
+      gridSpace.splice(
+        gridSpace.findIndex((x) => x === block),
+        1
+      );
+      gridSpace.splice(block.index, 0, block);
+      for (let i = parseInt(block.index) + 1; i < gridSpace.length; i++)
+        gridSpace[i].index++;
+    }
+    data[1] = block;
   }
 }
 function gridUnit(
@@ -1473,19 +1489,19 @@ function scaleBlock(block, factor, focusX, focusY, draw = true) {
   if (focusX !== undefined) {
     let dx = focusX - block.x;
     let dy = focusY - block.y;
-    moveBlock(block, dx * (1 - factor), dy * (1 - factor));
+    moveBlock(block, dx * (1 - factor), dy * (1 - factor), draw);
   }
   if (block.currentRoom === player.currentRoom && draw) {
     block.sprite.width = block.size;
     block.sprite.height = block.size;
   }
 }
-function moveBlock(block, dx, dy) {
+function moveBlock(block, dx, dy, draw = true) {
   let gridSpace = getGridSpace(block);
   let sprite = block.sprite;
   block.x += dx;
   block.y += dy;
-  if (block.currentRoom === player.currentRoom) {
+  if (block.currentRoom === player.currentRoom && draw) {
     sprite.x = block.x;
     sprite.y = block.y;
   }
@@ -1862,4 +1878,13 @@ function logChange(block) {
   if (!player.blockChanged.find((x) => x[1] === block)) {
     player.blockChanged.push([deepCopy(block), block]);
   }
+}
+function assignIndex() {
+  let func = function(block,x,y,i){
+    block.index = parseInt(i);
+    for (let j in block) {
+      if (propData[j]?.[0] === "block" && block[j] !== null) func(block[j],x,y,i);
+    }
+  }
+  forAllBlock(func);
 }
