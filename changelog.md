@@ -417,3 +417,7 @@
   - Nor after toggling play mode
 - Fixed a couple bugs where restarting from a checkpoint saved after the state of the level causes weird behaviors
 - Fixed a couple bugs related to importing
+
+### 17 Mar. 2022
+
+- Portal location selection is now affected by grid snapping
