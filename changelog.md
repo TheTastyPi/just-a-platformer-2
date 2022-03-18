@@ -425,3 +425,7 @@
 ### 17 Mar. 2022 #3
 
 - Added hideDetails property to all toggleable blocks
+
+### 18 Mar. 2022
+
+- Pasting is now affected by grid snapping

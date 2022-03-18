@@ -313,6 +313,7 @@ document.addEventListener("keydown", function (event) {
       if (event.ctrlKey || event.metaKey) {
         deselect();
         paste(editor.mousePos[0] - camx, editor.mousePos[1] - camy);
+        updateSelectDisp();
       }
       break;
     case "KeyG":
@@ -954,8 +955,18 @@ function paste(x, y) {
     editor.editSelect.push(block);
     added.push(block);
   }
-  addAction("addBlock", deepCopy(added));
   reselect();
+  let snapPos = getSnapPos(editor.selectBox);
+  let dx = snapPos[0] - editor.selectBox.x;
+  let dy = snapPos[1] - editor.selectBox.y;
+  selectDisp.x += dx;
+  selectDisp.y += dy;
+  for (let i in added) {
+    moveBlock(editor.editSelect[i], dx, dy);
+  }
+  editor.selectBox.x += dx;
+  editor.selectBox.y += dy;
+  addAction("addBlock", deepCopy(added));
   updateSelectDisp();
 }
 function linkSelected() {
