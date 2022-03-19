@@ -203,7 +203,19 @@ var blockEdit = new Vue({
       pos: "button",
       block: "button"
     },
-    blocks: blockList
+    blocks: blockList,
+    desc: {
+      eventPriority:
+        "Determines the order of touch events.\nHigher priority overrides lower priority.",
+      floorLeniency:
+        "Allows objects to instantly step onto a block.\nThe number determines the height you can step from.",
+      alwaysActive:
+        "Prevents dynamic blocks from deactivaing when in another room.",
+      global:
+        "Global switches affect the entire level.\nThey are separate from normal switches.",
+      forceVert:
+        "Forces boundary warps to, when in a corner, point vertically."
+    }
   }
 });
 var selectLayer = new PIXI.Container();

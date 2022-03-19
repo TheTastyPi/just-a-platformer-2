@@ -429,3 +429,9 @@
 ### 18 Mar. 2022
 
 - Pasting is now affected by grid snapping
+
+### 19 Mar. 2022
+
+- Added small descriptions to certain block properties that are available on hover
+- Fixed a bug where nested switch blocks doesn't update properly
+- Fixed a bug where checkpoints as sub-blocks doesn't update properly

@@ -152,10 +152,10 @@ new BlockType(
         if (control.shift && canSave) {
           setSpawn();
           canSave = false;
-          updateBlock(block);
+          updateBlock(getGridBlock(block));
           drawLevel();
         }
-        if (isEntering || isExiting) updateBlock(block);
+        if (isEntering || isExiting) updateBlock(getGridBlock(block));
       }
     }
   ],
@@ -1770,12 +1770,21 @@ new BlockType(
           logChange(gridBlock);
           gridBlock.used = true;
         }
-        forAllBlock((b) => {
-          if (
+        let checkValid = function (b) {
+          let valid =
             switchBlocks.includes(b.type) &&
             b.id === block.id &&
-            b.global === block.global
-          ) {
+            b.global === block.global;
+          for (let i in b) {
+            if (valid) break;
+            if (propData[i][0] === "block" && b[i]) {
+              valid = checkValid(b[i]);
+            }
+          }
+          return valid;
+        };
+        forAllBlock((b) => {
+          if (checkValid(block)) {
             if (!block.global && obj.currentRoom !== block.currentRoom) return;
             updateBlock(b);
             if (b.type === 26) updateSubBlock(b);

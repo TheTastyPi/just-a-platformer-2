@@ -897,7 +897,8 @@ function doPhysics(obj, t, isPlayer) {
           tempObj,
           isPlayer,
           !obj.lastCollided.find(
-            (x) => getGridBlock(x) === getGridBlock(block)),
+            (x) => getGridBlock(x) === getGridBlock(block)
+          ),
           false
         );
       }
@@ -905,8 +906,8 @@ function doPhysics(obj, t, isPlayer) {
     for (let i in obj.lastCollided) {
       let block = getGridBlock(obj.lastCollided[i]);
       if (!block || block.isPlayer || block.isSolid) continue;
-      if (collided.find((x) => x === block)) continue;
-      blockData[block.type].touchEvent[4](
+      if (collided.find((x) => getGridBlock(x) === block)) continue;
+      blockData[getSubBlock(block).type].touchEvent[4](
         obj,
         block,
         tempObj,
@@ -1322,7 +1323,7 @@ function rollForward(draw) {
     let data = player.blockChanged[i];
     let block = getGridBlock(data[0]);
     scaleBlock(block, data[1].size / block.size, block.x, block.y, draw);
-    moveBlock(block, data[1].x - block.x, data[1].y - block.y,draw);
+    moveBlock(block, data[1].x - block.x, data[1].y - block.y, draw);
     for (let i in data[1]) {
       if (["lastCollided", "sprite", "dupSprite", "link"].includes(i)) {
         delete data[1][i];
@@ -1854,6 +1855,9 @@ function isSwitchOn(block) {
 }
 function updateSubBlock(block) {
   let subBlock = getSubBlock(block);
+  subBlock.x = block.x;
+  subBlock.y = block.y;
+  subBlock.index = block.index;
   if (subBlock.dynamic) {
     if (!dynamicObjs.includes(block)) {
       dynamicObjs.push(block);
@@ -1880,11 +1884,12 @@ function logChange(block) {
   }
 }
 function assignIndex() {
-  let func = function(block,x,y,i){
+  let func = function (block, x, y, i) {
     block.index = parseInt(i);
     for (let j in block) {
-      if (propData[j]?.[0] === "block" && block[j] !== null) func(block[j],x,y,i);
+      if (propData[j]?.[0] === "block" && block[j] !== null)
+        func(block[j], x, y, i);
     }
-  }
+  };
   forAllBlock(func);
 }

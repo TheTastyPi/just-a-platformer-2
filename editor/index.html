@@ -50,7 +50,9 @@
       <div id="blockEditMenu" class="blockEditMenu" v-if="editor.editBlock !== undefined" v-on:keydown.stop>
         <div class="propContainer">
           <div v-for="prop in editOrder" class="blockProp">
-            <span style="width:50%">{{prop}}</span>
+            <span style="width:50%" v-bind:style="{textDecoration:desc[prop]?'underline':''}"
+            v-on:mousemove="if (desc[prop]) showTooltips(desc[prop])"
+            v-on:mouseleave="hideTooltips">{{prop}}</span>
             <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll">
               <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
                 <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
@@ -60,7 +62,9 @@
             <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></input>
           </div>
           <div v-for="prop in solidProps" class="blockProp" v-if="editor.editBlock.isSolid">
-            <span style="width:50%">{{prop}}</span>
+            <span style="width:50%"v-bind:style="{textDecoration:desc[prop]?'underline':''}"
+            v-on:mousemove="if (desc[prop]) showTooltips(desc[prop])"
+            v-on:mouseleave="hideTooltips">{{prop}}</span>
             <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll">
               <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
                 <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
@@ -70,7 +74,9 @@
             <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></input>
           </div>
           <div v-for="prop in dynamicProps" class="blockProp" v-if="editor.editBlock.dynamic">
-            <span style="width:50%">{{prop}}</span>
+            <span style="width:50%"v-bind:style="{textDecoration:desc[prop]?'underline':''}"
+            v-on:mousemove="if (desc[prop]) showTooltips(desc[prop])"
+            v-on:mouseleave="hideTooltips">{{prop}}</span>
             <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll">
               <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
                 <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
@@ -80,7 +86,9 @@
             <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></input>
           </div>
           <div v-if="Object.keys(editor.editBlockProp).length > 0 && inputType[propData[prop][0]] !== 'none'" v-for="prop in editor.editBlockProp" class="blockProp">
-            <span style="width:50%">{{prop}}</span>
+            <span style="width:50%"v-bind:style="{textDecoration:desc[prop]?'underline':''}"
+            v-on:mousemove="if (desc[prop]) showTooltips(desc[prop])"
+            v-on:mouseleave="hideTooltips">{{prop}}</span>
             <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll">
               <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
                 <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
