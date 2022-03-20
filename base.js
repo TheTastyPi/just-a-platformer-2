@@ -909,7 +909,7 @@ function doPhysics(obj, t, isPlayer) {
       if (collided.find((x) => getGridBlock(x) === block)) continue;
       blockData[getSubBlock(block).type].touchEvent[4](
         obj,
-        block,
+        getSubBlock(block),
         tempObj,
         isPlayer,
         false,

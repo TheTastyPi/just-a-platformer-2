@@ -435,3 +435,7 @@
 - Added small descriptions to certain block properties that are available on hover
 - Fixed a bug where nested switch blocks doesn't update properly
 - Fixed a bug where checkpoints as sub-blocks doesn't update properly
+
+### 20 Mar. 2022
+
+- Fixed a bug where sub-block's touch events does not peform properly
