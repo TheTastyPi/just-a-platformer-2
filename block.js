@@ -17,6 +17,7 @@ class Block {
     this.dynamic = false;
     this.interactive = false;
     this.link = null;
+    //this.events = {}
     // solid only
     this.floorLeniency = 0;
     // dynamic props
@@ -1777,17 +1778,21 @@ new BlockType(
             b.global === block.global;
           for (let i in b) {
             if (valid) break;
-            if (propData[i][0] === "block" && b[i]) {
+            if (propData[i]?.[0] === "block" && b[i]) {
               valid = checkValid(b[i]);
             }
           }
           return valid;
         };
         forAllBlock((b) => {
-          if (checkValid(block)) {
+          if (checkValid(b)) {
+            if (b.type === 26) updateSubBlock(b);
+          }
+        });
+        forAllVisible((b) => {
+          if (checkValid(b)) {
             if (!block.global && obj.currentRoom !== block.currentRoom) return;
             updateBlock(b);
-            if (b.type === 26) updateSubBlock(b);
           }
         });
       }

@@ -155,6 +155,10 @@ body::after {
   vertical-align: top;
   text-align: left;
 }
+.eventEditor {
+  display: none;
+  background: #bbbbbbbb;
+}
 .key {
   display: inline-block;
   background: #ffffff;

@@ -439,3 +439,7 @@
 ### 20 Mar. 2022
 
 - Fixed a bug where sub-block's touch events does not peform properly
+
+### 23 Mar. 2022
+
+- Switch Blocks are now more optimized

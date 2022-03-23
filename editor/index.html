@@ -59,6 +59,7 @@
               </optgroup>
             </select>
             <textarea v-else-if="inputType[propData[prop][0]] == 'textarea'"style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></textarea>
+            <button v-else-if="propData[prop][0] == 'events'" onclick="openEventEditor()">Open event editor</button>
             <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></input>
           </div>
           <div v-for="prop in solidProps" class="blockProp" v-if="editor.editBlock.isSolid">
@@ -432,6 +433,9 @@
           Paste Copied: <span class=key>Ctrl</span> <span class=key>V</span><br>
         </div>
       </div>
+    </div>
+    <div id="eventEditor" class="eventEditor centered">
+      this is event editor
     </div>
     <div
       id="tooltip"
