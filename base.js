@@ -39,6 +39,7 @@ var dynamicObjs = [];
 var animatedTypes = [8, 21];
 var animatedObjs = [];
 var timerList = [];
+var conveyorBlocks = [8, 21];
 var oneWayBlocks = [16, 17, 18, 19, 20, 21];
 var switchBlocks = [25, 26];
 var hasSubBlock = [26, 27, 30];
@@ -1104,7 +1105,6 @@ function doPhysics(obj, t, isPlayer) {
         drv = -rightBlock.yv;
       }
     }
-    let conveyorBlocks = [8, 21];
     if (conveyorBlocks.includes(topBlock?.type)) gdxv += topBlock.bottomSpeed;
     if (conveyorBlocks.includes(bottomBlock?.type))
       gdxv += bottomBlock.topSpeed;
@@ -1523,6 +1523,24 @@ function moveBlock(block, dx, dy, draw = true) {
   }
   if (block.currentRoom === player.currentRoom && block.type === 23)
     updateBlock(block);
+}
+function rotateBlock(block, dtheta, cx, cy, rad = false) {
+  let x = block.x + block.size / 2 - cx;
+  let y = block.y + block.size / 2 - cy;
+  let r = (x ** 2 + y ** 2) ** 0.5;
+  if (!rad) dtheta *= Math.PI / 180;
+  let theta = Math.atan2(y, x);
+  let ntheta = theta + dtheta;
+  let nx = Math.cos(ntheta) * r;
+  let ny = Math.sin(ntheta) * r;
+  moveBlock(block, nx - x, ny - y);
+}
+function flipBlock(block, pos, y = false) {
+  moveBlock(
+    block,
+    y ? 0 : (pos - block.x - block.size / 2) * 2,
+    y ? (pos - block.y - block.size / 2) * 2 : 0
+  );
 }
 function arraysEqual(a, b, isBlock = true) {
   if (typeof a !== "object" || typeof b !== "object") return a === b;

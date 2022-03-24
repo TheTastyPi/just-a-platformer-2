@@ -584,7 +584,7 @@ document.addEventListener("mouseup", function (event) {
       if (editor.editMode) {
         addAction(
           "moveBlock",
-          [...editor.editSelect],
+          deepCopy(editor.editSelect),
           editor.selectBox.x - editor.moveStart[0],
           editor.selectBox.y - editor.moveStart[1]
         );
@@ -636,7 +636,7 @@ id("display").addEventListener("wheel", function (event) {
         editor.totalScale = factor;
         addAction(
           "scaleBlock",
-          [...editor.editSelect],
+          deepCopy(editor.editSelect),
           editor.totalScale,
           xPos,
           yPos
@@ -769,7 +769,7 @@ function confirmEditAll() {
   for (let i in editor.editSelect)
     editor.editSelect[i] = confirmPropEdit(editor.editSelect[i]);
   reselect();
-  addAction("editProp", prevBlocks, [...editor.editSelect]);
+  addAction("editProp", prevBlocks, deepCopy(editor.editSelect));
 }
 function select(selectRect, single = false, prev, build = false) {
   let first;
@@ -1288,38 +1288,65 @@ function doAction(action) {
       }
       deselect();
       break;
-    case "moveBlock":
-      for (let i in action[1]) moveBlock(action[1][i], action[2], action[3]);
-      editor.editSelect = action[1];
-      updateSelectDisp();
+    case "moveBlock": {
+      let blocks = action[1].map((b) => getGridBlock(b));
+      for (let i in blocks) {
+        let block = blocks[i];
+        moveBlock(block, action[2], action[3]);
+      }
+      action[1] = deepCopy(blocks);
+      editor.editSelect = blocks;
+      reselect();
       break;
-    case "scaleBlock":
-      for (let i in action[1]) {
-        let block = action[1][i];
+    }
+    case "scaleBlock": {
+      let blocks = action[1].map((b) => getGridBlock(b));
+      for (let i in blocks) {
+        let block = blocks[i];
         scaleBlock(block, action[2], action[3], action[4]);
         block.targetSize = block.size;
       }
+      action[1] = deepCopy(blocks);
       editor.scaleStart = false;
-      editor.editSelect = action[1];
-      updateSelectDisp();
+      editor.editSelect = blocks;
+      reselect();
       break;
+    }
     case "changeLevelSize":
       changeLevelSize(action[1], action[2]);
       break;
-    case "editProp":
-      for (let i in action[1]) {
+    case "editProp": {
+      let blocks = action[1].map((b) => getGridBlock(b));
+      for (let i in action[2]) {
         addBlock(action[2][i]);
-        removeBlock(action[1][i]);
+        removeBlock(blocks[i]);
       }
-      editor.editSelect = deepCopy(action[2]);
-      updateSelectDisp();
+      editor.editSelect = action[2];
+      reselect();
       break;
+    }
+    case "rotateBlock": {
+      let blocks = action[1].map((b) => getGridBlock(b));
+      editor.editSelect = blocks;
+      rotateSelected(action[2], false);
+      action[1] = deepCopy(blocks);
+      reselect();
+      break;
+    }
+    case "flipBlock": {
+      let blocks = action[1].map((b) => getGridBlock(b));
+      editor.editSelect = blocks;
+      flipSelected(action[2], false);
+      action[1] = deepCopy(blocks);
+      reselect();
+      break;
+    }
     default:
   }
 }
 function undoAction(action) {
   switch (action[0]) {
-    case "addBlock":
+    case "addBlock": {
       for (let i in action[1]) {
         removeBlock(action[1][i]);
         for (let j in action[1]) {
@@ -1333,39 +1360,68 @@ function undoAction(action) {
       }
       deselect();
       break;
-    case "removeBlock":
+    }
+    case "removeBlock": {
       let blocks = deepCopy(action[1]);
       for (let i in blocks) addBlock(blocks[i]);
       editor.editSelect.push(...blocks);
       reselect();
       break;
-    case "moveBlock":
-      for (let i in action[1]) moveBlock(action[1][i], -action[2], -action[3]);
-      editor.editSelect = action[1];
-      updateSelectDisp();
+    }
+    case "moveBlock": {
+      let blocks = action[1].map((b) => getGridBlock(b));
+      for (let i in blocks) {
+        let block = blocks[i];
+        moveBlock(block, -action[2], -action[3]);
+      }
+      action[1] = deepCopy(blocks);
+      editor.editSelect = blocks;
+      reselect();
       break;
-    case "scaleBlock":
-      for (let i in action[1]) {
-        let block = action[1][i];
+    }
+    case "scaleBlock": {
+      let blocks = action[1].map((b) => getGridBlock(b));
+      for (let i in blocks) {
+        let block = blocks[i];
         scaleBlock(block, 1 / action[2], action[3], action[4]);
         block.targetSize = block.size;
       }
+      action[1] = deepCopy(blocks);
       editor.scaleStart = false;
-      editor.editSelect = action[1];
-      updateSelectDisp();
+      editor.editSelect = blocks;
+      reselect();
       break;
+    }
     case "changeLevelSize":
       changeLevelSize(action[1], -action[2], false);
       for (let i in action[3]) addBlock(action[3][i]);
       break;
-    case "editProp":
+    case "editProp": {
+      let blocks = action[2].map((b) => getGridBlock(b));
       for (let i in action[1]) {
         addBlock(action[1][i]);
-        removeBlock(action[2][i]);
+        removeBlock(blocks[i]);
       }
-      editor.editSelect = deepCopy(action[1]);
-      updateSelectDisp();
+      editor.editSelect = action[1];
+      reselect();
       break;
+    }
+    case "rotateBlock": {
+      let blocks = action[1].map((b) => getGridBlock(b));
+      editor.editSelect = blocks;
+      rotateSelected(!action[2], false);
+      action[1] = deepCopy(blocks);
+      reselect();
+      break;
+    }
+    case "flipBlock": {
+      let blocks = action[1].map((b) => getGridBlock(b));
+      editor.editSelect = blocks;
+      flipSelected(action[2], false);
+      action[1] = deepCopy(blocks);
+      reselect();
+      break;
+    }
     default:
   }
 }
@@ -1754,6 +1810,90 @@ function updateMenus() {
     id("blockSelect").style.display = "none";
     id("blockEdit").style.display = "none";
   }
+}
+function rotateSelected(ccw = false, action = true) {
+  let cx = (editor.selectBox.x + editor.selectBox.maxx) / 2;
+  let cy = (editor.selectBox.y + editor.selectBox.maxy) / 2;
+  for (let i in editor.editSelect) {
+    let block = editor.editSelect[i];
+    rotateBlock(block, ccw ? -90 : 90, cx, cy);
+    if (oneWayBlocks.includes(block.type) || conveyorBlocks.includes(block.type)) {
+      if (oneWayBlocks.includes(block.type)) {
+        let temp = block.leftWall;
+        if (ccw) {
+          block.leftWall = block.topWall;
+          block.topWall = block.rightWall;
+          block.rightWall = block.bottomWall;
+          block.bottomWall = temp;
+        } else {
+          block.leftWall = block.bottomWall;
+          block.bottomWall = block.rightWall;
+          block.rightWall = block.topWall;
+          block.topWall = temp;
+        }
+      } else {
+        let temp = block.leftSpeed;
+        if (ccw) {
+          block.leftSpeed = block.topSpeed;
+          block.topSpeed = block.rightSpeed;
+          block.rightSpeed = block.bottomSpeed;
+          block.bottomSpeed = temp;
+        } else {
+          block.leftSpeed = block.bottomSpeed;
+          block.bottomSpeed = block.rightSpeed;
+          block.rightSpeed = block.topSpeed;
+          block.topSpeed = temp;
+        }
+      }
+      block.sprite.destroy();
+      let s = createSprite(block);
+      levelLayer.addChild(s);
+      block.sprite = s;
+      cullBlock(block);
+    }
+  }
+  if (action) addAction("rotateBlock", deepCopy(editor.editSelect), ccw);
+  reselect();
+}
+function flipSelected(y = false, action = true) {
+  let pos;
+  if (y) {
+    pos = (editor.selectBox.y + editor.selectBox.maxy) / 2;
+  } else pos = (editor.selectBox.x + editor.selectBox.maxx) / 2;
+  for (let i in editor.editSelect) {
+    let block = editor.editSelect[i];
+    if (oneWayBlocks.includes(block.type) || conveyorBlocks.includes(block.type)) {
+      if (oneWayBlocks.includes(block.type)) {
+        if (y) {
+          let temp = block.topWall;
+          block.topWall = block.bottomWall;
+          block.bottomWall = temp;
+        } else {
+          let temp = block.leftWall;
+          block.leftWall = block.rightWall;
+          block.rightWall = temp;
+        }
+      } else {
+        if (y) {
+          let temp = block.topSpeed;
+          block.topSpeed = block.bottomSpeed;
+          block.bottomSpeed = temp;
+        } else {
+          let temp = block.leftSpeed;
+          block.leftSpeed = block.rightSpeed;
+          block.rightSpeed = temp;
+        }
+      }
+      block.sprite.destroy();
+      let s = createSprite(block);
+      levelLayer.addChild(s);
+      block.sprite = s;
+      cullBlock(block);
+    }
+    flipBlock(block, pos, y);
+  }
+  if (action) addAction("flipBlock", deepCopy(editor.editSelect), y);
+  reselect();
 }
 function openEventEditor() {
   if (id("eventEditor").display === "block") {

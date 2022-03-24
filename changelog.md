@@ -443,3 +443,8 @@
 ### 23 Mar. 2022
 
 - Switch Blocks are now more optimized
+
+### 24 Mar. 2022
+
+- Added the ability to rotate and flip selected blocks
+- Fixed several issues related to undoing and redoing, like seriously, how have you people not reported this yet, and how have I not found this until now

@@ -155,6 +155,35 @@
         v-on:mousemove="showTooltips('Toggle center snapping')"
         v-on:mouseleave="hideTooltips"
       ></button><br>
+      <div>Editing</div>
+      <button
+        class="optionButton"
+        onclick="rotateSelected(true)"
+        style="background-image: url(../pics/rotateccw.png);"
+        v-on:mousemove="showTooltips('Rotate selected blocks counter-clockwise')"
+        v-on:mouseleave="hideTooltips"
+      ></button>
+      <button
+        class="optionButton"
+        onclick="rotateSelected(false)"
+        style="background-image: url(../pics/rotatecw.png);"
+        v-on:mousemove="showTooltips('Rotate selected blocks clockwise')"
+        v-on:mouseleave="hideTooltips"
+      ></button><br>
+      <button
+        class="optionButton"
+        onclick="flipSelected(false)"
+        style="background-image: url(../pics/flipHori.png);"
+        v-on:mousemove="showTooltips('Flip selected blocks horizontally')"
+        v-on:mouseleave="hideTooltips"
+      ></button>
+      <button
+        class="optionButton"
+        onclick="flipSelected(true)"
+        style="background-image: url(../pics/flipVert.png);"
+        v-on:mousemove="showTooltips('Flip selected blocks vertically')"
+        v-on:mouseleave="hideTooltips"
+      ></button>
       <div>Level Size</div>
       {{width+"x"+height}}<br>
       {{editor.invertExpand?'Retract':'Expand'}} level by <input v-model="editor.expandAmt" onchange="editor.expandAmt = Math.round(editor.expandAmt)" v-on:keydown.stop style="width:100px"></input><br>
