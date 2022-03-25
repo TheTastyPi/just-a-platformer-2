@@ -494,10 +494,11 @@ function doPhysics(obj, t, isPlayer) {
         gridSpace = [new Block(0, x * 50, y * 50, 50, true, true, 3)];
       }
       for (let i in gridSpace) {
+        let subBlock = getSubBlock(gridSpace[i]);
         if (gridSpace[i].dynamic && !prevDynObjs.includes(gridSpace[i]))
           continue;
-        if (isPlayer && !gridSpace[i].collidePlayer) continue;
-        if (!isPlayer && !gridSpace[i].collideBlock) continue;
+        if (isPlayer && !subBlock.collidePlayer) continue;
+        if (!isPlayer && !subBlock.collideBlock) continue;
         doCollision(gridSpace[i]);
       }
     }
@@ -587,10 +588,11 @@ function doPhysics(obj, t, isPlayer) {
               gridSpace = [new Block(0, x * 50, y * 50, 50, true, true, 3)];
             }
             for (let i in gridSpace) {
+              let subBlock = getSubBlock(gridSpace[i]);
               if (gridSpace[i].dynamic && !prevDynObjs.includes(gridSpace[i]))
                 continue;
-              if (isPlayer && !gridSpace[i].collidePlayer) continue;
-              if (!isPlayer && !gridSpace[i].collideBlock) continue;
+              if (isPlayer && !subBlock.collidePlayer) continue;
+              if (!isPlayer && !subBlock.collideBlock) continue;
               doCollision({
                 ...gridSpace[i],
                 x: gridSpace[i].x - newlvl.length * 50,
@@ -602,8 +604,9 @@ function doPhysics(obj, t, isPlayer) {
         if (isPlayer || subObj.blockPushable) {
           for (let i in prevDynObjs) {
             let block = prevDynObjs[i];
-            if (isPlayer && !block.collidePlayer) continue;
-            if (!isPlayer && !block.collideBlock) continue;
+            let subBlock = getSubBlock(prevDynObjs[i]);
+            if (isPlayer && !subBlock.collidePlayer) continue;
+            if (!isPlayer && !subBlock.collideBlock) continue;
             if (block.currentRoom === obj.roomLink[1].currentRoom)
               doCollision({
                 ...block,
@@ -650,10 +653,11 @@ function doPhysics(obj, t, isPlayer) {
               gridSpace = [new Block(0, x * 50, y * 50, 50, true, true, 3)];
             }
             for (let i in gridSpace) {
+              let subBlock = getSubBlock(gridSpace[i]);
               if (gridSpace[i].dynamic && !prevDynObjs.includes(gridSpace[i]))
                 continue;
-              if (isPlayer && !gridSpace[i].collidePlayer) continue;
-              if (!isPlayer && !gridSpace[i].collideBlock) continue;
+              if (isPlayer && !subBlock.collidePlayer) continue;
+              if (!isPlayer && !subBlock.collideBlock) continue;
               doCollision({
                 ...gridSpace[i],
                 x: gridSpace[i].x + newlvl.length * 50,
@@ -665,8 +669,9 @@ function doPhysics(obj, t, isPlayer) {
         if (isPlayer || subObj.blockPushable) {
           for (let i in prevDynObjs) {
             let block = prevDynObjs[i];
-            if (isPlayer && !block.collidePlayer) continue;
-            if (!isPlayer && !block.collideBlock) continue;
+            let subBlock = getSubBlock(prevDynObjs[i]);
+            if (isPlayer && !subBlock.collidePlayer) continue;
+            if (!isPlayer && !subBlock.collideBlock) continue;
             if (block.currentRoom === obj.roomLink[1].currentRoom)
               doCollision({
                 ...block,
@@ -713,10 +718,11 @@ function doPhysics(obj, t, isPlayer) {
               gridSpace = [new Block(0, x * 50, y * 50, 50, true, true, 3)];
             }
             for (let i in gridSpace) {
+              let subBlock = getSubBlock(gridSpace[i]);
               if (gridSpace[i].dynamic && !prevDynObjs.includes(gridSpace[i]))
                 continue;
-              if (isPlayer && !gridSpace[i].collidePlayer) continue;
-              if (!isPlayer && !gridSpace[i].collideBlock) continue;
+              if (isPlayer && !subBlock.collidePlayer) continue;
+              if (!isPlayer && !subBlock.collideBlock) continue;
               doCollision({
                 ...gridSpace[i],
                 x: gridSpace[i].x - dx,
@@ -728,8 +734,9 @@ function doPhysics(obj, t, isPlayer) {
         if (isPlayer || subObj.blockPushable) {
           for (let i in prevDynObjs) {
             let block = prevDynObjs[i];
-            if (isPlayer && !block.collidePlayer) continue;
-            if (!isPlayer && !block.collideBlock) continue;
+            let subBlock = getSubBlock(prevDynObjs[i]);
+            if (isPlayer && !subBlock.collidePlayer) continue;
+            if (!isPlayer && !subBlock.collideBlock) continue;
             if (block.currentRoom === obj.roomLink[1].currentRoom)
               doCollision({
                 ...block,
@@ -776,10 +783,11 @@ function doPhysics(obj, t, isPlayer) {
               gridSpace = [new Block(0, x * 50, y * 50, 50, true, true, 3)];
             }
             for (let i in gridSpace) {
+              let subBlock = getSubBlock(gridSpace[i]);
               if (gridSpace[i].dynamic && !prevDynObjs.includes(gridSpace[i]))
                 continue;
-              if (isPlayer && !gridSpace[i].collidePlayer) continue;
-              if (!isPlayer && !gridSpace[i].collideBlock) continue;
+              if (isPlayer && !subBlock.collidePlayer) continue;
+              if (!isPlayer && !subBlock.collideBlock) continue;
               doCollision({
                 ...gridSpace[i],
                 x: gridSpace[i].x - dx,
@@ -791,8 +799,9 @@ function doPhysics(obj, t, isPlayer) {
         if (isPlayer || subObj.blockPushable) {
           for (let i in prevDynObjs) {
             let block = prevDynObjs[i];
-            if (isPlayer && !block.collidePlayer) continue;
-            if (!isPlayer && !block.collideBlock) continue;
+            let subBlock = getSubBlock(prevDynObjs[i]);
+            if (isPlayer && !subBlock.collidePlayer) continue;
+            if (!isPlayer && !subBlock.collideBlock) continue;
             if (block.currentRoom === obj.roomLink[1].currentRoom)
               doCollision({
                 ...block,

@@ -455,7 +455,7 @@
 
 ### 25 Mar. 2022 #2
 
-- Fixed a bug where block deleted via deleting a room are still selected
+- Fixed a bug where blocks deleted via deleting a room are still selected
 - Fixed a bug where, while not in play mode, selected dynamic blocks are bugged after respawning
 - Fixed a bug where rotating blocks can cause long decimals after the positions of a block
 - Property edit display now updates as you scale a block
