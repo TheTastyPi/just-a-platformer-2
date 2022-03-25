@@ -349,7 +349,9 @@ function doPhysics(obj, t, isPlayer) {
       // left
       if (isLeft) {
         if (oneWayBlocks.includes(block.type)) {
-          if (!block.rightWall || obj.lastCollided.find((x) => x === block)) {
+          if (!block.rightWall || obj.lastCollided.find(
+            (x) => getGridBlock(x) === getGridBlock(block)
+          )) {
             return;
           } else if (!block.passOnPush)
             collided.splice(
@@ -378,7 +380,9 @@ function doPhysics(obj, t, isPlayer) {
       // right
       if (isRight) {
         if (oneWayBlocks.includes(block.type)) {
-          if (!block.leftWall || obj.lastCollided.find((x) => x === block)) {
+          if (!block.leftWall || obj.lastCollided.find(
+            (x) => getGridBlock(x) === getGridBlock(block)
+          )) {
             return;
           } else if (!block.passOnPush)
             collided.splice(
@@ -407,7 +411,9 @@ function doPhysics(obj, t, isPlayer) {
       // top
       if (isTop) {
         if (oneWayBlocks.includes(block.type)) {
-          if (!block.bottomWall || obj.lastCollided.find((x) => x === block)) {
+          if (!block.bottomWall || obj.lastCollided.find(
+            (x) => getGridBlock(x) === getGridBlock(block)
+          )) {
             return;
           } else if (!block.passOnPush)
             collided.splice(
@@ -436,7 +442,9 @@ function doPhysics(obj, t, isPlayer) {
       // bottom
       if (isBottom) {
         if (oneWayBlocks.includes(block.type)) {
-          if (!block.topWall || obj.lastCollided.find((x) => x === block)) {
+          if (!block.topWall || obj.lastCollided.find(
+            (x) => getGridBlock(x) === getGridBlock(block)
+          )) {
             return;
           } else if (!block.passOnPush)
             collided.splice(
