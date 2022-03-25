@@ -1250,16 +1250,20 @@ function respawn(start = false, draw = true) {
     dynamicInit = deepCopy(dynamicObjs);
     dynamicSave = deepCopy(dynamicObjs);
   }
-  for (let i = 0; i < dynamicObjs.length; i++) {
-    if (dynamicObjs[i].dynamic) {
-      removeBlock(dynamicObjs[i], false);
-      i--;
+  if (editor?.playMode ?? true) {
+    for (let i = 0; i < dynamicObjs.length; i++) {
+      if (dynamicObjs[i].dynamic) {
+        removeBlock(dynamicObjs[i], false);
+        i--;
+      }
     }
   }
   player = deepCopy(start ? startState : saveState);
-  let newDynamicObjs = deepCopy(start ? dynamicInit : dynamicSave);
-  for (let i in newDynamicObjs) {
-    if (newDynamicObjs[i].dynamic) addBlock(newDynamicObjs[i], false);
+  if (editor?.playMode ?? true) {
+    let newDynamicObjs = deepCopy(start ? dynamicInit : dynamicSave);
+    for (let i in newDynamicObjs) {
+      if (newDynamicObjs[i].dynamic) addBlock(newDynamicObjs[i], false);
+    }
   }
   if (start) {
     saveState = deepCopy(startState);
@@ -1528,11 +1532,21 @@ function rotateBlock(block, dtheta, cx, cy, rad = false) {
   let x = block.x + block.size / 2 - cx;
   let y = block.y + block.size / 2 - cy;
   let r = (x ** 2 + y ** 2) ** 0.5;
+  let temptheta = dtheta;
   if (!rad) dtheta *= Math.PI / 180;
   let theta = Math.atan2(y, x);
   let ntheta = theta + dtheta;
   let nx = Math.cos(ntheta) * r;
   let ny = Math.sin(ntheta) * r;
+  if (!rad) {
+    if (temptheta === 90) {
+      nx = -y;
+      ny = x;
+    } else if (temptheta === -90) {
+      nx = y;
+      ny = -x;
+    }
+  }
   moveBlock(block, nx - x, ny - y);
 }
 function flipBlock(block, pos, y = false) {

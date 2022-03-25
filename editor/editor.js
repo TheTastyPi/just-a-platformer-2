@@ -641,8 +641,8 @@ id("display").addEventListener("wheel", function (event) {
           xPos,
           yPos
         );
-        reselect();
       }
+      reselect();
     }
     updateSelectDisp();
   } else {
@@ -1711,6 +1711,8 @@ function deleteRoom(name) {
     player.currentRoom = editor.roomOrder[0];
     drawLevel(true);
   }
+  editor.editSelect = editor.editSelect.filter(b=>b.currentRoom !== name)
+  reselect();
   save();
 }
 function renameRoom(name) {
