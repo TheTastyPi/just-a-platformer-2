@@ -1328,17 +1328,17 @@ function doAction(action) {
     case "rotateBlock": {
       let blocks = action[1].map((b) => getGridBlock(b));
       editor.editSelect = blocks;
+      reselect();
       rotateSelected(action[2], false);
       action[1] = deepCopy(blocks);
-      reselect();
       break;
     }
     case "flipBlock": {
       let blocks = action[1].map((b) => getGridBlock(b));
       editor.editSelect = blocks;
+      reselect();
       flipSelected(action[2], false);
       action[1] = deepCopy(blocks);
-      reselect();
       break;
     }
     default:
@@ -1409,17 +1409,17 @@ function undoAction(action) {
     case "rotateBlock": {
       let blocks = action[1].map((b) => getGridBlock(b));
       editor.editSelect = blocks;
+      reselect();
       rotateSelected(!action[2], false);
       action[1] = deepCopy(blocks);
-      reselect();
       break;
     }
     case "flipBlock": {
       let blocks = action[1].map((b) => getGridBlock(b));
       editor.editSelect = blocks;
+      reselect()
       flipSelected(action[2], false);
       action[1] = deepCopy(blocks);
-      reselect();
       break;
     }
     default:

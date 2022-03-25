@@ -448,3 +448,7 @@
 
 - Added the ability to rotate 90 degrees and flip selected blocks
 - Fixed several issues related to undoing and redoing, like seriously, how have you people not reported this yet, and how have I not found this until now
+
+### 25 Mar. 2022
+
+- Fixed a bug where undo/redoing rotations and flips didn't work if the targeted blocks weren't selected
