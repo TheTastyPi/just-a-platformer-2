@@ -459,3 +459,13 @@
 - Fixed a bug where, while not in play mode, selected dynamic blocks are bugged after respawning
 - Fixed a bug where rotating blocks can cause long decimals after the positions of a block
 - Property edit display now updates as you scale a block
+
+## 30 Mar. 2022
+
+- Added dashing (Q or L)
+- Added Dash Field and Dash Restore Field
+- Fixed the display of Jump Field and Jump Restore Field when newJump or addedJump is 0
+- Fixed a bug where properties with a value of Infinity does not save properly
+- Fixed a bug where dynamic blocks does not interact with Wall-Jump Blocks correctly
+- Force Fields now disables acceleration via other sources
+- Added a description for the "addVel" property of Force Fields

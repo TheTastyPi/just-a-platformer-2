@@ -5,7 +5,8 @@ function drawPlayer() {
   let ratio = player.currentJump / player.maxJump;
   if (player.maxJump === Infinity) ratio = 1;
   if (player.maxJump === 0) ratio = 0;
-  playerDisp.tint = PIXI.utils.rgb2hex([1 - ratio, 0, ratio]);
+  let dRatio = dashTimer/dashDuration;
+  playerDisp.tint = PIXI.utils.rgb2hex([(1 - ratio)*(1-dRatio), dRatio, ratio*(1-dRatio)]);
   if (editor?.invincible) playerDisp.tint = PIXI.utils.rgb2hex([1, 0, 1]);
   playerDisp.alpha = player.isDead ? 0.5 : 1;
   playerDisp.x = player.x;

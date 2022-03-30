@@ -15,6 +15,8 @@ var defaultPlayer = {
   currentJump: 1,
   canWallJump: false,
   wallJumpDir: 0,
+  maxDash: 0,
+  currentDash: 1,
   moveSpeed: 1,
   friction: true,
   gameSpeed: 1,
@@ -59,6 +61,8 @@ display.stage.addChild(levelMask);
 levelLayer.mask = levelMask;
 var canJump = true;
 var canWJ = true;
+var accelx = true;
+var accely = true;
 var lastFrame = 0;
 var simReruns = 10;
 var timeLimit = 100;
@@ -73,11 +77,14 @@ var dt = 0;
 var interval = 1000 / 60;
 var coyoteTime = 1000 / 20;
 var coyoteTimer = 1000 / 20;
-var logfps = false;
+var dashDuration = 200;
+var dashTimer = 0;
+var dashSpeed = 500;
 var prevDynObjs = [];
+var prevTextDisp = [];
 var justDied = false;
 var fpsTimer = 10;
-var prevTextDisp = [];
+var logfps = false;
 function nextFrame(timeStamp) {
   dt += (timeStamp - lastFrame) * player.gameSpeed;
   if (logfps) {
@@ -91,6 +98,12 @@ function nextFrame(timeStamp) {
   if (dt < timeLimit) {
     while (dt >= interval) {
       dt -= interval;
+      if (dashTimer > 0) dashTimer -= interval;
+      if (dashTimer < 0) {
+        dashTimer = 0;
+        player.xv = 0;
+        player.yv = 0;
+      }
       for (let i in timerList) {
         let data = timerList[i];
         let block = data[0];
@@ -177,6 +190,8 @@ function doPhysics(obj, t, isPlayer) {
   let gdxv = 0;
   let gdyv = 0;
   let subObj = deepCopy(obj);
+  accelx = true;
+  accely = true;
   if (hasSubBlock.includes(obj.type)) {
     subObj = {
       ...getSubBlock(subObj),
@@ -349,9 +364,12 @@ function doPhysics(obj, t, isPlayer) {
       // left
       if (isLeft) {
         if (oneWayBlocks.includes(block.type)) {
-          if (!block.rightWall || obj.lastCollided.find(
-            (x) => getGridBlock(x) === getGridBlock(block)
-          )) {
+          if (
+            !block.rightWall ||
+            obj.lastCollided.find(
+              (x) => getGridBlock(x) === getGridBlock(block)
+            )
+          ) {
             return;
           } else if (!block.passOnPush)
             collided.splice(
@@ -380,9 +398,12 @@ function doPhysics(obj, t, isPlayer) {
       // right
       if (isRight) {
         if (oneWayBlocks.includes(block.type)) {
-          if (!block.leftWall || obj.lastCollided.find(
-            (x) => getGridBlock(x) === getGridBlock(block)
-          )) {
+          if (
+            !block.leftWall ||
+            obj.lastCollided.find(
+              (x) => getGridBlock(x) === getGridBlock(block)
+            )
+          ) {
             return;
           } else if (!block.passOnPush)
             collided.splice(
@@ -411,9 +432,12 @@ function doPhysics(obj, t, isPlayer) {
       // top
       if (isTop) {
         if (oneWayBlocks.includes(block.type)) {
-          if (!block.bottomWall || obj.lastCollided.find(
-            (x) => getGridBlock(x) === getGridBlock(block)
-          )) {
+          if (
+            !block.bottomWall ||
+            obj.lastCollided.find(
+              (x) => getGridBlock(x) === getGridBlock(block)
+            )
+          ) {
             return;
           } else if (!block.passOnPush)
             collided.splice(
@@ -442,9 +466,12 @@ function doPhysics(obj, t, isPlayer) {
       // bottom
       if (isBottom) {
         if (oneWayBlocks.includes(block.type)) {
-          if (!block.topWall || obj.lastCollided.find(
-            (x) => getGridBlock(x) === getGridBlock(block)
-          )) {
+          if (
+            !block.topWall ||
+            obj.lastCollided.find(
+              (x) => getGridBlock(x) === getGridBlock(block)
+            )
+          ) {
             return;
           } else if (!block.passOnPush)
             collided.splice(
@@ -943,10 +970,26 @@ function doPhysics(obj, t, isPlayer) {
       }
     }
     obj.lastCollided = collided;
-    if ([15, 19].includes(leftBlock?.type) && obj.xv === 0) obj.x--;
-    if ([15, 19].includes(rightBlock?.type) && obj.xv === 0) obj.x++;
-    if ([15, 19].includes(topBlock?.type) && obj.yv === 0) obj.y--;
-    if ([15, 19].includes(bottomBlock?.type) && obj.yv === 0) obj.y++;
+    if ([15, 19].includes(leftBlock?.type) && obj.xv === 0) {
+      if (isPlayer) {
+        obj.x--;
+      } else moveBlock(obj, -1, 0);
+    }
+    if ([15, 19].includes(rightBlock?.type) && obj.xv === 0) {
+      if (isPlayer) {
+        obj.x++;
+      } else moveBlock(obj, 1, 0);
+    }
+    if ([15, 19].includes(topBlock?.type) && obj.yv === 0) {
+      if (isPlayer) {
+        obj.y--;
+      } else moveBlock(obj, 0, -1);
+    }
+    if ([15, 19].includes(bottomBlock?.type) && obj.yv === 0) {
+      if (isPlayer) {
+        obj.y++;
+      } else moveBlock(obj, 0, 1);
+    }
     friction = tempObj.friction && friction;
     if (isPlayer) {
       if (
@@ -957,6 +1000,7 @@ function doPhysics(obj, t, isPlayer) {
         giveJump
       ) {
         obj.currentJump = obj.maxJump;
+        if (dashTimer === 0) obj.currentDash = obj.maxDash;
         coyoteTimer = coyoteTime;
       } else {
         if (prevg !== tempObj.g || prevxg !== tempObj.xg) coyoteTimer = -1;
@@ -1000,8 +1044,33 @@ function doPhysics(obj, t, isPlayer) {
       obj.isDead = false;
       if (isPlayer) obj.currentJump = 1;
     }
+    // dashing
+    if (isPlayer && control.dash && player.currentDash > 0 && dashTimer === 0) {
+      if (control.left || control.right || control.up || control.down) {
+        player.xv = 0;
+        player.yv = 0;
+      }
+      if (control.left) {
+        player.xv = -dashSpeed;
+        dashTimer = dashDuration;
+      } else if (control.right) {
+        player.xv = dashSpeed;
+        dashTimer = dashDuration;
+      }
+      if (control.up) {
+        player.yv = -dashSpeed;
+        dashTimer = dashDuration;
+      } else if (control.down) {
+        player.yv = dashSpeed;
+        dashTimer = dashDuration;
+      }
+      if (dashTimer === dashDuration) {
+        player.currentDash--;
+        dashTimer -= interval;
+      }
+    }
     // jumping
-    if (isPlayer) {
+    if (isPlayer && dashTimer === 0) {
       let vert = control.up || control.down;
       let hori = control.left || control.right;
       if (obj.currentJump > 0 && canJump) {
@@ -1161,49 +1230,58 @@ function doPhysics(obj, t, isPlayer) {
       if (!(leftBlock?.xv > 0) && !(rightBlock?.xv < 0)) obj.xa += fricAcc;
     }
     // change velocity
-    obj.xv += obj.xa * t * (!tempObj.xg * 74 + 1);
-    obj.yv += obj.ya * t * (tempObj.xg * 74 + 1);
-    if (
-      Math.abs(dxv - gdxv) > Math.abs(obj.xa) &&
-      Math.sign(dxv - gdxv) === Math.sign(obj.xa)
-    )
-      obj.xv =
-        obj.xa +
-        (tempObj.g < 0 ? topBlock?.xv ?? 0 : 0) +
-        (tempObj.g > 0 ? bottomBlock?.xv ?? 0 : 0);
-    if (
-      Math.abs(dyv - gdxv) > Math.abs(obj.ya) &&
-      Math.sign(dyv - gdxv) === Math.sign(obj.ya)
-    )
-      obj.yv =
-        obj.ya +
-        (tempObj.g < 0 ? leftBlock?.yv ?? 0 : 0) +
-        (tempObj.g > 0 ? rightBlock?.yv ?? 0 : 0);
-    if (tempObj.xg) {
-      if (Math.abs(dyv - gdxv) < 0.1) obj.yv -= dyv - gdxv;
+    if (dashTimer === 0) {
+      if (accelx) obj.xv += obj.xa * t * (!tempObj.xg * 74 + 1);
+      if (accely) obj.yv += obj.ya * t * (tempObj.xg * 74 + 1);
+      if (
+        accelx &&
+        Math.abs(dxv - gdxv) > Math.abs(obj.xa) &&
+        Math.sign(dxv - gdxv) === Math.sign(obj.xa)
+      )
+        obj.xv =
+          obj.xa +
+          (tempObj.g < 0 ? topBlock?.xv ?? 0 : 0) +
+          (tempObj.g > 0 ? bottomBlock?.xv ?? 0 : 0);
+      if (
+        accely &&
+        Math.abs(dyv - gdxv) > Math.abs(obj.ya) &&
+        Math.sign(dyv - gdxv) === Math.sign(obj.ya)
+      )
+        obj.yv =
+          obj.ya +
+          (tempObj.g < 0 ? leftBlock?.yv ?? 0 : 0) +
+          (tempObj.g > 0 ? rightBlock?.yv ?? 0 : 0);
+      if (tempObj.xg) {
+        if (Math.abs(dyv - gdxv) < 0.1 && accely) obj.yv -= dyv - gdxv;
+      } else {
+        if (Math.abs(dxv - gdxv) < 0.1 && accelx) obj.xv -= dxv - gdxv;
+      }
+      if (leftBlock && accelx) {
+        if (leftBlock.dynamic || leftBlock === player) {
+          obj.xv = Math.max(obj.xv, (obj.xv + leftBlock.xv) / 2);
+        } else obj.xv = Math.max(obj.xv, leftBlock.xv);
+      }
+      if (rightBlock && accelx) {
+        if (rightBlock.dynamic || rightBlock === player) {
+          obj.xv = Math.min(obj.xv, (obj.xv + rightBlock.xv) / 2);
+        } else obj.xv = Math.min(obj.xv, rightBlock.xv);
+      }
+      if (topBlock && accely) {
+        if (topBlock.dynamic || topBlock === player) {
+          obj.yv = Math.max(obj.yv, (obj.yv + topBlock.yv) / 2);
+        } else obj.yv = Math.max(obj.yv, topBlock.yv);
+      }
+      if (bottomBlock && accely) {
+        if (bottomBlock.dynamic || bottomBlock === player) {
+          obj.yv = Math.min(obj.yv, (obj.yv + bottomBlock.yv) / 2);
+        } else obj.yv = Math.min(obj.yv, bottomBlock.yv);
+      }
     } else {
-      if (Math.abs(dxv - gdxv) < 0.1) obj.xv -= dxv - gdxv;
+      obj.xa = 0;
+      obj.ya = 0;
     }
-    if (leftBlock) {
-      if (leftBlock.dynamic || leftBlock === player) {
-        obj.xv = Math.max(obj.xv, (obj.xv + leftBlock.xv) / 2);
-      } else obj.xv = Math.max(obj.xv, leftBlock.xv);
-    }
-    if (rightBlock) {
-      if (rightBlock.dynamic || rightBlock === player) {
-        obj.xv = Math.min(obj.xv, (obj.xv + rightBlock.xv) / 2);
-      } else obj.xv = Math.min(obj.xv, rightBlock.xv);
-    }
-    if (topBlock) {
-      if (topBlock.dynamic || topBlock === player) {
-        obj.yv = Math.max(obj.yv, (obj.yv + topBlock.yv) / 2);
-      } else obj.yv = Math.max(obj.yv, topBlock.yv);
-    }
-    if (bottomBlock) {
-      if (bottomBlock.dynamic || bottomBlock === player) {
-        obj.yv = Math.min(obj.yv, (obj.yv + bottomBlock.yv) / 2);
-      } else obj.yv = Math.min(obj.yv, bottomBlock.yv);
-    }
+    if (!accelx) obj.xa = 0;
+    if (!accely) obj.ya = 0;
     // change position
     if (isPlayer) {
       obj.x += obj.xv * t + (obj.xa * t * t) / 2 + xWarp;

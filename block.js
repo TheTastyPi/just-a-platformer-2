@@ -770,8 +770,14 @@ new BlockType(
     () => {},
     (obj, block) => {
       if (!block.addVel) {
-        if (!block.yOnly) obj.xv = block.newxv;
-        if (!block.xOnly) obj.yv = block.newyv;
+        if (!block.yOnly) {
+          obj.xv = block.newxv;
+          accelx = false;
+        }
+        if (!block.xOnly) {
+          obj.yv = block.newyv;
+          accely = false;
+        }
       }
     }
   ],
@@ -796,8 +802,9 @@ new BlockType(
   (block, app = display) => {
     let g = new PIXI.Graphics();
     g.alpha = 0.5;
-    let factor = Math.min(block.newJump / 3, 1);
+    let factor = Math.min(Math.max(block.newJump, 1) / 3, 1);
     let str = romanize(block.newJump).toLowerCase();
+    if (block.newJump === 0) str = "0";
     if (block.infJump) str = "inf";
     let color = PIXI.utils.rgb2hex([
       0.5 + 0.5 * factor,
@@ -857,8 +864,9 @@ new BlockType(
   (block, app = display) => {
     let g = new PIXI.Graphics();
     g.alpha = 0.5;
-    let factor = Math.min(block.addedJump / 3, 1);
+    let factor = Math.min(Math.max(block.addedJump, 1) / 3, 1);
     let str = romanize(block.addedJump).toLowerCase();
+    if (block.addedJump === 0) str = "0";
     if (block.fullRestore) str = "full";
     let color = PIXI.utils.rgb2hex([
       0.5,
@@ -2160,4 +2168,131 @@ new BlockType(
     color: []
   },
   ["color"]
+);
+new BlockType(
+  "Dash Field",
+  {
+    ...new Block(32, 0, 0, 50, false, false, 1),
+    newDash: 1,
+    infDash: false,
+    temporary: false
+  },
+  (block, app = display) => {
+    let g = new PIXI.Graphics();
+    g.alpha = 0.5;
+    let factor = Math.min(Math.max(block.newDash, 1) / 3, 1);
+    let str = romanize(block.newDash).toLowerCase();
+    if (block.newDash === 0) str = "0";
+    if (block.infDash) str = "inf";
+    let color = PIXI.utils.rgb2hex([0.5, 0.5 + 0.5 * factor, 0.5]);
+    g.beginFill(color);
+    g.drawRect(0, 0, 50, 50);
+    g.endFill();
+    drawStr(
+      g,
+      str,
+      PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2)),
+      block.infDash * 3,
+      20
+    );
+    if (!block.temporary) {
+      g.moveTo(35, 10);
+      g.lineTo(45, 10);
+      g.moveTo(40, 5);
+      g.lineTo(40, 15);
+    }
+    return app.renderer.generateTexture(g);
+  },
+  [
+    () => {},
+    () => {},
+    () => {},
+    () => {},
+    (obj, block, tempObj, isPlayer) => {
+      if (!isPlayer) return;
+      if (!block.temporary) {
+        obj.maxDash = block.newDash;
+        if (block.infDash) obj.maxDash = Infinity;
+      }
+      tempObj.maxDash = block.newDash;
+      if (block.infDash) tempObj.maxDash = Infinity;
+    }
+  ],
+  () => {},
+  {
+    newDash: [() => 0, () => 100],
+    infDash: [],
+    temporary: []
+  },
+  ["newDash", "infDash", "temporary"]
+);
+new BlockType(
+  "Dash Restore Field",
+  {
+    ...new Block(33, 0, 0, 50, false, false, 1),
+    addedDash: 1,
+    fullRestore: false,
+    cooldown: 1000,
+    timer: 0
+  },
+  (block, app = display) => {
+    let g = new PIXI.Graphics();
+    g.alpha = 0.5;
+    let factor = Math.min(Math.max(block.addedDash, 1) / 3, 1);
+    let str = romanize(block.addedDash).toLowerCase();
+    if (block.addedDash === 0) str = "0";
+    if (block.fullRestore) str = "full";
+    let color = PIXI.utils.rgb2hex([
+      0.5 + 0.5 * factor,
+      0.5,
+      0.5 + 0.5 * factor
+    ]);
+    g.beginFill(color);
+    g.drawRect(0, 0, 50, 50);
+    g.endFill();
+    drawStr(
+      g,
+      str,
+      PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2)),
+      block.fullRestore * 3,
+      20
+    );
+    return app.renderer.generateTexture(g);
+  },
+  [
+    () => {},
+    () => {},
+    () => {},
+    () => {},
+    (obj, block, tempObj, isPlayer) => {
+      if (!isPlayer || block.timer > 0) return;
+      obj.currentDash = Math.min(
+        obj.maxDash,
+        obj.currentDash + block.addedDash
+      );
+      if (block.fullRestore) obj.currentDash = obj.maxDash;
+      block.timer = block.cooldown;
+      timerList.push([
+        block,
+        "timer",
+        function (block) {
+          let sprite = block.sprite;
+          let ratio = 1 - block.timer / block.cooldown;
+          sprite.tint = PIXI.utils.rgb2hex([
+            1,
+            0.5 + ratio * 0.5,
+            0.5 + ratio * 0.5
+          ]);
+        }
+      ]);
+    }
+  ],
+  () => {},
+  {
+    addedDash: [() => 0, () => 100],
+    fullRestore: [],
+    cooldown: [() => 0, () => 1000 * 60],
+    timer: []
+  },
+  ["addedDash", "fullRestore", "cooldown"]
 );

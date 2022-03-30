@@ -3,7 +3,8 @@ const control = {
   right: false,
   up: false,
   down: false,
-  shift: false
+  shift: false,
+  dash: false
 };
 
 document.addEventListener("keydown", function (event) {
@@ -31,6 +32,10 @@ document.addEventListener("keydown", function (event) {
       break;
     case "KeyR":
       respawn(event.shiftKey && editor !== undefined);
+      break;
+    case "KeyQ":
+    case "KeyL":
+      control.dash = true;
       break;
     default:
   }
@@ -63,6 +68,10 @@ document.addEventListener("keyup", function (event) {
     case "ShiftRight":
       control.shift = false;
       canSave = true;
+      break;
+    case "KeyQ":
+    case "KeyL":
+      control.dash = false;
       break;
     default:
   }

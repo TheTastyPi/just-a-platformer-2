@@ -91,6 +91,8 @@ const propData = {
   // player
   maxJump: ["int", "mJ", () => 0, () => Infinity],
   currentJump: ["int", "cJ", () => 0, () => Infinity],
+  maxDash: ["int", "mD", () => 0, () => Infinity],
+  currentDash: ["int", "cD", () => 0, () => Infinity],
   moveSpeed: ["num", "mS", () => 0, () => 10],
   switchLocal: ["idk", "sL"],
   switchGlobal: ["idk", "sG"],
@@ -139,7 +141,9 @@ const propData = {
   hideDetails: ["bool", "hD"],
   lifetime: ["num", "lt"],
   value: ["num", "val"],
-  setValue: ["bool", "sV"]
+  setValue: ["bool", "sV"],
+  newDash: ["int", "nD"],
+  infDash: ["bool", "iD"]
 };
 const propAliasReverse = {};
 const blockList = {
@@ -147,7 +151,7 @@ const blockList = {
   Basic: [0, 16, 1, 17],
   Dynamic: [4, 5, 31],
   Movement: [3, 18, 15, 19, 6, 20, 8, 21, 7, 12],
-  Status: [9, 10, 13, 14, 24],
+  Status: [9, 10, 13, 14, 32, 33, 24],
   "Multi-State": [28, 25, 26, 27, 29, 30]
 };
 var levels =
@@ -211,7 +215,8 @@ var blockEdit = new Vue({
         "Prevents dynamic blocks from deactivaing when in another room.",
       global:
         "Global switches affect the entire level.\nThey are separate from normal switches.",
-      forceVert: "Forces boundary warps to, when in a corner, point vertically."
+      forceVert: "Forces boundary warps to, when in a corner, point vertically.",
+      addVel: "Changes the Force Field from\nsetting velocity to adding velocity."
     }
   }
 });
@@ -1417,7 +1422,7 @@ function undoAction(action) {
     case "flipBlock": {
       let blocks = action[1].map((b) => getGridBlock(b));
       editor.editSelect = blocks;
-      reselect()
+      reselect();
       flipSelected(action[2], false);
       action[1] = deepCopy(blocks);
       break;
@@ -1445,6 +1450,9 @@ function compressBlock(block) {
       delete block[prop];
       continue;
     }
+    if (block[prop] === Infinity) {
+      block[prop] = "Infinity";
+    }
     if (propData[prop][0] === "block" && block[prop])
       compressBlock(block[prop]);
     if (propData[prop][1] !== prop) {
@@ -1465,6 +1473,9 @@ function decompressBlock(block, room) {
     if (prop === "cR") delete block[prop];
   }
   for (let prop in block) {
+    if (block[prop] === "Infinity") {
+      block[prop] = Infinity;
+    }
     if (propData[prop][0] === "block" && block[prop])
       decompressBlock(block[prop], room);
   }
@@ -1535,8 +1546,11 @@ function str2lvls(str) {
 function pState2str(pState) {
   pState = deepCopy(pState);
   for (let prop in pState) {
-    if (pState[prop] === defaultPlayer[prop] || propData[prop] === undefined)
+    if (pState[prop] === defaultPlayer[prop] || propData[prop] === undefined) {
       delete pState[prop];
+    } else if (pState[prop] === Infinity) {
+      pState[prop] = "Infinity";
+    }
   }
   let str = JSON.stringify(pState);
   return LZString.compressToEncodedURIComponent(str);
@@ -1544,6 +1558,11 @@ function pState2str(pState) {
 function str2pState(str) {
   let pState = JSON.parse(LZString.decompressFromEncodedURIComponent(str));
   pState = { ...defaultPlayer, ...pState };
+  for (let prop in pState) {
+    if (pState[prop] === "Infinity") {
+      pState[prop] = Infinity;
+    }
+  }
   return pState;
 }
 function storeSave() {
@@ -1711,7 +1730,7 @@ function deleteRoom(name) {
     player.currentRoom = editor.roomOrder[0];
     drawLevel(true);
   }
-  editor.editSelect = editor.editSelect.filter(b=>b.currentRoom !== name)
+  editor.editSelect = editor.editSelect.filter((b) => b.currentRoom !== name);
   reselect();
   save();
 }
@@ -1819,7 +1838,10 @@ function rotateSelected(ccw = false, action = true) {
   for (let i in editor.editSelect) {
     let block = editor.editSelect[i];
     rotateBlock(block, ccw ? -90 : 90, cx, cy);
-    if (oneWayBlocks.includes(block.type) || conveyorBlocks.includes(block.type)) {
+    if (
+      oneWayBlocks.includes(block.type) ||
+      conveyorBlocks.includes(block.type)
+    ) {
       if (oneWayBlocks.includes(block.type)) {
         let temp = block.leftWall;
         if (ccw) {
@@ -1864,7 +1886,10 @@ function flipSelected(y = false, action = true) {
   } else pos = (editor.selectBox.x + editor.selectBox.maxx) / 2;
   for (let i in editor.editSelect) {
     let block = editor.editSelect[i];
-    if (oneWayBlocks.includes(block.type) || conveyorBlocks.includes(block.type)) {
+    if (
+      oneWayBlocks.includes(block.type) ||
+      conveyorBlocks.includes(block.type)
+    ) {
       if (oneWayBlocks.includes(block.type)) {
         if (y) {
           let temp = block.topWall;
