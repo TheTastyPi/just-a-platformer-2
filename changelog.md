@@ -467,5 +467,10 @@
 - Fixed the display of Jump Field and Jump Restore Field when newJump or addedJump is 0
 - Fixed a bug where properties with a value of Infinity does not save properly
 - Fixed a bug where dynamic blocks does not interact with Wall-Jump Blocks correctly
-- Force Fields now disables acceleration via other sources
+- Force Fields with addVel false now disables acceleration via other sources
 - Added a description for the "addVel" property of Force Fields
+
+## 31 Mar. 2022
+
+- Changed the look of Dash Restore Fields when cooling down
+- Wall-jumping now take priority over normal jumps if the player is not on the floor

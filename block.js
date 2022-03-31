@@ -2279,8 +2279,8 @@ new BlockType(
           let sprite = block.sprite;
           let ratio = 1 - block.timer / block.cooldown;
           sprite.tint = PIXI.utils.rgb2hex([
-            1,
             0.5 + ratio * 0.5,
+            1,
             0.5 + ratio * 0.5
           ]);
         }

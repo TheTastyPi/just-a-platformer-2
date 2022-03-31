@@ -1073,27 +1073,7 @@ function doPhysics(obj, t, isPlayer) {
     if (isPlayer && dashTimer === 0) {
       let vert = control.up || control.down;
       let hori = control.left || control.right;
-      if (obj.currentJump > 0 && canJump) {
-        if (tempObj.xg) {
-          if (hori) {
-            obj.xv = Math.sign(tempObj.g) * -375;
-            obj.currentJump--;
-            canJump = false;
-            player.jumpOn = !player.jumpOn;
-            updateAll(27);
-            forAllBlock(updateSubBlock, 27);
-          }
-        } else {
-          if (vert) {
-            obj.yv = Math.sign(tempObj.g) * -375;
-            obj.currentJump--;
-            canJump = false;
-            player.jumpOn = !player.jumpOn;
-            updateAll(27);
-            forAllBlock(updateSubBlock, 27);
-          }
-        }
-      } else if (tempObj.canWallJump && canWJ) {
+      if (tempObj.canWallJump && canWJ && obj.currentJump !== tempObj.maxJump) {
         if (tempObj.xg) {
           obj.xv = Math[obj.g < 0 ? "max" : "min"](obj.xv, tempObj.g * 100);
         } else
@@ -1144,6 +1124,26 @@ function doPhysics(obj, t, isPlayer) {
             }
             break;
           default:
+        }
+      } else if (obj.currentJump > 0 && canJump) {
+        if (tempObj.xg) {
+          if (hori) {
+            obj.xv = Math.sign(tempObj.g) * -375;
+            obj.currentJump--;
+            canJump = false;
+            player.jumpOn = !player.jumpOn;
+            updateAll(27);
+            forAllBlock(updateSubBlock, 27);
+          }
+        } else {
+          if (vert) {
+            obj.yv = Math.sign(tempObj.g) * -375;
+            obj.currentJump--;
+            canJump = false;
+            player.jumpOn = !player.jumpOn;
+            updateAll(27);
+            forAllBlock(updateSubBlock, 27);
+          }
         }
       }
     }
