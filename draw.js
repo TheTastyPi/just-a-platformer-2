@@ -5,8 +5,12 @@ function drawPlayer() {
   let ratio = player.currentJump / player.maxJump;
   if (player.maxJump === Infinity) ratio = 1;
   if (player.maxJump === 0) ratio = 0;
-  let dRatio = dashTimer/dashDuration;
-  playerDisp.tint = PIXI.utils.rgb2hex([(1 - ratio)*(1-dRatio), dRatio, ratio*(1-dRatio)]);
+  let dRatio = dashTimer / dashDuration;
+  playerDisp.tint = PIXI.utils.rgb2hex([
+    (1 - ratio) * (1 - dRatio),
+    dRatio,
+    ratio * (1 - dRatio)
+  ]);
   if (editor?.invincible) playerDisp.tint = PIXI.utils.rgb2hex([1, 0, 1]);
   playerDisp.alpha = player.isDead ? 0.5 : 1;
   playerDisp.x = player.x;
@@ -78,15 +82,19 @@ function drawLevel(clear = false) {
   });
   if (clear) adjustScreen();
 }
-function updateBlock(block) {
+function updateBlock(block, updateTexture = false) {
   if (block.sprite) {
     block.sprite.renderable = !block.invisible;
     block.sprite.alpha = block.opacity;
+    block.sprite.zIndex = block.eventPriority;
+    if (updateTexture) block.sprite.texture = createTexture(block);
     blockData[block.type].update(block);
   }
   if (block.dupSprite) {
-    block.sprite.renderable = !block.invisible;
-    block.sprite.alpha = block.opacity;
+    block.dupSprite.renderable = !block.invisible;
+    block.dupSprite.alpha = block.opacity;
+    block.dupSprite.zIndex = block.eventPriority;
+    if (updateTexture) block.dupSprite.texture = createTexture(block);
     blockData[block.type].update(block, block.dupSprite);
   }
 }
@@ -98,7 +106,7 @@ function forAllBlock(func, type) {
         for (let i in level[x][y]) {
           let block = level[x][y][i];
           if (!type || block.type === type) {
-            func(block,x,y,i);
+            func(block, x, y, i, j);
           }
         }
       }

@@ -41,13 +41,18 @@ var editor = {
   playMode: false,
   doAnimation: true,
   rightTab: "save",
-  choosePos: false,
+  chooseType: undefined,
   chooseFor: undefined,
+  chooseInEvent: false,
   currentRoom: "default",
   roomOrder: ["default"],
-  chooseBlock: false,
-  chooseBlockFor: undefined,
-  links: []
+  links: [],
+  eventScope: undefined,
+  eventContext: undefined,
+  editEvent: undefined,
+  eventSelect: [0, 0],
+  eventClipboard: [],
+  errorLog: []
 };
 const propData = {
   // general
@@ -70,7 +75,7 @@ const propData = {
   collidePlayer: ["bool", "cP"],
   collideBlock: ["bool", "cB"],
   giveJump: ["bool", "j"],
-  eventPriority: ["int", "ep", () => 0, () => Infinity],
+  eventPriority: ["int", "ep", () => -Infinity, () => Infinity],
   invisible: ["bool", "v"],
   opacity: ["num", "o", () => 0, () => 1],
   friction: ["bool", "fr"],
@@ -97,6 +102,7 @@ const propData = {
   switchLocal: ["idk", "sL"],
   switchGlobal: ["idk", "sG"],
   gameSpeed: ["num", "gS", () => 0, () => 10],
+  currentRoom: ["str", "cR"],
   // special
   power: ["num", "p"],
   color: ["color", "c"],
@@ -147,13 +153,25 @@ const propData = {
 };
 const propAliasReverse = {};
 const blockList = {
-  Special: [2, 11, 22, 23],
+  Special: [2, 11, 22, 23, 34],
   Basic: [0, 16, 1, 17],
   Dynamic: [4, 5, 31],
   Movement: [3, 18, 15, 19, 6, 20, 8, 21, 7, 12],
   Status: [9, 10, 13, 14, 32, 33, 24],
   "Multi-State": [28, 25, 26, 27, 29, 30]
 };
+const commandList = {
+  Control: [1, 3, 6, 5, 4, 7, 8, 9],
+  Variable: [2, 16, 15, 18, 19],
+  Gameplay: [0, 10, 11, 17, 14, 13, 12]
+};
+const eventDataAlias = {
+  _multiRun: "mR",
+  _multiRunDelay: "mRD",
+  _playerTrigger: "pT",
+  _blockTrigger: "bT"
+};
+const eventAliasReverse = {};
 var levels =
   "N4IgJgpgZghgrgGwC4gFwgNoeAHREgTwAcI9UAGAGjwA8yAmAVmpAIebwGMAlMvSWIiR4AvpVz5ipNFTxs0jWSB59w0eMlHi8hEmSXzUARnJKVafuqFaJu6RRaGjiludSXBmkGNtT9jhlNXXgs1T2FvbUk9GQC0JjMQ9zCNCJ8dP1i5MgBmIK4kj1SbDJiHbLQclwLVAWLI3zKDXIB2DhA6ePa3IusG0vslTtRq5UKUvvTowZZh0cMAFnyx2qsvKbt-WjITRNXwkumtjp3lwwTg-fqNzPKTtCMmONR6NsvQusmozaz74zOyEs9h81mlvrchjtRj0JutwU1Zjs3hVjE88ABndjvZKfOGNGbbB7zHY5FoAOnamIe9Ap2N6eIGx2Gzma1MpOxp3XGuLB+KZUNZxketIxHJFKxBB36R1+zOJD2WVNR4phPMOPzuzIAbJznrsWErhVyrl8+bKke0nIqxcbJdd4QS-kYABzky2nJSG3U1O2mxnmh6u8VOI0Gm102G8-2agV66Hc0HqiGIomCvLAnGJ6UayGp55AiNq7PJwkvZaqrM3BGl+gAyrlhNSqv2IxGFNltOjJA0CLJAAKACcIOj0QACDAACQAuqOkAB7UdzkgAO1nAAsIKONwgiKOALYQZdwACEeELlYd-PiddQBZ9mabl4DL3jJoZMpj8WRrA57K658fM1PxeIN3QeUNRWpFVG3tIDcxAt09WtKDbQfWDo3g14wP+T1w3vekow-TCdWDD0wxQgD0KI9sLhRfVIOVVCCKTas-lon9wO9EAvWgt9CJzGj5VRP9GMov1qJrISjFJcUeKYyMWMdYZ2KcV9fXfASa2-c5vwrQCMMEtMGz4xSrxfQU7wlNDxM0v50zEjSSzsm92L0qjbOGeyUUstybKczy1OsxzWM87SsXwhTixC1psNJeSi2bMyqgs4z1P4-zARvQLmKipTMsFeirJyxLn0s1SM2Kp9gLKwIKsikrqpc7L6qq+CavrOqEta9t2tQZKHLSKdKAAThGqdvCAA";
 var blockSelect = new Vue({
@@ -180,8 +198,8 @@ var blockEdit = new Vue({
       "invisible",
       "opacity",
       "friction",
-      "dynamic"
-      //"events"
+      "dynamic",
+      "events"
     ],
     solidProps: ["floorLeniency"],
     dynamicProps: [
@@ -208,16 +226,44 @@ var blockEdit = new Vue({
     blocks: blockList,
     desc: {
       eventPriority:
-        "Determines the order of touch events.\nHigher priority overrides lower priority.",
+        "Determines the priority of touch events.\nHigher priority overrides lower priority.\nAlso determines z-index.\nNote: The player's z-index is -1.",
       floorLeniency:
         "Allows objects to instantly step onto a block.\nThe number determines the height you can step from.",
       alwaysActive:
         "Prevents dynamic blocks from deactivaing when in another room.",
       global:
         "Global switches affect the entire level.\nThey are separate from normal switches.",
-      forceVert: "Forces boundary warps to, when in a corner, point vertically.",
-      addVel: "Changes the Force Field from\nsetting velocity to adding velocity."
+      forceVert:
+        "Forces boundary warps to, when in a corner, point vertically.",
+      addVel:
+        "Changes the Force Field from\nsetting velocity to adding velocity.",
+      passOnPush:
+        "Allows a dynamic block/player to be pushed through the panel by another object."
     }
+  }
+});
+const eventTypes = {
+  block: [
+    "onTouch",
+    "onTouchLeft",
+    "onTouchRight",
+    "onTouchTop",
+    "onTouchBottom"
+  ],
+  room: ["onTick", "onEnter", "onJump", "onDash", "onKeyDown", "onKeyUp"],
+  global: ["onTick", "onStart", "onJump", "onDash", "onKeyDown", "onKeyUp"]
+};
+var eventEditor = new Vue({
+  el: "#eventEditor",
+  data: {
+    editor: editor,
+    active: false,
+    typeSelected: null,
+    commandData: commandData,
+    commands: commandList,
+    optionsOpen: false,
+    docOpen: false,
+    docTab: "intro"
   }
 });
 var selectLayer = new PIXI.Container();
@@ -281,11 +327,15 @@ document.addEventListener("keydown", function (event) {
       break;
     case "Backspace":
       if (editor.editMode) {
-        addAction("removeBlock", deepCopy(editor.editSelect));
-        for (let i in editor.editSelect) {
-          removeBlock(editor.editSelect[i]);
+        if (eventEditor.active) {
+          removeCommand();
+        } else {
+          addAction("removeBlock", deepCopy(editor.editSelect));
+          for (let i in editor.editSelect) {
+            removeBlock(editor.editSelect[i]);
+          }
+          deselect();
         }
-        deselect();
       }
       break;
     case "KeyZ":
@@ -302,32 +352,55 @@ document.addEventListener("keydown", function (event) {
     case "KeyX":
       if (editor.playMode) return;
       if (event.ctrlKey || event.metaKey) {
-        copy();
-        addAction("removeBlock", deepCopy(editor.editSelect));
-        for (let i in editor.editSelect) {
-          removeBlock(editor.editSelect[i]);
+        if (editor.editEvent) {
+          copyCommand();
+          removeCommand();
+        } else {
+          copy();
+          addAction("removeBlock", deepCopy(editor.editSelect));
+          for (let i in editor.editSelect) {
+            removeBlock(editor.editSelect[i]);
+          }
+          deselect();
         }
-        deselect();
       }
       break;
     case "KeyC":
       if (editor.playMode) return;
       if (event.ctrlKey || event.metaKey) {
-        if (editor.chooseBlock) {
-          let block = editor.editBlock[editor.chooseBlockFor];
-          if (block) {
-            editor.clipboard = [{ ...block, x: 0, y: 0 }];
+        if (["block", "ref"].includes(editor.chooseType)) {
+          if (editor.chooseFor.length !== 0) {
+            let minx = editor.chooseFor.reduce(
+              (min, b) => (b.x < min ? b.x : min),
+              Infinity
+            );
+            let miny = editor.chooseFor.reduce(
+              (min, b) => (b.y < min ? b.y : min),
+              Infinity
+            );
+            editor.clipboard = editor.chooseFor.map((b) => {
+              return { ...b, x: b.x - minx, y: b.y - miny };
+            });
           } else editor.clipboard = [];
-          editor.chooseBlock = false;
+          editor.chooseType = undefined;
+        } else if (editor.editEvent) {
+          copyCommand();
         } else copy();
       }
       break;
     case "KeyV":
       if (editor.playMode) return;
       if (event.ctrlKey || event.metaKey) {
-        deselect();
-        paste(editor.mousePos[0] - camx, editor.mousePos[1] - camy);
-        updateSelectDisp();
+        if (editor.editEvent) {
+          pasteCommand();
+        } else {
+          deselect();
+          paste(
+            (editor.mousePos[0] - camx) / cams,
+            (editor.mousePos[1] - camy) / cams
+          );
+          updateSelectDisp();
+        }
       }
       break;
     case "KeyG":
@@ -365,16 +438,38 @@ document.addEventListener("keydown", function (event) {
       buildDisp.visible = !editor.editMode;
       break;
     case "Delete":
-      if (editor.chooseBlock) {
-        editor.editBlock[editor.chooseBlockFor] = null;
-        editor.chooseBlock = false;
-        confirmEditAll();
+      if (editor.chooseType) {
+        editor.chooseFor.splice(0);
+        editor.chooseType = undefined;
+        if (!editor.chooseInEvent) confirmEditAll();
       }
       break;
     case "Escape":
-      if (editor.chooseBlock) {
-        editor.chooseBlock = false;
+      editor.chooseType = undefined;
+      break;
+    case "ArrowUp":
+    case "ArrowDown":
+      if (editor.editEvent) {
+        let typeSelected = eventEditor.typeSelected;
+        let sign = key === "ArrowUp" ? -1 : 1;
+        editor.eventSelect = [
+          Math.max(
+            Math.min(
+              editor.eventSelect[0] + sign,
+              editor.editEvent[typeSelected].length
+            ),
+            1
+          ),
+          Math.max(
+            Math.min(
+              editor.eventSelect[1] + sign,
+              editor.editEvent[typeSelected].length
+            ),
+            1
+          )
+        ];
       }
+      break;
     default:
   }
 });
@@ -418,14 +513,14 @@ id("display").addEventListener("mousedown", function (event) {
         player.x = loc[0];
         player.y = loc[1];
         player.isDead = false;
-        if (editor.choosePos) {
-          editor.editBlock[editor.chooseFor] = [
+        if (editor.chooseType === "pos") {
+          Object.assign(editor.chooseFor, [
             player.currentRoom,
             loc[0] + player.size / 2,
             loc[1] + player.size / 2
-          ];
-          editor.choosePos = false;
-          confirmEditAll();
+          ]);
+          editor.chooseType = undefined;
+          if (!editor.chooseInEvent) confirmEditAll();
         }
       } else if (!(event.ctrlKey || event.metaKey)) {
         if (editor.editMode) {
@@ -535,8 +630,8 @@ document.addEventListener("mousemove", function (event) {
         editor.moveSelect[0] += event.movementX / cams;
         editor.moveSelect[1] += event.movementY / cams;
         let newBox = deepCopy(editor.selectBox);
-        newBox.x += editor.moveSelect[0];
-        newBox.y += editor.moveSelect[1];
+        newBox.x = editor.moveStart[0] + editor.moveSelect[0];
+        newBox.y = editor.moveStart[1] + editor.moveSelect[1];
         let snapPos = getSnapPos(newBox);
         let dx = snapPos[0] - editor.selectBox.x;
         let dy = snapPos[1] - editor.selectBox.y;
@@ -547,7 +642,6 @@ document.addEventListener("mousemove", function (event) {
         }
         editor.selectBox.x += dx;
         editor.selectBox.y += dy;
-        if (dx !== 0 || dy !== 0) editor.moveSelect = [0, 0];
         updateSelectDisp();
       }
       break;
@@ -571,16 +665,29 @@ document.addEventListener("mouseup", function (event) {
         editor.selectStart !== undefined
       ) {
         let prev = editor.editSelect[0];
-        if (!event.shiftKey && !editor.chooseBlock) deselect();
-        let x = Math.min((editor.selectStart[0] - camx) / cams, xPos);
-        let y = Math.min((editor.selectStart[1] - camy) / cams, yPos);
-        let w = Math.abs(editor.selectStart[0] - event.clientX) / cams;
-        let h = Math.abs(editor.selectStart[1] - event.clientY) / cams;
-        select(
-          { x: x, y: y, width: w, height: h },
-          w === 0 && h === 0 && !event.shiftKey,
-          prev
-        );
+        if (!event.shiftKey && !editor.chooseType) deselect();
+        let choosing = editor.chooseType;
+        let singleChoose =
+          editor.chooseType && !Array.isArray(editor.chooseFor);
+        if (editor.chooseType) {
+          if (singleChoose) editor.chooseFor = [editor.chooseFor];
+          editor.chooseFor.splice(0);
+        }
+        if (editor.chooseType !== "pos") {
+          let x = Math.min((editor.selectStart[0] - camx) / cams, xPos);
+          let y = Math.min((editor.selectStart[1] - camy) / cams, yPos);
+          let w = Math.abs(editor.selectStart[0] - event.clientX) / cams;
+          let h = Math.abs(editor.selectStart[1] - event.clientY) / cams;
+          select(
+            { x: x, y: y, width: w, height: h },
+            w === 0 && h === 0 && !event.shiftKey,
+            prev
+          );
+          if (singleChoose)
+            editor.chooseSource[0][editor.chooseSource[1]] =
+              editor.chooseFor[0];
+          if (choosing && !editor.chooseInEvent) confirmEditAll();
+        }
         editor.selectStart = undefined;
       }
       selectBox.visible = false;
@@ -594,6 +701,7 @@ document.addEventListener("mouseup", function (event) {
           editor.selectBox.y - editor.moveStart[1]
         );
         reselect();
+        editor.moveSelect = [0, 0];
       }
       break;
     case 1: // middle
@@ -719,19 +827,9 @@ function confirmPropEdit(block) {
   let newBlock = deepCopy(block);
   let editBlock = editor.editBlock;
   for (let i in block) {
-    if (newBlock.type !== editBlock.type && editBlock.type !== "MIXED") {
-      newBlock = {
-        ...blockData[editBlock.type].defaultBlock,
-        x: newBlock.x,
-        y: newBlock.y,
-        size: newBlock.size,
-        currentRoom: newBlock.currentRoom
-      };
-      break;
-    }
     if (editBlock[i] !== "MIXED") {
       if (propData[i] === undefined) {
-        if (i !== "currentRoom")
+        if (blockData[block.type].defaultBlock[i] !== undefined)
           newBlock[i] = blockData[block.type].defaultBlock[i];
         continue;
       }
@@ -764,17 +862,36 @@ function confirmPropEdit(block) {
     if (newBlock[i] === undefined)
       newBlock[i] = blockData[newBlock.type].defaultBlock[i];
   }
-  removeBlock(block);
-  addBlock(newBlock);
-  if (hasSubBlock.includes(newBlock.type)) updateSubBlock(newBlock);
-  return newBlock;
+  scaleBlock(block, newBlock.size / block.size, block.x, block.y, true, false);
+  moveBlock(block, newBlock.x - block.x, newBlock.y - block.y, true, false);
+  if (newBlock.type !== block.type) {
+    let { x, y, size, currentRoom } = block;
+    Object.assign(block, blockData[newBlock.type].defaultBlock);
+    block.x = x;
+    block.y = y;
+    block.size = size;
+    block.currentRoom = currentRoom;
+  } else Object.assign(block, newBlock);
+  updateBlock(block, true);
+  updateBlockState(block);
 }
 function confirmEditAll() {
   let prevBlocks = deepCopy(editor.editSelect);
-  for (let i in editor.editSelect)
-    editor.editSelect[i] = confirmPropEdit(editor.editSelect[i]);
+  for (let i in editor.editSelect) confirmPropEdit(editor.editSelect[i]);
   reselect();
   addAction("editProp", prevBlocks, deepCopy(editor.editSelect));
+}
+function addToEditBlock(block) {
+  for (let i in block) {
+    if (editor.editBlock[i] === "MIXED") continue;
+    if (editor.editBlock[i] === undefined && propData[i] !== undefined) {
+      editor.editBlock[i] = block[i];
+      editor.editBlockProp.push(i);
+    }
+    if (block[i] != editor.editBlock[i]) {
+      editor.editBlock[i] = "MIXED";
+    }
+  }
 }
 function select(selectRect, single = false, prev, build = false) {
   let first;
@@ -796,22 +913,34 @@ function select(selectRect, single = false, prev, build = false) {
         let block = gridSpace[i];
         if (
           isColliding(selectRect, block) &&
-          (!editor.editSelect.includes(block) || build)
+          (!editor.editSelect.includes(block) || build || editor.chooseType)
         ) {
-          if (editor.chooseBlock) {
-            if (editor.editSelect.includes(block)) return;
-            editor.editBlock[editor.chooseBlockFor] = deepCopy(block);
-            editor.chooseBlock = false;
-            confirmEditAll();
-            return;
-          }
           if (single) {
+            if (editor.chooseType) {
+              editor.chooseFor[0] = block;
+              editor.chooseType = undefined;
+              if (editor.chooseType === "block") {
+                editor.chooseFor[0] = deepCopy(editor.chooseFor[0]);
+                editor.chooseFor[0].isRootBlock = false;
+              }
+              return;
+            }
             first ??= block;
             if (prev === block) {
               found = true;
               continue;
             }
             if (!found) continue;
+          } else {
+            if (editor.chooseType) {
+              let b = block;
+              if (editor.chooseType === "block") {
+                b = deepCopy(b);
+                b.isRootBlock = false;
+              }
+              editor.chooseFor.push(b);
+              continue;
+            }
           }
           if (single || editor.editBlock === undefined) {
             editor.editBlock = deepCopy(block);
@@ -819,33 +948,27 @@ function select(selectRect, single = false, prev, build = false) {
               if (propData[i] !== undefined) editor.editBlockProp.push(i);
             }
           } else {
-            for (let i in block) {
-              if (editor.editBlock[i] === "MIXED") continue;
-              if (
-                editor.editBlock[i] === undefined &&
-                propData[i] !== undefined
-              ) {
-                editor.editBlock[i] = block[i];
-                editor.editBlockProp.push(i);
-              }
-              if (block[i] != editor.editBlock[i]) {
-                editor.editBlock[i] = "MIXED";
-              }
-            }
+            addToEditBlock(block);
           }
           if (single) {
             if (build) {
               changeBuildSelect(block);
             } else {
               if (block.link) {
-                editor.editSelect = [...block.link];
+                for (let j in block.link) {
+                  addToEditBlock(block.link[j]);
+                  editor.editSelect.push(block.link[j]);
+                }
               } else editor.editSelect = [block];
             }
             cycled = true;
             break;
           } else {
             if (block.link) {
-              editor.editSelect.push(...block.link);
+              for (let j in block.link) {
+                addToEditBlock(block.link[j]);
+                editor.editSelect.push(block.link[j]);
+              }
             } else editor.editSelect.push(block);
           }
         }
@@ -863,6 +986,7 @@ function select(selectRect, single = false, prev, build = false) {
       editor.editSelect = [...first.link];
     } else editor.editSelect = [first];
   }
+  if (editor.chooseType) editor.chooseType = undefined;
   updateSelectDisp();
 }
 function deselect() {
@@ -876,8 +1000,8 @@ function deselect() {
   selectDisp.removeChildren();
   editor.editBlock = undefined;
   editor.editBlockProp = [];
-  editor.choosePos = false;
-  editor.chooseBlock = false;
+  editor.chooseType = undefined;
+  eventEditor.active = false;
 }
 function reselect() {
   for (let j in editor.editSelect) {
@@ -1156,8 +1280,6 @@ function changeLevelSize(dir, num, action = true) {
         startState.x += 50 * num;
       if (saveState.currentRoom === player.currentRoom) saveState.x += 50 * num;
       player.x += 50 * num;
-      dynamicSave = deepCopy(dynamicObjs);
-      dynamicInit = deepCopy(dynamicObjs);
       editOptions.width += num;
       break;
     }
@@ -1225,8 +1347,6 @@ function changeLevelSize(dir, num, action = true) {
         startState.y += 50 * num;
       if (saveState.currentRoom === player.currentRoom) saveState.y += 50 * num;
       player.y += 50 * num;
-      dynamicSave = deepCopy(dynamicObjs);
-      dynamicInit = deepCopy(dynamicObjs);
       editOptions.height += num;
       break;
     }
@@ -1275,7 +1395,11 @@ function doAction(action) {
   switch (action[0]) {
     case "addBlock":
       let blocks = deepCopy(action[1]);
-      for (let i in blocks) addBlock(blocks[i]);
+      for (let i in blocks) {
+        let index = blocks[i].index;
+        let block = addBlock(blocks[i], false);
+        shiftIndex(block, index);
+      }
       editor.editSelect.push(...blocks);
       reselect();
       break;
@@ -1368,7 +1492,11 @@ function undoAction(action) {
     }
     case "removeBlock": {
       let blocks = deepCopy(action[1]);
-      for (let i in blocks) addBlock(blocks[i]);
+      for (let i in blocks) {
+        let index = blocks[i].index;
+        let block = addBlock(blocks[i], false);
+        shiftIndex(block, index);
+      }
       editor.editSelect.push(...blocks);
       reselect();
       break;
@@ -1440,12 +1568,89 @@ function redo() {
   editor.currentAction++;
   doAction(editor.actionList[editor.currentAction]);
 }
+function compressEvents(events) {
+  for (let i in events) {
+    let event = events[i];
+    if (event.length === 0) {
+      delete events[i];
+      continue;
+    }
+    let data = event[0];
+    for (let prop in data) {
+      if (
+        data[prop] === defaultEventData[prop] ||
+        defaultEventData[prop] === undefined
+      ) {
+        delete data[prop];
+      }
+      if (eventDataAlias[prop] !== prop) {
+        data[eventDataAlias[prop]] = data[prop];
+        delete data[prop];
+      }
+    }
+    for (let j in event) {
+      if (j === "0") continue;
+      let line = event[j];
+      for (let k in line) {
+        if (k === "0") continue;
+        if (isBlockRef(line[k])) {
+          line[k] = line[k].map((adr) => getBlockAddress(adr));
+        } else if (
+          Array.isArray(line[k]) &&
+          line[k][0]?.isBlock
+        ) {
+          line[k].map((b) => compressBlock(b));
+        }
+      }
+    }
+  }
+}
+function decompressEvents(events, scope, room) {
+  for (let i in events) {
+    let event = events[i];
+    let data = event[0];
+    data._eventType = i;
+    data._scope = scope;
+    for (let prop in data) {
+      if (
+        eventAliasReverse[prop] !== undefined &&
+        eventAliasReverse[prop] !== prop
+      ) {
+        data[eventAliasReverse[prop]] = data[prop];
+        delete data[prop];
+      }
+    }
+    for (let j in event) {
+      if (j === "0") continue;
+      let line = event[j];
+      for (let k in line) {
+        if (k === "0") continue;
+        if (isBlockRef(line[k])) {
+          line[k] = line[k].map((adr) => getBlockFromAddress(adr));
+        } else if (
+          typeof line[k] !== "string" &&
+          commandData[line[0]].inputType[parseInt(k) - 1] === "block"
+        ) {
+          line[k].map((b) => decompressBlock(b, room));
+          line[k].map((b) => (b.isRootBlock = false));
+        }
+      }
+    }
+    for (let prop in defaultEventData) {
+      if (data[prop] === undefined) data[prop] = defaultEventData[prop];
+    }
+  }
+}
 function compressBlock(block) {
+  compressEvents(block.events);
+  if (Object.keys(block.events).length === 0) delete block.events;
+  let isRef = isBlockRef([block]);
   for (let prop in block) {
     if (prop === "type") continue;
     if (
       block[prop] === blockData[block.type].defaultBlock[prop] ||
-      propData[prop] === undefined
+      propData[prop] === undefined ||
+      (prop === "currentRoom" && isRef)
     ) {
       delete block[prop];
       continue;
@@ -1453,15 +1658,17 @@ function compressBlock(block) {
     if (block[prop] === Infinity) {
       block[prop] = "Infinity";
     }
-    if (propData[prop][0] === "block" && block[prop])
+    if (propData[prop][0] === "block" && block[prop].type !== undefined)
       compressBlock(block[prop]);
     if (propData[prop][1] !== prop) {
       block[propData[prop][1]] = block[prop];
       delete block[prop];
     }
   }
+  block.t = block.type;
+  delete block.type;
 }
-function decompressBlock(block, room) {
+function decompressBlock(block, room, root = true) {
   for (let prop in block) {
     if (
       propAliasReverse[prop] !== undefined &&
@@ -1470,33 +1677,35 @@ function decompressBlock(block, room) {
       block[propAliasReverse[prop]] = block[prop];
       delete block[prop];
     }
-    if (prop === "cR") delete block[prop];
   }
   for (let prop in block) {
     if (block[prop] === "Infinity") {
       block[prop] = Infinity;
     }
-    if (propData[prop][0] === "block" && block[prop])
-      decompressBlock(block[prop], room);
+    if (propData[prop][0] === "block" && block[prop].type !== undefined)
+      decompressBlock(block[prop], room, false);
   }
   for (let prop in blockData[block.type].defaultBlock) {
     if (block[prop] === undefined)
       block[prop] = blockData[block.type].defaultBlock[prop];
   }
-  block.currentRoom = room;
+  if (!root) block.isRootBlock = false;
+  block.currentRoom ??= room;
 }
 function lvl2str(lvl) {
   let w = lvl.length;
   let h = lvl[0].length;
-  lvl = deepCopy(lvl).flat().flat();
+  lvl = deepCopy(lvl, false, [false,false,true]).flat().flat();
   for (let i in lvl) compressBlock(lvl[i]);
   let str = JSON.stringify([lvl, w, h]);
   return str;
 }
 function lvls2str(lvls) {
-  lvls = deepCopy(lvls);
-  for (let i in lvls) lvls[i] = lvl2str(lvls[i]);
-  return LZString.compressToEncodedURIComponent(JSON.stringify(lvls));
+  lvls = deepCopy(lvls, false, [false,false,true]);
+  let newlvls = [];
+  for (let i in editor.roomOrder)
+    newlvls[i] = lvl2str(lvls[editor.roomOrder[i]]);
+  return LZString.compressToEncodedURIComponent(JSON.stringify(newlvls));
 }
 function str2lvl(str, room) {
   let newStr = LZString.decompressFromEncodedURIComponent(str);
@@ -1522,13 +1731,12 @@ function str2lvl(str, room) {
     }
     if (block.dynamic) {
       dynBlocks.push(block);
-      continue;
     }
     getGridSpace(block, lvl).push(block);
   }
   return [lvl, dynBlocks, aniBlocks];
 }
-function str2lvls(str) {
+function str2lvls(str, useRoomOrder = true) {
   let newStr = LZString.decompressFromEncodedURIComponent(str);
   if (LZString.compressToEncodedURIComponent(newStr) === str) str = newStr;
   let lvls = JSON.parse(str);
@@ -1536,7 +1744,7 @@ function str2lvls(str) {
   let aniBlocks = [];
   for (let i in lvls) {
     let lvl = lvls[i];
-    lvl = str2lvl(lvl, i);
+    lvl = str2lvl(lvl, useRoomOrder ? editor.roomOrder[i] : i);
     lvls[i] = lvl[0];
     dynBlocks.push(...lvl[1]);
     aniBlocks.push(...lvl[2]);
@@ -1582,21 +1790,41 @@ function addSave() {
 }
 function save() {
   if (editor.playMode) return;
-  if (editor.currentSave !== undefined)
+  if (editor.currentSave !== undefined) {
+    let roomEventsComp = [];
+    for (let i in editor.roomOrder) {
+      let events = deepCopy(roomEvents[editor.roomOrder[i]]);
+      compressEvents(events);
+      roomEventsComp.push(events);
+    }
+    let globalEventsComp = deepCopy(globalEvents);
+    compressEvents(globalEventsComp);
     editor.saves[editor.currentSave] = [
       lvls2str(levels),
       pState2str(startState),
-      deepCopy(editor.roomOrder)
+      deepCopy(editor.roomOrder),
+      LZString.compressToEncodedURIComponent(
+        JSON.stringify(
+          editor.links.map((l) => l.map((b) => getBlockAddress(b)))
+        )
+      ),
+      LZString.compressToEncodedURIComponent(JSON.stringify(roomEventsComp)),
+      LZString.compressToEncodedURIComponent(JSON.stringify(globalEventsComp))
     ];
+  }
   storeSave();
 }
 function load(name) {
-  rollBack();
+  rollBack(true);
   let save = editor.saves[name];
   if (save) {
+    if (save[2] === undefined) {
+      editor.roomOrder = Object.keys(levels);
+    } else editor.roomOrder = save[2];
     let saveData;
+    let noRooms = false;
     try {
-      saveData = str2lvls(save[0]);
+      saveData = str2lvls(save[0], save[4] !== undefined);
       levels = saveData[0];
     } catch (err) {
       saveData = str2lvl(save[0]);
@@ -1610,31 +1838,69 @@ function load(name) {
       );
       for (let i in saveData[1]) saveData[1][i].currentRoom = name;
       for (let i in saveData[2]) saveData[2][i].currentRoom = name;
+      noRooms = true;
     }
     animatedObjs = saveData[2];
     startState = str2pState(save[1]);
-    if (save[0][0] !== "{") {
+    if (noRooms) {
       startState.currentRoom = name;
       player.currentRoom = name;
     }
-    if (save[2] === undefined) {
-      editor.roomOrder = Object.keys(levels);
-    } else editor.roomOrder = save[2];
     if (!editor.roomOrder.includes(startState.currentRoom)) {
       startState.currentRoom = editor.roomOrder[0];
       player.currentRoom = editor.roomOrder[0];
     }
+    roomEvents = {};
+    globalEvents = {};
+    if (save[4]) {
+      let lvlsTemp = {};
+      for (let i in editor.roomOrder) {
+        lvlsTemp[editor.roomOrder[i]] = levels[i];
+      }
+      levels = lvlsTemp;
+      forAllBlock((b, x, y, i, room) => decompressEvents(b.events, "block", room));
+      let roomEventsComp = JSON.parse(
+        LZString.decompressFromEncodedURIComponent(save[4])
+      );
+      roomEventsComp.map((x) => decompressEvents(x, "room"));
+      for (let i in editor.roomOrder) {
+        roomEvents[editor.roomOrder[i]] = roomEventsComp[i];
+      }
+      globalEvents = JSON.parse(
+        LZString.decompressFromEncodedURIComponent(save[5])
+      );
+      decompressEvents(globalEvents, "global");
+    } else {
+      for (let i in editor.roomOrder) {
+        roomEvents[editor.roomOrder[i]] = {};
+      }
+    }
+    if (save[3] === undefined) {
+      editor.links = [];
+    } else {
+      let links = JSON.parse(
+        LZString.decompressFromEncodedURIComponent(save[3])
+      );
+      editor.links = links.map((l) => l.map((adr) => getBlockFromAddress(adr)));
+      for (let i in editor.links) {
+        let link = editor.links[i];
+        for (let j in link) {
+          let block = link[j];
+          block.link = link;
+        }
+      }
+    }
     assignIndex();
     togglePlayMode();
-    dynamicInit = saveData[1];
-    dynamicObjs = [];
-    player.blockChanged = [];
+    dynamicObjs = saveData[1];
+    diffStart = [];
+    diffSave = [];
     respawn(true, false);
     drawLevel(true);
     switchBlocks.map(updateAll);
     updateAll(27);
     updateAll(30);
-    forAllBlock(updateSubBlock, 26);
+    forAllBlock(updateBlockState, 26);
     adjustLevelSize();
     adjustScreen(true);
     updateGrid();
@@ -1709,6 +1975,7 @@ function addRoom() {
     )
   );
   player.currentRoom = name;
+  roomEvents[name] = {};
   save();
 }
 function deleteRoom(name) {
@@ -1725,6 +1992,7 @@ function deleteRoom(name) {
     )
   );
   delete levels[name];
+  delete roomEvents[name];
   editor.roomOrder.splice(editor.roomOrder.indexOf(name), 1);
   if (player.currentRoom === name) {
     player.currentRoom = editor.roomOrder[0];
@@ -1738,7 +2006,7 @@ function renameRoom(name) {
   let newName = prompt("Please input new name.");
   if (newName !== null && newName !== name) {
     editor.roomOrder.splice(editor.roomOrder.indexOf(name), 1, newName);
-    levels[newName] = deepCopy(levels[name]);
+    levels[newName] = levels[name];
     levels[newName].map((x) =>
       x.map((y) =>
         y.map((b) => {
@@ -1746,7 +2014,10 @@ function renameRoom(name) {
         })
       )
     );
+    reselect();
     delete levels[name];
+    delete roomEvents[name];
+    roomEvents[newName] = {};
     if (startState.currentRoom === name) startState.currentRoom = newName;
     if (saveState.currentRoom === name) saveState.currentRoom = newName;
     if (player.currentRoom === name) player.currentRoom = newName;
@@ -1790,25 +2061,16 @@ function blurAll() {
 function togglePlayMode() {
   editor.playMode = !editor.playMode;
   if (editor.playMode) {
-    rollBack();
-    dynamicInit = deepCopy(dynamicObjs);
-    dynamicSave = deepCopy(dynamicObjs);
-    rollForward();
     selectLayer.visible = false;
     deselect();
+    clearErr();
+    runEvent(globalEvents.onStart);
   } else {
-    rollBack();
-    for (let i = 0; i < dynamicObjs.length; i++) {
-      if (dynamicObjs[i].dynamic) {
-        removeBlock(dynamicObjs[i]);
-        i--;
-      }
-    }
-    let newDynamicObjs = deepCopy(dynamicInit);
-    for (let i in newDynamicObjs) {
-      if (newDynamicObjs[i].dynamic) addBlock(newDynamicObjs[i]);
-    }
-    dynamicSave = deepCopy(dynamicInit);
+    player.eventQueue = [];
+    player.actionQueue = [];
+    saveState.eventQueue = [];
+    saveState.actionQueue = [];
+    rollBack(true);
     selectLayer.visible = true;
     drawLevel();
   }
@@ -1869,10 +2131,7 @@ function rotateSelected(ccw = false, action = true) {
           block.topSpeed = temp;
         }
       }
-      block.sprite.destroy();
-      let s = createSprite(block);
-      levelLayer.addChild(s);
-      block.sprite = s;
+      updateBlock(block, true);
       cullBlock(block);
     }
   }
@@ -1911,10 +2170,7 @@ function flipSelected(y = false, action = true) {
           block.rightSpeed = temp;
         }
       }
-      block.sprite.destroy();
-      let s = createSprite(block);
-      levelLayer.addChild(s);
-      block.sprite = s;
+      updateBlock(block, true);
       cullBlock(block);
     }
     flipBlock(block, pos, y);
@@ -1922,10 +2178,126 @@ function flipSelected(y = false, action = true) {
   if (action) addAction("flipBlock", deepCopy(editor.editSelect), y);
   reselect();
 }
-function openEventEditor() {
-  if (id("eventEditor").display === "block") {
-    id("eventEditor").display = "none";
-  } else id("eventEditor").display = "block";
+function toggleEventEditor(eventScope, eventContext) {
+  eventEditor.active = !eventEditor.active;
+  if (eventEditor.active) {
+    editor.eventScope = eventScope;
+    editor.eventContext = eventContext;
+    if (eventScope === "block") {
+      editor.editEvent = eventContext;
+    } else {
+      editor.editEvent = deepCopy(eventContext, true);
+    }
+    selectCommand(editor.editEvent[eventEditor.typeSelected]?.length ?? 1);
+  } else {
+    editor.editEvent = undefined;
+    eventEditor.typeSelected = null;
+  }
+}
+function confirmEventEdit() {
+  for (let i in editor.editEvent) {
+    let event = editor.editEvent[i];
+    event[0]._scope = editor.eventScope;
+  }
+  if (editor.eventScope === "block") {
+    confirmEditAll();
+  } else {
+    Object.assign(editor.eventContext, editor.editEvent);
+    for (let i in editor.eventContext) {
+      if (editor.editEvent[i] === undefined) {
+        delete editor.eventContext[i];
+      }
+    }
+  }
+}
+function selectCommand(line, multi = false) {
+  if (multi) {
+    if (line > editor.eventSelect[1]) {
+      Vue.set(editor.eventSelect, 1, line);
+    } else if (line < editor.eventSelect[0]) {
+      Vue.set(editor.eventSelect, 0, line);
+    }
+  } else editor.eventSelect = [line, line];
+}
+function createEvent() {
+  let eventType = eventEditor.typeSelected;
+  let event = [];
+  event[0] = deepCopy(defaultEventData);
+  event[0]._eventType = eventType;
+  Vue.set(eventEditor.editor.editEvent, eventType, event);
+}
+function addCommand(commandId) {
+  let eventType = eventEditor.typeSelected;
+  if (!eventType) return;
+  if (editor.editEvent[eventType] === undefined) {
+    createEvent();
+  }
+  editor.editEvent[eventType].splice(editor.eventSelect[0], 0, [
+    commandId,
+    ...deepCopy(commandData[commandId].defaultInput)
+  ]);
+  if (editor.eventSelect[0] === editor.editEvent[eventType].length - 1) {
+    editor.eventSelect[0]++;
+    editor.eventSelect[1]++;
+  }
+}
+function removeCommand() {
+  let eventType = eventEditor.typeSelected;
+  if (!editor.editEvent[eventType]) return;
+  editor.editEvent[eventType].splice(
+    editor.eventSelect[0],
+    1 + editor.eventSelect[1] - editor.eventSelect[0]
+  );
+  if (editor.editEvent[eventType].length === 1) {
+    Vue.delete(eventEditor.editor.editEvent, eventType);
+    selectCommand(1);
+  } else {
+    if (editor.eventSelect[1] >= editor.editEvent[eventType].length) {
+      let diff = editor.eventSelect[1] - editor.editEvent[eventType].length + 1;
+      editor.eventSelect = [
+        editor.eventSelect[0] - diff,
+        editor.eventSelect[1] - diff
+      ];
+    }
+    if (editor.eventSelect[0] < 1) Vue.set(editor.eventSelect, 0, 1);
+  }
+}
+function copyCommand() {
+  if (!eventEditor.typeSelected) return;
+  editor.eventClipboard = deepCopy(
+    editor.editEvent[eventEditor.typeSelected].slice(
+      editor.eventSelect[0],
+      editor.eventSelect[1] + 1
+    )
+  );
+}
+function pasteCommand() {
+  let eventType = eventEditor.typeSelected;
+  if (!eventType) return;
+  if (editor.editEvent[eventType] === undefined) {
+    createEvent();
+  }
+  editor.editEvent[eventType].splice(
+    editor.eventSelect[0],
+    0,
+    ...deepCopy(editor.eventClipboard)
+  );
+}
+function clearErr() {
+  editor.errorLog.splice(0);
+}
+function chooseFromLevel(type, chooseObj, chooseKey, inEvent = false) {
+  editor.chooseType = type;
+  editor.chooseFor = chooseObj[chooseKey];
+  editor.chooseSource = [chooseObj, chooseKey];
+  editor.chooseInEvent = inEvent;
+  if (!editor.editMode) {
+    editor.editMode = true;
+    buildDisp.visible = false;
+    selectDisp.visible = true;
+    updateMenus();
+  }
+  blurAll();
 }
 function init() {
   setInterval(function () {
@@ -1949,7 +2321,8 @@ function init() {
     btn.stage.addChild(s);
   }
   for (let i in propData) propAliasReverse[propData[i][1]] = i;
-  levels = str2lvls(levels)[0];
+  for (let i in eventDataAlias) eventAliasReverse[eventDataAlias[i]] = i;
+  levels = str2lvls(levels, false)[0];
   player.currentRoom = "default";
   assignIndex();
   drawLevel(true);

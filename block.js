@@ -17,7 +17,10 @@ class Block {
     this.dynamic = false;
     this.interactive = false;
     this.link = null;
-    //this.events = {}
+    this.events = {};
+    this.isBlock = true;
+    this.isRootBlock = true;
+    this.moving = false;
     // solid only
     this.floorLeniency = 0;
     // dynamic props
@@ -114,33 +117,21 @@ new BlockType(
   {
     color: []
   },
-  ["color"]
+  []
 );
 new BlockType(
   "Check Point",
-  { ...new Block(2, 0, 0, 50, false, false, 1), color: "#00ffff" },
+  { ...new Block(2, 0, 0, 50, false, false, 3), color: "#00ffff" },
   (block, app = display) => {
     let g = new PIXI.Graphics();
     g.alpha = 0.5;
     g.beginFill(0xffffff);
     g.drawRect(0, 0, 50, 50);
     g.endFill();
-    if (
-      isColliding(player, block, true) &&
-      player.currentRoom === block.currentRoom &&
-      !(
-        isColliding(saveState, block, true) &&
-        saveState.currentRoom === block.currentRoom
-      ) &&
-      app === display
-    ) {
-      drawStr(g, "shft", 0x888888);
-    } else {
-      g.lineStyle(5, 0x888888);
-      g.moveTo(5, 25);
-      g.lineTo(25, 45);
-      g.lineTo(45, 5);
-    }
+    g.lineStyle(5, 0x888888);
+    g.moveTo(5, 25);
+    g.lineTo(25, 45);
+    g.lineTo(45, 5);
     return app.renderer.generateTexture(g);
   },
   [
@@ -148,20 +139,19 @@ new BlockType(
     () => {},
     () => {},
     () => {},
-    (obj, block, tempObj, isPlayer, isEntering, isExiting) => {
+    (obj, block, tempObj, isPlayer) => {
       if (isPlayer) {
+        tempObj.textDisp = [block.x, block.y, block.size, "Shift to use"];
         if (control.shift && canSave) {
           setSpawn();
           canSave = false;
           updateBlock(getGridBlock(block));
           drawLevel();
         }
-        if (isEntering || isExiting) updateBlock(getGridBlock(block));
       }
     }
   ],
   (block, sprite = block.sprite, app = display) => {
-    if (sprite._destroyed) return;
     let colliding =
       isColliding(saveState, block, true) &&
       saveState.currentRoom === block.currentRoom;
@@ -172,22 +162,11 @@ new BlockType(
             .hex2rgb(PIXI.utils.string2hex(block.color))
             .map((x) => x / 2)
         );
-    if (canSave && !colliding) {
-      if (sprite.texture !== blockData[block.type].defaultTexture)
-        sprite.texture.destroy(true);
-      sprite.texture = blockData[block.type].getTexture(block, app);
-    } else if (
-      sprite.texture !== blockData[block.type].defaultTexture &&
-      app === display
-    ) {
-      sprite.texture.destroy(true);
-      sprite.texture = blockData[block.type].defaultTexture;
-    }
   },
   {
     color: []
   },
-  ["color"]
+  []
 );
 new BlockType(
   "Bounce Block",
@@ -236,7 +215,7 @@ new BlockType(
   {
     power: [() => 0, () => 2000]
   },
-  ["power"]
+  []
 );
 new BlockType(
   "Pushable Block",
@@ -266,7 +245,7 @@ new BlockType(
   {
     color: []
   },
-  ["color"]
+  []
 );
 new BlockType(
   "Semi-Unpushable Block",
@@ -299,7 +278,7 @@ new BlockType(
   {
     color: []
   },
-  ["color"]
+  []
 );
 new BlockType(
   "Ice Block",
@@ -332,11 +311,11 @@ new BlockType(
   {
     color: []
   },
-  ["color"]
+  []
 );
 new BlockType(
   "Water Block",
-  { ...new Block(7, 0, 0, 50, false, true, 1), maxSpeed: 200 },
+  { ...new Block(7, 0, 0, 50, false, true, 3), maxSpeed: 200 },
   (block, app = display) => {
     let g = new PIXI.Graphics();
     g.alpha = 0.5;
@@ -432,7 +411,7 @@ new BlockType(
 new BlockType(
   "Gravity Field",
   {
-    ...new Block(9, 0, 0, 50, false, false, 1),
+    ...new Block(9, 0, 0, 50, false, false, 3),
     newg: 1,
     newxg: false,
     dirOnly: false,
@@ -575,7 +554,7 @@ new BlockType(
 new BlockType(
   "Speed Field",
   {
-    ...new Block(10, 0, 0, 50, false, false, 1),
+    ...new Block(10, 0, 0, 50, false, false, 3),
     newSpeed: 1,
     temporary: false
   },
@@ -638,7 +617,7 @@ new BlockType(
 new BlockType(
   "Text Field",
   {
-    ...new Block(11, 0, 0, 50, false, false, 1),
+    ...new Block(11, 0, 0, 50, false, false, 3),
     text: "text"
   },
   (block, app = display) => {
@@ -680,7 +659,7 @@ new BlockType(
 new BlockType(
   "Force Field",
   {
-    ...new Block(12, 0, 0, 50, false, false, 1),
+    ...new Block(12, 0, 0, 50, false, false, 3),
     newxv: 200,
     newyv: 0,
     xOnly: false,
@@ -794,7 +773,7 @@ new BlockType(
 new BlockType(
   "Jump Field",
   {
-    ...new Block(13, 0, 0, 50, false, false, 1),
+    ...new Block(13, 0, 0, 50, false, false, 3),
     newJump: 1,
     infJump: false,
     temporary: false
@@ -855,7 +834,7 @@ new BlockType(
 new BlockType(
   "Jump Restore Field",
   {
-    ...new Block(14, 0, 0, 50, false, false, 1),
+    ...new Block(14, 0, 0, 50, false, false, 3),
     addedJump: 1,
     fullRestore: false,
     cooldown: 1000,
@@ -892,28 +871,22 @@ new BlockType(
     () => {},
     (obj, block, tempObj, isPlayer) => {
       if (!isPlayer || block.timer > 0) return;
+      logChange(block);
       obj.currentJump = Math.min(
         obj.maxJump,
         obj.currentJump + block.addedJump
       );
       if (block.fullRestore) obj.currentJump = obj.maxJump;
       block.timer = block.cooldown;
-      timerList.push([
-        block,
-        "timer",
-        function (block) {
-          let sprite = block.sprite;
-          let ratio = 1 - block.timer / block.cooldown;
-          sprite.tint = PIXI.utils.rgb2hex([
-            1,
-            0.5 + ratio * 0.5,
-            0.5 + ratio * 0.5
-          ]);
-        }
-      ]);
+      addTimer(block, "timer", function (block) {
+        updateBlock(block);
+      });
     }
   ],
-  () => {},
+  (block, sprite = block.sprite) => {
+    let ratio = 1 - block.timer / block.cooldown;
+    sprite.tint = PIXI.utils.rgb2hex([1, 0.5 + ratio * 0.5, 0.5 + ratio * 0.5]);
+  },
   {
     addedJump: [() => 0, () => 100],
     fullRestore: [],
@@ -978,7 +951,7 @@ new BlockType(
   {
     color: []
   },
-  ["color"]
+  []
 );
 new BlockType(
   "Solid Panel",
@@ -1086,7 +1059,7 @@ new BlockType(
     passOnPush: [],
     color: []
   },
-  ["leftWall", "rightWall", "topWall", "bottomWall", "color"]
+  ["leftWall", "rightWall", "topWall", "bottomWall"]
 );
 new BlockType(
   "Bounce Panel",
@@ -1228,7 +1201,7 @@ new BlockType(
     passOnPush: [],
     color: []
   },
-  ["leftWall", "rightWall", "topWall", "bottomWall", "color"]
+  ["leftWall", "rightWall", "topWall", "bottomWall"]
 );
 new BlockType(
   "Ice Panel",
@@ -1292,7 +1265,7 @@ new BlockType(
     passOnPush: [],
     color: []
   },
-  ["leftWall", "rightWall", "topWall", "bottomWall", "color"]
+  ["leftWall", "rightWall", "topWall", "bottomWall"]
 );
 new BlockType(
   "Conveyor Panel",
@@ -1391,12 +1364,13 @@ new BlockType(
 new BlockType(
   "Teleporter",
   {
-    ...new Block(22, 0, 0, 50, false, false, 1),
+    ...new Block(22, 0, 0, 50, false, false, 3),
+    color: "#FFBBFF",
     newPos: []
   },
   (block, app = display) => {
     let g = new PIXI.Graphics();
-    g.beginFill(0xffbbff);
+    g.beginFill(PIXI.utils.string2hex(block.color));
     g.drawRect(0, 0, 50, 50);
     g.endFill();
     g.lineStyle({
@@ -1413,21 +1387,23 @@ new BlockType(
     () => {},
     (obj, block, tempObj, isPlayer) => {
       if (levels[block.newPos[0]] === undefined) return;
-      let draw = obj.currentRoom !== block.newPos[0];
+      let move = obj.currentRoom !== block.newPos[0];
       obj.currentRoom = block.newPos[0];
       let nx = block.newPos[1] - obj.size / 2;
       let ny = block.newPos[2] - obj.size / 2;
       if (isPlayer) {
         obj.x = nx;
         obj.y = ny;
-        if (draw) drawLevel(true);
+        if (move) setLevel(block.newPos[0]);
       } else moveBlock(obj, nx - obj.x, ny - obj.y);
     }
   ],
   () => {},
   {
+    color: [],
     newPos: []
-  }
+  },
+  []
 );
 new BlockType(
   "Boundary Warp",
@@ -1568,9 +1544,7 @@ new BlockType(
     }
   ],
   (block, sprite = block.sprite, app) => {
-    if (sprite.texture !== blockData[block.type].defaultTexture)
-      sprite.texture.destroy(true);
-    sprite.texture = blockData[block.type].getTexture(block, app);
+    sprite.texture = createTexture(block, app);
   },
   {
     newRoom: [],
@@ -1583,7 +1557,7 @@ new BlockType(
 new BlockType(
   "Size Field",
   {
-    ...new Block(24, 0, 0, 50, false, false, 1),
+    ...new Block(24, 0, 0, 50, false, false, 3),
     newSize: 20,
     temporary: false
   },
@@ -1725,17 +1699,18 @@ new BlockType(
 new BlockType(
   "Switch",
   {
-    ...new Block(25, 0, 0, 50, false, false, 1),
+    ...new Block(25, 0, 0, 50, false, false, 3),
     id: 0,
     singleUse: false,
     used: false,
-    global: false
+    global: false,
+    color: "#88ff88",
+    hideDetails: false
   },
   (block, app = display) => {
     let g = new PIXI.Graphics();
     g.alpha = 0.5;
-    let color = PIXI.utils.rgb2hex([0.5, 1, 0.5]);
-    if (block.global) color = PIXI.utils.rgb2hex([0.5, 0.5, 1]);
+    let color = 0xffffff;
     g.beginFill(color);
     g.drawRect(0, 0, 50, 50);
     g.endFill();
@@ -1743,18 +1718,31 @@ new BlockType(
       width: 2,
       color: PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2))
     });
-    drawStr(
-      g,
-      block.id.toString(),
-      PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2)),
-      3,
-      20
-    );
+    if (!block.hideDetails) {
+      drawStr(
+        g,
+        block.id.toString(),
+        PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2)),
+        3,
+        20
+      );
+    }
     if (block.singleUse) {
       g.moveTo(3, 3);
       g.lineTo(13, 13);
       g.moveTo(13, 3);
       g.lineTo(3, 13);
+      if (block.used) {
+        g.moveTo(13, 8);
+        g.lineTo(3, 8);
+      }
+    }
+    if (block.global) {
+      g.moveTo(47, 4);
+      g.lineTo(41, 4);
+      g.lineTo(41, 12);
+      g.lineTo(47, 12);
+      g.lineTo(47, 7);
     }
     return app.renderer.generateTexture(g);
   },
@@ -1778,6 +1766,7 @@ new BlockType(
           let gridBlock = getGridBlock(block);
           logChange(gridBlock);
           gridBlock.used = true;
+          updateBlock(gridBlock, true);
         }
         let checkValid = function (b) {
           let valid =
@@ -1794,7 +1783,7 @@ new BlockType(
         };
         forAllBlock((b) => {
           if (checkValid(b)) {
-            if (b.type === 26) updateSubBlock(b);
+            if (b.type === 26) updateBlockState(b);
           }
         });
         forAllVisible((b) => {
@@ -1807,9 +1796,7 @@ new BlockType(
     }
   ],
   (block, sprite = block.sprite, app) => {
-    if (block.used) {
-      sprite.tint = 0xff4444;
-    } else sprite.tint = 0xffffff;
+    sprite.tint = PIXI.utils.string2hex(block.color);
     if (!isSwitchOn(block))
       sprite.tint = PIXI.utils.rgb2hex(
         PIXI.utils.hex2rgb(sprite.tint).map((x) => x / 2)
@@ -1819,17 +1806,19 @@ new BlockType(
     id: [() => 0, () => Infinity],
     singleUse: [],
     used: [],
-    global: []
+    global: [],
+    color: [],
+    hideDetails: []
   },
-  ["id", "singleUse", "used", "global"]
+  ["id", "singleUse", "used", "global", "hideDetails"]
 );
 new BlockType(
   "Switch Block",
   {
-    ...new Block(26, 0, 0, 50, false, false, 1),
+    ...new Block(26, 0, 0, 50, false, false, 3),
     id: 0,
     global: false,
-    blockA: null,
+    blockA: {},
     blockB: blockData[0].defaultBlock,
     invert: false,
     hideDetails: false
@@ -1872,9 +1861,7 @@ new BlockType(
   },
   [() => {}, () => {}, () => {}, () => {}, () => {}],
   (block, sprite = block.sprite, app) => {
-    if (sprite.texture !== blockData[block.type].defaultTexture)
-      sprite.texture.destroy(true);
-    sprite.texture = blockData[block.type].getTexture(block, app);
+    sprite.texture = createTexture(block, app);
   },
   {
     id: [() => 0, () => Infinity],
@@ -1889,8 +1876,8 @@ new BlockType(
 new BlockType(
   "Jump Block",
   {
-    ...new Block(27, 0, 0, 50, false, false, 1),
-    blockA: null,
+    ...new Block(27, 0, 0, 50, false, false, 3),
+    blockA: {},
     blockB: blockData[0].defaultBlock,
     invert: false,
     hideDetails: false
@@ -1922,9 +1909,7 @@ new BlockType(
   },
   [() => {}, () => {}, () => {}, () => {}, () => {}],
   (block, sprite = block.sprite, app) => {
-    if (sprite.texture !== blockData[block.type].defaultTexture)
-      sprite.texture.destroy(true);
-    sprite.texture = blockData[block.type].getTexture(block, app);
+    sprite.texture = createTexture(block, app);
   },
   {
     blockA: [],
@@ -1937,34 +1922,27 @@ new BlockType(
 function unstableBlock(obj, block) {
   block = getGridBlock(block);
   if (block.timer !== 0 || !block.active) return;
+  logChange(block);
   block.timer = block.lifetime;
-  timerList.push([
-    block,
-    "timer",
-    function () {
-      let sprite = block.sprite;
-      let ratio = block.timer / block.lifetime;
-      sprite.tint = PIXI.utils.rgb2hex([1, ratio, ratio]);
-      if (block.timer === 0) {
-        block.active = false;
-        sprite.alpha = 0.5;
-        block.timer = block.cooldown;
-        timerList.push([
-          block,
-          "timer",
-          function () {
-            let sprite = block.sprite;
-            let ratio = 1 - block.timer / block.cooldown;
-            sprite.tint = PIXI.utils.rgb2hex([1, ratio, ratio]);
-            if (block.timer === 0) {
-              block.active = true;
-              sprite.alpha = 1;
-            }
-          }
-        ]);
-      }
+  addTimer(block, "timer", function () {
+    let sprite = block.sprite;
+    let ratio = block.timer / block.lifetime;
+    sprite.tint = PIXI.utils.rgb2hex([1, ratio, ratio]);
+    if (block.timer === 0) {
+      block.active = false;
+      sprite.alpha = 0.5;
+      block.timer = block.cooldown;
+      addTimer(block, "timer", function () {
+        let sprite = block.sprite;
+        let ratio = 1 - block.timer / block.cooldown;
+        sprite.tint = PIXI.utils.rgb2hex([1, ratio, ratio]);
+        if (block.timer === 0) {
+          block.active = true;
+          sprite.alpha = 1;
+        }
+      });
     }
-  ]);
+  });
 }
 new BlockType(
   "Unstable Block",
@@ -2010,7 +1988,7 @@ new BlockType(
 new BlockType(
   "Coin",
   {
-    ...new Block(29, 12.5, 12.5, 25, false, false, 1),
+    ...new Block(29, 12.5, 12.5, 25, false, false, 3),
     value: 1,
     used: false,
     setValue: false
@@ -2056,7 +2034,7 @@ new BlockType(
         gridBlock.used = true;
         updateBlock(gridBlock);
         updateAll(30);
-        forAllBlock(updateSubBlock, 30);
+        forAllBlock(updateBlockState, 30);
         infoDisp.coins = player.coins;
       }
     }
@@ -2076,9 +2054,9 @@ new BlockType(
 new BlockType(
   "Coin Block",
   {
-    ...new Block(30, 0, 0, 50, false, false, 1),
+    ...new Block(30, 0, 0, 50, false, false, 3),
     value: 1,
-    blockA: null,
+    blockA: {},
     blockB: blockData[0].defaultBlock,
     invert: false,
     hideDetails: false
@@ -2120,9 +2098,7 @@ new BlockType(
   },
   [() => {}, () => {}, () => {}, () => {}, () => {}],
   (block, sprite = block.sprite, app) => {
-    if (sprite.texture !== blockData[block.type].defaultTexture)
-      sprite.texture.destroy(true);
-    sprite.texture = blockData[block.type].getTexture(block, app);
+    sprite.texture = createTexture(block, app);
   },
   {
     value: [() => -Infinity, () => Infinity],
@@ -2172,7 +2148,7 @@ new BlockType(
 new BlockType(
   "Dash Field",
   {
-    ...new Block(32, 0, 0, 50, false, false, 1),
+    ...new Block(32, 0, 0, 50, false, false, 3),
     newDash: 1,
     infDash: false,
     temporary: false
@@ -2229,7 +2205,7 @@ new BlockType(
 new BlockType(
   "Dash Restore Field",
   {
-    ...new Block(33, 0, 0, 50, false, false, 1),
+    ...new Block(33, 0, 0, 50, false, false, 3),
     addedDash: 1,
     fullRestore: false,
     cooldown: 1000,
@@ -2266,28 +2242,22 @@ new BlockType(
     () => {},
     (obj, block, tempObj, isPlayer) => {
       if (!isPlayer || block.timer > 0) return;
+      logChange(block);
       obj.currentDash = Math.min(
         obj.maxDash,
         obj.currentDash + block.addedDash
       );
       if (block.fullRestore) obj.currentDash = obj.maxDash;
       block.timer = block.cooldown;
-      timerList.push([
-        block,
-        "timer",
-        function (block) {
-          let sprite = block.sprite;
-          let ratio = 1 - block.timer / block.cooldown;
-          sprite.tint = PIXI.utils.rgb2hex([
-            0.5 + ratio * 0.5,
-            1,
-            0.5 + ratio * 0.5
-          ]);
-        }
-      ]);
+      addTimer(block, "timer", function (block) {
+        updateBlock(block);
+      });
     }
   ],
-  () => {},
+  (block, sprite = block.sprite) => {
+    let ratio = 1 - block.timer / block.cooldown;
+    sprite.tint = PIXI.utils.rgb2hex([0.5 + ratio * 0.5, 1, 0.5 + ratio * 0.5]);
+  },
   {
     addedDash: [() => 0, () => 100],
     fullRestore: [],
@@ -2295,4 +2265,28 @@ new BlockType(
     timer: []
   },
   ["addedDash", "fullRestore", "cooldown"]
+);
+new BlockType(
+  "Event Stop Field",
+  new Block(34, 0, 0, 50, false, false, 3),
+  (block, app = display) => {
+    let g = new PIXI.Graphics();
+    g.alpha = 0.5;
+    g.beginFill(0x888888);
+    g.drawRect(0, 0, 50, 50);
+    g.endFill();
+    g.lineStyle(2.5, 0x880000);
+    g.moveTo(5, 45);
+    g.lineTo(45, 5);
+    return app.renderer.generateTexture(g);
+  },
+  [
+    () => {},
+    () => {},
+    () => {},
+    () => {},
+    (obj, block, tempObj, isPlayer) => {
+      if (isPlayer) obj.eventQueue = [];
+    }
+  ]
 );

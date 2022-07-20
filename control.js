@@ -9,6 +9,10 @@ const control = {
 
 document.addEventListener("keydown", function (event) {
   let key = event.code;
+  runEvent(globalEvents.onKeyDown, undefined, { key: key });
+  runEvent(roomEvents[player.currentRoom].onKeyDown, player.currentRoom, {
+    key: key
+  });
   switch (key) {
     case "ArrowLeft":
     case "KeyA":
@@ -43,6 +47,10 @@ document.addEventListener("keydown", function (event) {
 
 document.addEventListener("keyup", function (event) {
   let key = event.code;
+  runEvent(globalEvents.onKeyUp, undefined, { key: key });
+  runEvent(roomEvents[player.currentRoom].onKeyUp, player.currentRoom, {
+    key: key
+  });
   switch (key) {
     case "ArrowLeft":
     case "KeyA":
@@ -76,4 +84,4 @@ document.addEventListener("keyup", function (event) {
     default:
   }
 });
-// 6
+// 10 (whyyyy)

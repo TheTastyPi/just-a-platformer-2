@@ -30,21 +30,63 @@ var defaultPlayer = {
   switchGlobal: [],
   coins: 0,
   jumpOn: false,
-  blockAdded: [],
-  blockChanged: [],
-  blockRemoved: []
+  eventQueue: [],
+  actionQueue: [],
+  timerList: []
 };
 var player = deepCopy(defaultPlayer);
-var dynamicInit = [];
-var dynamicSave = [];
 var dynamicObjs = [];
-var animatedTypes = [8, 21];
 var animatedObjs = [];
-var timerList = [];
-var conveyorBlocks = [8, 21];
-var oneWayBlocks = [16, 17, 18, 19, 20, 21];
-var switchBlocks = [25, 26];
-var hasSubBlock = [26, 27, 30];
+var globalEvents = {};
+var roomEvents = { default: {} };
+var diffStart = [];
+var diffSave = [];
+const animatedTypes = [8, 21];
+const conveyorBlocks = [8, 21];
+const oneWayBlocks = [16, 17, 18, 19, 20, 21];
+const switchBlocks = [25, 26];
+const hasSubBlock = [26, 27, 30];
+const defaultEventData = {
+  ran: false,
+  source: undefined,
+  cause: undefined,
+  player: undefined,
+  key: undefined,
+  _scope: undefined,
+  _controls: undefined,
+  _loops: undefined,
+  _lineNum: 0,
+  _multiRun: false,
+  _multiRunDelay: 0,
+  _delayTimer: 0,
+  _playerTrigger: true,
+  _blockTrigger: true
+};
+const readOnlyPlayerProp = [
+  "isDead",
+  "canWallJump",
+  "wallJumpDir",
+  "textDisp",
+  "lastCollided",
+  "isPlayer",
+  "roomLink",
+  "dupSprite",
+  "eventQueue",
+  "actionQueue",
+  "timerList"
+];
+const readOnlyBlockProp = [
+  "link",
+  "events",
+  "isBlock",
+  "isRootBlock",
+  "lastCollided",
+  "roomLink",
+  "sprite",
+  "dupSprite",
+  "removed",
+  "moving"
+];
 const maxBlockSize = 100;
 var display = new PIXI.Application({
   width: window.innerWidth,
@@ -64,17 +106,16 @@ var canWJ = true;
 var accelx = true;
 var accely = true;
 var lastFrame = 0;
+var interval = 1000 / 60;
 var simReruns = 10;
 var timeLimit = 100;
 var CThreshold = 1;
-var VCThreshold = 1;
 var spawnDelay = 333;
 var deathTimer = spawnDelay;
 var saveState = deepCopy(player);
 var startState = deepCopy(player);
 var canSave = true;
 var dt = 0;
-var interval = 1000 / 60;
 var coyoteTime = 1000 / 20;
 var coyoteTimer = 1000 / 20;
 var dashDuration = 200;
@@ -104,17 +145,50 @@ function nextFrame(timeStamp) {
         player.xv = 0;
         player.yv = 0;
       }
-      for (let i in timerList) {
-        let data = timerList[i];
-        let block = data[0];
-        let prop = data[1];
-        let func = data[2];
-        block[prop] -= interval;
-        if (block[prop] < 0) {
-          block[prop] = 0;
-          timerList.splice(i, 1);
+      for (let i in player.timerList) {
+        let data = player.timerList[i];
+        let [obj, prop, func] = data;
+        obj[prop] -= interval;
+        if (obj[prop] < 0) {
+          obj[prop] = 0;
+          player.timerList.splice(i, 1);
         }
-        func(block);
+        func(obj);
+      }
+      runEvent(globalEvents.onTick);
+      runEvent(roomEvents[player.currentRoom].onTick, player.currentRoom);
+      handleEvents();
+      for (let i = 0; i < player.actionQueue.length; i++) {
+        let action = player.actionQueue[i];
+        let err;
+        let output;
+        for (let j in action) {
+          if (j === "0") continue;
+          let inputType =
+            commandData[action[0]._type].inputType[parseInt(j) - 1];
+          if (
+            inputType === "blockRef" &&
+            action[j].some((x) => !x.isBlock || x.removed)
+          ) {
+            err = "NONEXISTENT_BLOCK_REF";
+          }
+        }
+        if (!err) {
+          output = commandData[action[0]._type].actionFunc({
+            args: [...action],
+            action: action
+          });
+        } else {
+          if (editor) {
+            let errPath = createErrPath(action[0], err);
+            editor.errorLog.push(errPath);
+          }
+          output = "END";
+        }
+        if (output === "END") {
+          player.actionQueue.splice(i, 1);
+          i--;
+        }
       }
       for (let i = 0; i < simReruns; i++) {
         prevDynObjs = deepCopy(dynamicObjs);
@@ -164,21 +238,16 @@ function nextFrame(timeStamp) {
   window.requestAnimationFrame(nextFrame);
 }
 function doPhysics(obj, t, isPlayer) {
-  if (
-    !obj.dynamic &&
-    !isPlayer &&
-    player.blockAdded.findIndex((x) => x === obj) === -1
-  )
-    logChange(obj);
+  if (!isPlayer) logChange(obj);
   let level = levels[obj.currentRoom];
   let px1 = obj.x;
   let px2 = px1 + obj.size;
   let py1 = obj.y;
   let py2 = py1 + obj.size;
-  let leftBlock;
-  let rightBlock;
-  let topBlock;
-  let bottomBlock;
+  let dirPos = [px1, px2, py1, py2];
+  let dirBlock = [undefined, undefined, undefined, undefined];
+  let dirOffset = [0, 0, 0, 0];
+  let dirWord = ["Left", "Right", "Top", "Bottom"];
   let isDead = false;
   let friction = true;
   let giveJump = false;
@@ -189,7 +258,14 @@ function doPhysics(obj, t, isPlayer) {
   let topPriority = [0, 0, 0, 0, 0];
   let gdxv = 0;
   let gdyv = 0;
-  let subObj = deepCopy(obj);
+  let subObj = deepCopy(
+    obj,
+    false,
+    undefined,
+    "actionQueue",
+    "eventQueue",
+    "timerList"
+  );
   accelx = true;
   accely = true;
   if (hasSubBlock.includes(obj.type)) {
@@ -199,13 +275,13 @@ function doPhysics(obj, t, isPlayer) {
       y: obj.y,
       xv: obj.xv,
       yv: obj.yv,
-      xa: obj.xv,
-      ya: obj.yv,
+      xa: obj.xa,
+      ya: obj.ya,
       size: obj.size
     };
   }
-  let doCollision = function (block) {
-    let colliding = isColliding(obj, block, true);
+  let doCollision = function (block, xOffset = 0, yOffset = 0) {
+    let colliding = isColliding(obj, block, true, xOffset, yOffset);
     if (
       !colliding ||
       (block.x === obj.x && block.y === obj.y && block.index === obj.index) ||
@@ -221,52 +297,31 @@ function doPhysics(obj, t, isPlayer) {
           y: block.y,
           xv: block.xv,
           yv: block.yv,
-          xa: block.xv,
-          ya: block.yv,
+          xa: block.xa,
+          ya: block.ya,
           size: block.size
         };
       }
     }
-    let bx1 = block.x;
-    let bx2 = block.x + block.size;
-    let by1 = block.y;
-    let by2 = block.y + block.size;
+    let bx1 = block.x + xOffset;
+    let bx2 = bx1 + block.size;
+    let by1 = block.y + yOffset;
+    let by2 = by1 + block.size;
+    let dirBPos = [bx1, bx2, by1, by2];
     let data = blockData[block.type];
     if (!block.friction) friction = false;
     if (colliding) collided.push(block);
     // solid block
     if (block === player || block.isSolid) {
-      let dxv = (obj.xv - block.xv) * t + ((obj.xa - block.xa) * t * t) / 2;
-      let dyv = (obj.yv - block.yv) * t + ((obj.ya - block.ya) * t * t) / 2;
-      let VUncertainty =
-        obj.xv < VCThreshold ||
-        block.xv < VCThreshold ||
-        obj.yv < VCThreshold ||
-        block.yv < VCThreshold ||
-        Math.abs(obj.xv - block.xv) < VCThreshold ||
-        Math.abs(obj.yv - block.xv) < VCThreshold;
-      if (VUncertainty) {
-        dxv = 1;
-        dyv = 1;
-      }
-      let tx1 = (px1 - bx2) / dxv;
-      let tx2 = (px2 - bx1) / dxv;
-      let ty1 = (py1 - by2) / dyv;
-      let ty2 = (py2 - by1) / dyv;
-      if (VUncertainty) {
-        tx1 = Math.abs(tx1);
-        tx2 = Math.abs(tx2);
-        ty1 = Math.abs(ty1);
-        ty2 = Math.abs(ty2);
-      }
-      if (tx1 < 0) tx1 = Infinity;
-      if (tx2 < 0) tx2 = Infinity;
-      if (ty1 < 0) ty1 = Infinity;
-      if (ty2 < 0) ty2 = Infinity;
+      let tx1 = Math.abs(px1 - bx2);
+      let tx2 = Math.abs(px2 - bx1);
+      let ty1 = Math.abs(py1 - by2);
+      let ty2 = Math.abs(py2 - by1);
       let isLeft = bx1 < px1 && bx2 > px1 && bx2 < px2;
       let isRight = bx1 < px2 && bx2 > px2 && bx1 > px1;
       let isTop = by1 < py1 && by2 > py1 && by2 < py2;
       let isBottom = by1 < py2 && by2 > py2 && by1 > py1;
+      let dir;
       // block inside
       if (
         block !== player &&
@@ -292,211 +347,99 @@ function doPhysics(obj, t, isPlayer) {
         return;
       }
       if (subObj.xg && subObj.g < 0 && block.floorLeniency >= bx2 - px1) {
-        isLeft = true;
-        isRight = false;
-        isTop = false;
-        isBottom = false;
+        dir = 0;
       } else if (
         subObj.xg &&
         subObj.g > 0 &&
         block.floorLeniency >= px2 - bx1
       ) {
-        isLeft = false;
-        isRight = true;
-        isTop = false;
-        isBottom = false;
+        dir = 1;
       } else if (
         !subObj.xg &&
         subObj.g < 0 &&
         block.floorLeniency >= by2 - py1
       ) {
-        isLeft = false;
-        isRight = false;
-        isTop = true;
-        isBottom = false;
+        dir = 2;
       } else if (
         !subObj.xg &&
         subObj.g > 0 &&
         block.floorLeniency >= py2 - by1
       ) {
-        isLeft = false;
-        isRight = false;
-        isTop = false;
-        isBottom = true;
+        dir = 3;
       } else {
-        // top left
         if (isLeft && isTop) {
           if (Math.abs(tx1 - ty1) < CThreshold) return;
           if (tx1 < ty1) {
-            isTop = false;
+            dir = 0;
           } else {
-            isLeft = false;
+            dir = 2;
           }
-        }
-        // top right
-        if (isRight && isTop) {
+        } else if (isRight && isTop) {
           if (Math.abs(tx2 - ty1) < CThreshold) return;
           if (tx2 < ty1) {
-            isTop = false;
+            dir = 1;
           } else {
-            isRight = false;
+            dir = 2;
           }
-        }
-        // bottom left
-        if (isLeft && isBottom) {
+        } else if (isLeft && isBottom) {
           if (Math.abs(tx1 - ty2) < CThreshold) return;
           if (tx1 < ty2) {
-            isBottom = false;
+            dir = 0;
           } else {
-            isLeft = false;
+            dir = 3;
           }
-        }
-        // bottom right
-        if (isRight && isBottom) {
+        } else if (isRight && isBottom) {
           if (Math.abs(tx2 - ty2) < CThreshold) return;
           if (tx2 < ty2) {
-            isBottom = false;
+            dir = 1;
           } else {
-            isRight = false;
+            dir = 3;
           }
+        } else if (isLeft) {
+          dir = 0;
+        } else if (isRight) {
+          dir = 1;
+        } else if (isTop) {
+          dir = 2;
+        } else if (isBottom) {
+          dir = 3;
         }
       }
-      // left
-      if (isLeft) {
-        if (oneWayBlocks.includes(block.type)) {
-          if (
-            !block.rightWall ||
-            obj.lastCollided.find(
-              (x) => getGridBlock(x) === getGridBlock(block)
-            )
-          ) {
-            return;
-          } else if (!block.passOnPush)
-            collided.splice(
-              collided.findIndex((x) => x === block),
-              1
-            );
-        }
-        if (colliding) {
-          if (
-            leftBlock === undefined ||
-            leftBlock.x + leftBlock.size < bx2 ||
-            (leftBlock.x + leftBlock.size === bx2 &&
-              block.eventPriority > leftBlock.eventPriority)
-          )
-            leftBlock = block;
-        }
-        if (block === player) return;
-        if (block.eventPriority > topPriority[0]) {
-          eventList[0] = [];
-          topPriority[0] = block.eventPriority;
-        }
-        if (block.eventPriority === topPriority[0])
-          eventList[0].push([block, data.touchEvent[0]]);
-        return;
+      let dBlock = dirBlock[dir];
+      if (oneWayBlocks.includes(block.type)) {
+        if (
+          !block[dirWord[dir ^ 1].toLowerCase() + "Wall"] ||
+          obj.lastCollided.find((x) => getGridBlock(x) === getGridBlock(block))
+        ) {
+          return;
+        } else if (!block.passOnPush)
+          collided.splice(
+            collided.findIndex((x) => x === block),
+            1
+          );
       }
-      // right
-      if (isRight) {
-        if (oneWayBlocks.includes(block.type)) {
-          if (
-            !block.leftWall ||
-            obj.lastCollided.find(
-              (x) => getGridBlock(x) === getGridBlock(block)
-            )
-          ) {
-            return;
-          } else if (!block.passOnPush)
-            collided.splice(
-              collided.findIndex((x) => x === block),
-              1
-            );
+      let axis = dir < 2 ? "x" : "y";
+      let sign = dir % 2 ? 1 : -1;
+      let border =
+        dBlock?.[axis] + (dir % 2 ? 0 : dBlock?.size) + dirOffset[dir];
+      if (colliding) {
+        if (
+          dBlock === undefined ||
+          sign * border > sign * dirBPos[dir ^ 1] ||
+          (border === dirBPos[dir ^ 1] &&
+            block.eventPriority > dBlock.eventPriority)
+        ) {
+          dirBlock[dir] = block;
+          dirOffset[dir] = dir < 2 ? xOffset : yOffset;
         }
-        if (colliding) {
-          if (
-            rightBlock === undefined ||
-            rightBlock.x > bx1 ||
-            (rightBlock.x === bx1 &&
-              block.eventPriority > rightBlock.eventPriority)
-          )
-            rightBlock = block;
-        }
-        if (block === player) return;
-        if (block.eventPriority > topPriority[1]) {
-          eventList[1] = [];
-          topPriority[1] = block.eventPriority;
-        }
-        if (block.eventPriority === topPriority[1])
-          eventList[1].push([block, data.touchEvent[1]]);
-        return;
       }
-      // top
-      if (isTop) {
-        if (oneWayBlocks.includes(block.type)) {
-          if (
-            !block.bottomWall ||
-            obj.lastCollided.find(
-              (x) => getGridBlock(x) === getGridBlock(block)
-            )
-          ) {
-            return;
-          } else if (!block.passOnPush)
-            collided.splice(
-              collided.findIndex((x) => x === block),
-              1
-            );
-        }
-        if (colliding) {
-          if (
-            topBlock === undefined ||
-            topBlock.y + topBlock.size < by2 ||
-            (topBlock.y + topBlock.size === by2 &&
-              block.eventPriority > topBlock.eventPriority)
-          )
-            topBlock = block;
-        }
-        if (block === player) return;
-        if (block.eventPriority > topPriority[2]) {
-          eventList[2] = [];
-          topPriority[2] = block.eventPriority;
-        }
-        if (block.eventPriority === topPriority[2])
-          eventList[2].push([block, data.touchEvent[2]]);
-        return;
+      if (block === player) return;
+      if (block.eventPriority > topPriority[dir]) {
+        eventList[dir] = [];
+        topPriority[dir] = block.eventPriority;
       }
-      // bottom
-      if (isBottom) {
-        if (oneWayBlocks.includes(block.type)) {
-          if (
-            !block.topWall ||
-            obj.lastCollided.find(
-              (x) => getGridBlock(x) === getGridBlock(block)
-            )
-          ) {
-            return;
-          } else if (!block.passOnPush)
-            collided.splice(
-              collided.findIndex((x) => x === block),
-              1
-            );
-        }
-        if (colliding) {
-          if (
-            bottomBlock === undefined ||
-            bottomBlock.y > by1 ||
-            (bottomBlock.y === by1 &&
-              block.eventPriority > bottomBlock.eventPriority)
-          )
-            bottomBlock = block;
-        }
-        if (block === player) return;
-        if (block.eventPriority > topPriority[3]) {
-          eventList[3] = [];
-          topPriority[3] = block.eventPriority;
-        }
-        if (block.eventPriority === topPriority[3])
-          eventList[3].push([block, data.touchEvent[3]]);
-        return;
-      }
+      if (block.eventPriority === topPriority[dir])
+        eventList[dir].push([block, data.touchEvent[dir]]);
     } else {
       if (block.type === 12 && block.addVel) {
         gdxv += block.newxv;
@@ -557,11 +500,18 @@ function doPhysics(obj, t, isPlayer) {
   // room link
   let xWarp = 0;
   let yWarp = 0;
-  let rWarp = obj.currentRoom;
+  let rWarp;
   if (obj.roomLink[0] !== undefined) {
     let newlvl = levels[obj.roomLink[1].currentRoom];
     let dx = obj.roomLink[1].x - obj.roomLink[0].x;
     let dy = obj.roomLink[1].y - obj.roomLink[0].y;
+    let hori = false;
+    let neg = -1;
+    if (obj.roomLink[2] === "left" || obj.roomLink[2] === "right") hori = true;
+    if (obj.roomLink[2] === "left" || obj.roomLink[2] === "top") neg = 1;
+    let lvlOffsetted = neg > 0 ? newlvl : level;
+    let xOff = hori ? neg * lvlOffsetted.length * 50 : dx;
+    let yOff = !hori ? neg * lvlOffsetted[0].length * 50 : dy;
     if (obj.roomLink[1].currentRoom === player.currentRoom) {
       if (obj.dupSprite === null) {
         let s;
@@ -575,25 +525,8 @@ function doPhysics(obj, t, isPlayer) {
         levelLayer.addChild(s);
         obj.dupSprite = s;
       }
-      switch (obj.roomLink[2]) {
-        case "left":
-          obj.dupSprite.x = obj.x + newlvl.length * 50;
-          obj.dupSprite.y = obj.y + dy;
-          break;
-        case "right":
-          obj.dupSprite.x = obj.x - level.length * 50;
-          obj.dupSprite.y = obj.y + dy;
-          break;
-        case "top":
-          obj.dupSprite.x = obj.x + dx;
-          obj.dupSprite.y = obj.y + newlvl[0].length * 50;
-          break;
-        case "bottom":
-          obj.dupSprite.x = obj.x + dx;
-          obj.dupSprite.y = obj.y + level[0].length * 50;
-          break;
-        default:
-      }
+      obj.dupSprite.x = obj.x + xOff;
+      obj.dupSprite.y = obj.y + yOff;
     } else if (obj.dupSprite !== null) {
       for (let i in obj.dupSprite.children) obj.dupSprite.children[i].destroy();
       obj.dupSprite.destroy({
@@ -603,268 +536,62 @@ function doPhysics(obj, t, isPlayer) {
       });
       obj.dupSprite = null;
     }
-    switch (obj.roomLink[2]) {
-      case "left":
-        for (
-          let x = gridUnit(px1 + newlvl.length * 50) - maxBlockSize / 50;
-          x <= gridUnit(px2 + newlvl.length * 50);
-          x++
-        ) {
-          if (isDead || obj.isDead) break;
-          for (
-            let y = gridUnit(py1 + dy) - maxBlockSize / 50;
-            y <= gridUnit(py2 + dy);
-            y++
-          ) {
-            if (isDead || obj.isDead) break;
-            let gridSpace = newlvl[x]?.[y];
-            if (gridSpace === undefined) {
-              if (x < 0 || x > newlvl.length - 1) continue;
-              gridSpace = [new Block(0, x * 50, y * 50, 50, true, true, 3)];
-            }
-            for (let i in gridSpace) {
-              let subBlock = getSubBlock(gridSpace[i]);
-              if (gridSpace[i].dynamic && !prevDynObjs.includes(gridSpace[i]))
-                continue;
-              if (isPlayer && !subBlock.collidePlayer) continue;
-              if (!isPlayer && !subBlock.collideBlock) continue;
-              doCollision({
-                ...gridSpace[i],
-                x: gridSpace[i].x - newlvl.length * 50,
-                y: gridSpace[i].y - dy
-              });
-            }
+    for (
+      let x = gridUnit(px1 + xOff) - maxBlockSize / 50;
+      x <= gridUnit(px2 + xOff);
+      x++
+    ) {
+      if (isDead || obj.isDead) break;
+      for (
+        let y = gridUnit(py1 + yOff) - maxBlockSize / 50;
+        y <= gridUnit(py2 + yOff);
+        y++
+      ) {
+        if (isDead || obj.isDead) break;
+        let gridSpace = newlvl[x]?.[y];
+        if (gridSpace === undefined) {
+          if (hori) {
+            if (x < 0 || x > lvlOffsetted.length - 1) continue;
+          } else {
+            if (y < 0 || y > lvlOffsetted[0].length - 1) continue;
           }
+          gridSpace = [new Block(0, x * 50, y * 50, 50, true, true, 3)];
         }
-        if (isPlayer || subObj.blockPushable) {
-          for (let i in prevDynObjs) {
-            let block = prevDynObjs[i];
-            let subBlock = getSubBlock(prevDynObjs[i]);
-            if (isPlayer && !subBlock.collidePlayer) continue;
-            if (!isPlayer && !subBlock.collideBlock) continue;
-            if (block.currentRoom === obj.roomLink[1].currentRoom)
-              doCollision({
-                ...block,
-                x: block.x - newlvl.length * 50,
-                y: block.y - dy,
-                isSolid: true
-              });
-          }
+        for (let i in gridSpace) {
+          let subBlock = getSubBlock(gridSpace[i]);
+          if (gridSpace[i].dynamic && !prevDynObjs.includes(gridSpace[i]))
+            continue;
+          if (isPlayer && !subBlock.collidePlayer) continue;
+          if (!isPlayer && !subBlock.collideBlock) continue;
+          doCollision(gridSpace[i], -xOff, -yOff);
         }
-        if (
-          subObj.dynamic &&
-          subObj.playerPushable &&
-          subObj.collidePlayer &&
-          player.currentRoom === obj.roomLink[1].currentRoom
-        )
-          doCollision({
-            ...player,
-            x: player.x - newlvl.length * 50,
-            y: player.y - dy,
-            isSolid: true
-          });
-        if (obj.x < -obj.size / 2) {
-          rWarp = obj.roomLink[1].currentRoom;
-          xWarp = newlvl.length * 50;
-          yWarp = dy;
-        }
-        break;
-      case "right":
-        for (
-          let x = gridUnit(px1 - level.length * 50) - maxBlockSize / 50;
-          x <= gridUnit(px2 - level.length * 50);
-          x++
-        ) {
-          if (isDead || obj.isDead) break;
-          for (
-            let y = gridUnit(py1 + dy) - maxBlockSize / 50;
-            y <= gridUnit(py2 + dy);
-            y++
-          ) {
-            if (isDead || obj.isDead) break;
-            let gridSpace = newlvl[x]?.[y];
-            if (gridSpace === undefined) {
-              if (x < 0 || x > level.length - 1) continue;
-              gridSpace = [new Block(0, x * 50, y * 50, 50, true, true, 3)];
-            }
-            for (let i in gridSpace) {
-              let subBlock = getSubBlock(gridSpace[i]);
-              if (gridSpace[i].dynamic && !prevDynObjs.includes(gridSpace[i]))
-                continue;
-              if (isPlayer && !subBlock.collidePlayer) continue;
-              if (!isPlayer && !subBlock.collideBlock) continue;
-              doCollision({
-                ...gridSpace[i],
-                x: gridSpace[i].x + newlvl.length * 50,
-                y: gridSpace[i].y - dy
-              });
-            }
-          }
-        }
-        if (isPlayer || subObj.blockPushable) {
-          for (let i in prevDynObjs) {
-            let block = prevDynObjs[i];
-            let subBlock = getSubBlock(prevDynObjs[i]);
-            if (isPlayer && !subBlock.collidePlayer) continue;
-            if (!isPlayer && !subBlock.collideBlock) continue;
-            if (block.currentRoom === obj.roomLink[1].currentRoom)
-              doCollision({
-                ...block,
-                x: block.x + level.length * 50,
-                y: block.y - dy,
-                isSolid: true
-              });
-          }
-        }
-        if (
-          subObj.dynamic &&
-          subObj.playerPushable &&
-          subObj.collidePlayer &&
-          player.currentRoom === obj.roomLink[1].currentRoom
-        )
-          doCollision({
-            ...player,
-            x: player.x + level.length * 50,
-            y: player.y - dy,
-            isSolid: true
-          });
-        if (obj.x > level.length * 50 - obj.size / 2) {
-          rWarp = obj.roomLink[1].currentRoom;
-          xWarp = -level.length * 50;
-          yWarp = dy;
-        }
-        break;
-      case "top":
-        for (
-          let x = gridUnit(px1 + dx) - maxBlockSize / 50;
-          x <= gridUnit(px2 + dx);
-          x++
-        ) {
-          if (isDead || obj.isDead) break;
-          for (
-            let y = gridUnit(py1 + newlvl[0].length * 50) - maxBlockSize / 50;
-            y <= gridUnit(py2 + newlvl[0].length * 50);
-            y++
-          ) {
-            if (isDead || obj.isDead) break;
-            let gridSpace = newlvl[x]?.[y];
-            if (gridSpace === undefined) {
-              if (y < 0 || y > newlvl[0].length - 1) continue;
-              gridSpace = [new Block(0, x * 50, y * 50, 50, true, true, 3)];
-            }
-            for (let i in gridSpace) {
-              let subBlock = getSubBlock(gridSpace[i]);
-              if (gridSpace[i].dynamic && !prevDynObjs.includes(gridSpace[i]))
-                continue;
-              if (isPlayer && !subBlock.collidePlayer) continue;
-              if (!isPlayer && !subBlock.collideBlock) continue;
-              doCollision({
-                ...gridSpace[i],
-                x: gridSpace[i].x - dx,
-                y: gridSpace[i].y - newlvl[0].length * 50
-              });
-            }
-          }
-        }
-        if (isPlayer || subObj.blockPushable) {
-          for (let i in prevDynObjs) {
-            let block = prevDynObjs[i];
-            let subBlock = getSubBlock(prevDynObjs[i]);
-            if (isPlayer && !subBlock.collidePlayer) continue;
-            if (!isPlayer && !subBlock.collideBlock) continue;
-            if (block.currentRoom === obj.roomLink[1].currentRoom)
-              doCollision({
-                ...block,
-                x: block.x - dx,
-                y: block.y - newlvl[0].length * 50,
-                isSolid: true
-              });
-          }
-        }
-        if (
-          subObj.dynamic &&
-          subObj.playerPushable &&
-          subObj.collidePlayer &&
-          player.currentRoom === obj.roomLink[1].currentRoom
-        )
-          doCollision({
-            ...player,
-            x: player.x - dx,
-            y: player.y - newlvl[0].length * 50,
-            isSolid: true
-          });
-        if (obj.y < -obj.size / 2) {
-          rWarp = obj.roomLink[1].currentRoom;
-          xWarp = dx;
-          yWarp = newlvl[0].length * 50;
-        }
-        break;
-      case "bottom":
-        for (
-          let x = gridUnit(px1 + dx) - maxBlockSize / 50;
-          x <= gridUnit(px2 + dx);
-          x++
-        ) {
-          if (isDead || obj.isDead) break;
-          for (
-            let y = gridUnit(py1 - level[0].length * 50) - maxBlockSize / 50;
-            y <= gridUnit(py2 - level[0].length * 50);
-            y++
-          ) {
-            if (isDead || obj.isDead) break;
-            let gridSpace = newlvl[x]?.[y];
-            if (gridSpace === undefined) {
-              if (y < 0 || y > newlvl[0].length - 1) continue;
-              gridSpace = [new Block(0, x * 50, y * 50, 50, true, true, 3)];
-            }
-            for (let i in gridSpace) {
-              let subBlock = getSubBlock(gridSpace[i]);
-              if (gridSpace[i].dynamic && !prevDynObjs.includes(gridSpace[i]))
-                continue;
-              if (isPlayer && !subBlock.collidePlayer) continue;
-              if (!isPlayer && !subBlock.collideBlock) continue;
-              doCollision({
-                ...gridSpace[i],
-                x: gridSpace[i].x - dx,
-                y: gridSpace[i].y + level[0].length * 50
-              });
-            }
-          }
-        }
-        if (isPlayer || subObj.blockPushable) {
-          for (let i in prevDynObjs) {
-            let block = prevDynObjs[i];
-            let subBlock = getSubBlock(prevDynObjs[i]);
-            if (isPlayer && !subBlock.collidePlayer) continue;
-            if (!isPlayer && !subBlock.collideBlock) continue;
-            if (block.currentRoom === obj.roomLink[1].currentRoom)
-              doCollision({
-                ...block,
-                x: block.x - dx,
-                y: block.y + level[0].length * 50,
-                isSolid: true
-              });
-          }
-        }
-        if (
-          subObj.dynamic &&
-          subObj.playerPushable &&
-          subObj.collidePlayer &&
-          player.currentRoom === obj.roomLink[1].currentRoom
-        )
-          doCollision({
-            ...player,
-            x: player.x - dx,
-            y: player.y + level[0].length * 50,
-            isSolid: true
-          });
-        if (obj.y > level[0].length * 50 - obj.size / 2) {
-          rWarp = obj.roomLink[1].currentRoom;
-          xWarp = dx;
-          yWarp = -level[0].length * 50;
-        }
-        break;
-      default:
+      }
+    }
+    if (isPlayer || subObj.blockPushable) {
+      for (let i in prevDynObjs) {
+        let block = prevDynObjs[i];
+        let subBlock = getSubBlock(prevDynObjs[i]);
+        if (isPlayer && !subBlock.collidePlayer) continue;
+        if (!isPlayer && !subBlock.collideBlock) continue;
+        if (block.currentRoom === obj.roomLink[1].currentRoom)
+          doCollision(block, -xOff, -yOff);
+      }
+    }
+    if (
+      subObj.dynamic &&
+      subObj.playerPushable &&
+      subObj.collidePlayer &&
+      player.currentRoom === obj.roomLink[1].currentRoom
+    )
+      doCollision(player, -xOff, -yOff);
+    if (
+      neg * (hori ? obj.x : obj.y) <
+      neg *
+        ((neg < 0 ? (hori ? level : level[0]).length * 50 : 0) - obj.size / 2)
+    ) {
+      rWarp = obj.roomLink[1].currentRoom;
+      xWarp = xOff;
+      yWarp = yOff;
     }
     if (isPlayer && rWarp !== player.currentRoom) {
       camx -= xWarp;
@@ -881,18 +608,24 @@ function doPhysics(obj, t, isPlayer) {
   }
   // crushed
   if (
-    (leftBlock?.crushPlayer &&
-      rightBlock?.crushPlayer &&
-      rightBlock.x - leftBlock.x - leftBlock.size <
+    (dirBlock[0]?.crushPlayer &&
+      dirBlock[1]?.crushPlayer &&
+      dirBlock[1].x +
+        dirOffset[1] -
+        (dirBlock[0].x + dirOffset[0]) -
+        dirBlock[0].size <
         obj.size -
           CThreshold *
-            (isPlayer ? !(leftBlock.dynamic || rightBlock.dyanmic) : 1)) ||
-    (topBlock?.crushPlayer &&
-      bottomBlock?.crushPlayer &&
-      bottomBlock.y - topBlock.y - topBlock.size <
+            (isPlayer ? !(dirBlock[0].dynamic || dirBlock[1].dyanmic) : 1)) ||
+    (dirBlock[2]?.crushPlayer &&
+      dirBlock[3]?.crushPlayer &&
+      dirBlock[3].y +
+        dirOffset[3] -
+        (dirBlock[2].y + dirOffset[2]) -
+        dirBlock[2].size <
         obj.size -
           CThreshold *
-            (isPlayer ? !(topBlock.dynamic || bottomBlock.dyanmic) : 1))
+            (isPlayer ? !(dirBlock[2].dynamic || dirBlock[3].dyanmic) : 1))
   ) {
     obj.isDead = true;
   }
@@ -900,23 +633,24 @@ function doPhysics(obj, t, isPlayer) {
   // MOVEMENT & EVENTS
   if (!isDead && !obj.isDead) {
     // collision
-    let leftPush = leftBlock?.x + leftBlock?.size - px1;
-    let rightPush = rightBlock?.x - px2;
-    let topPush = topBlock?.y + topBlock?.size - py1;
-    let bottomPush = bottomBlock?.y - py2;
-    if (isNaN(leftPush)) leftPush = 0;
-    if (isNaN(rightPush)) rightPush = 0;
-    if (isNaN(topPush)) topPush = 0;
-    if (isNaN(bottomPush)) bottomPush = 0;
-    if (leftBlock?.dynamic || leftBlock === player) leftPush /= 2;
-    if (rightBlock?.dynamic || rightBlock === player) rightPush /= 2;
-    if (topBlock?.dynamic || topBlock === player) topPush /= 2;
-    if (bottomBlock?.dynamic || bottomBlock === player) bottomPush /= 2;
+    let dirPush = dirBlock.map(
+      (b, i) =>
+        b?.[i < 2 ? "x" : "y"] +
+        dirOffset[i] +
+        (i % 2 ? 0 : b?.size) -
+        dirPos[i]
+    );
+    for (let i in dirPush) {
+      if (isNaN(dirPush[i])) dirPush[i] = 0;
+      if (dirBlock[i]?.dynamic || dirBlock[i] === player) dirPush[i] /= 2;
+    }
+    let horiPush = dirPush[0] + dirPush[1];
+    let vertPush = dirPush[2] + dirPush[3];
     if (isPlayer) {
-      obj.x += leftPush + rightPush;
-      obj.y += topPush + bottomPush;
+      obj.x += horiPush;
+      obj.y += vertPush;
     } else {
-      moveBlock(obj, leftPush + rightPush, topPush + bottomPush);
+      moveBlock(obj, horiPush, vertPush);
     }
     // OoB
     if (
@@ -931,7 +665,25 @@ function doPhysics(obj, t, isPlayer) {
     let prevg = subObj.g;
     let prevxg = subObj.xg;
     obj.roomLink = [];
-    let tempObj = deepCopy(subObj);
+    let tempObj = deepCopy(
+      subObj,
+      false,
+      undefined,
+      "actionQueue",
+      "eventQueue",
+      "timerList"
+    );
+    for (let i in collided) {
+      let block = collided[i];
+      if (block === player) continue;
+      runEvent(block.events?.onTouch, block, { cause: obj });
+    }
+    for (let i in dirBlock) {
+      if (dirBlock[i])
+        runEvent(dirBlock[i].events?.["onTouch" + dirWord[i]], dirBlock[i], {
+          cause: obj
+        });
+    }
     for (let i in eventList) {
       for (let j in eventList[i]) {
         let block = eventList[i][j][0];
@@ -970,33 +722,27 @@ function doPhysics(obj, t, isPlayer) {
       }
     }
     obj.lastCollided = collided;
-    if ([15, 19].includes(leftBlock?.type) && obj.xv === 0) {
-      if (isPlayer) {
-        obj.x--;
-      } else moveBlock(obj, -1, 0);
-    }
-    if ([15, 19].includes(rightBlock?.type) && obj.xv === 0) {
-      if (isPlayer) {
-        obj.x++;
-      } else moveBlock(obj, 1, 0);
-    }
-    if ([15, 19].includes(topBlock?.type) && obj.yv === 0) {
-      if (isPlayer) {
-        obj.y--;
-      } else moveBlock(obj, 0, -1);
-    }
-    if ([15, 19].includes(bottomBlock?.type) && obj.yv === 0) {
-      if (isPlayer) {
-        obj.y++;
-      } else moveBlock(obj, 0, 1);
+    for (let i in dirBlock) {
+      let sign = i % 2 ? 1 : -1;
+      let hori = i < 2;
+      if (
+        [15, 19].includes(dirBlock[i]?.type) &&
+        sign * (hori ? obj.xv : obj.yv) >= 0
+      ) {
+        if (isPlayer) {
+          obj[hori ? "x" : "y"] += sign;
+        } else moveBlock(obj, hori * sign, !hori * sign);
+      }
     }
     friction = tempObj.friction && friction;
     if (isPlayer) {
       if (
-        (leftBlock?.giveJump && tempObj.xg && tempObj.g < 0) ||
-        (rightBlock?.giveJump && tempObj.xg && tempObj.g > 0) ||
-        (topBlock?.giveJump && !tempObj.xg && tempObj.g < 0) ||
-        (bottomBlock?.giveJump && !tempObj.xg && tempObj.g > 0) ||
+        dirBlock.some(
+          (b, i) =>
+            b?.giveJump &&
+            (i > 1) ^ tempObj.xg &&
+            (i % 2 ? 1 : -1) * tempObj.g > 0
+        ) ||
         giveJump
       ) {
         obj.currentJump = obj.maxJump;
@@ -1015,11 +761,11 @@ function doPhysics(obj, t, isPlayer) {
       }
       let style = id("textBlockText").style;
       if (tempObj.textDisp) {
-        if (!arraysEqual(prevTextDisp, tempObj.textDisp)) {
+        if (!arraysEqual(prevTextDisp, tempObj.textDisp, false)) {
           style.display = "inline-block";
-          let x = tempObj.textDisp[0];
-          let y = tempObj.textDisp[1];
-          let s = tempObj.textDisp[2];
+          let x = tempObj.textDisp[0] * cams;
+          let y = tempObj.textDisp[1] * cams;
+          let s = tempObj.textDisp[2] * cams;
           id("textBlockText").innerText = tempObj.textDisp[3];
           let w = id("textBlockText").clientWidth;
           let h = id("textBlockText").clientHeight;
@@ -1049,20 +795,19 @@ function doPhysics(obj, t, isPlayer) {
       if (control.left || control.right || control.up || control.down) {
         player.xv = 0;
         player.yv = 0;
+        dashTimer = dashDuration;
+        runEvent(globalEvents.onDash);
+        runEvent(roomEvents[player.currentRoom].onDash, player.currentRoom);
       }
       if (control.left) {
         player.xv = -dashSpeed;
-        dashTimer = dashDuration;
       } else if (control.right) {
         player.xv = dashSpeed;
-        dashTimer = dashDuration;
       }
       if (control.up) {
         player.yv = -dashSpeed;
-        dashTimer = dashDuration;
       } else if (control.down) {
         player.yv = dashSpeed;
-        dashTimer = dashDuration;
       }
       if (dashTimer === dashDuration) {
         player.currentDash--;
@@ -1071,9 +816,17 @@ function doPhysics(obj, t, isPlayer) {
     }
     // jumping
     if (isPlayer && dashTimer === 0) {
+      let jumpEvent = function () {
+        canJump = false;
+        player.jumpOn = !player.jumpOn;
+        runEvent(globalEvents.onJump);
+        runEvent(roomEvents[player.currentRoom].onJump, player.currentRoom);
+        updateAll(27);
+        forAllBlock(updateBlockState, 27);
+      };
       let vert = control.up || control.down;
       let hori = control.left || control.right;
-      if (tempObj.canWallJump && canWJ && obj.currentJump !== tempObj.maxJump) {
+      if (tempObj.canWallJump && canWJ) {
         if (tempObj.xg) {
           obj.xv = Math[obj.g < 0 ? "max" : "min"](obj.xv, tempObj.g * 100);
         } else
@@ -1083,44 +836,32 @@ function doPhysics(obj, t, isPlayer) {
             if (vert && control.right && obj.xv === 0) {
               obj.yv = Math.sign(tempObj.g) * -375;
               obj.xv = obj.moveSpeed * 400;
-              canJump = false;
               canWJ = false;
-              player.jumpOn = !player.jumpOn;
-              updateAll(27);
-              forAllBlock(updateSubBlock, 27);
+              jumpEvent();
             }
             break;
           case 1:
             if (vert && control.left && obj.xv === 0) {
               obj.yv = Math.sign(tempObj.g) * -375;
               obj.xv = -obj.moveSpeed * 400;
-              canJump = false;
               canWJ = false;
-              player.jumpOn = !player.jumpOn;
-              updateAll(27);
-              forAllBlock(updateSubBlock, 27);
+              jumpEvent();
             }
             break;
           case 2:
             if (hori && control.down && obj.yv === 0) {
               obj.xv = Math.sign(tempObj.g) * -375;
               obj.yv = obj.moveSpeed * 400;
-              canJump = false;
               canWJ = false;
-              player.jumpOn = !player.jumpOn;
-              updateAll(27);
-              forAllBlock(updateSubBlock, 27);
+              jumpEvent();
             }
             break;
           case 3:
             if (hori && control.up && obj.yv === 0) {
               obj.xv = Math.sign(tempObj.g) * -375;
               obj.yv = -obj.moveSpeed * 400;
-              canJump = false;
               canWJ = false;
-              player.jumpOn = !player.jumpOn;
-              updateAll(27);
-              forAllBlock(updateSubBlock, 27);
+              jumpEvent();
             }
             break;
           default:
@@ -1130,19 +871,13 @@ function doPhysics(obj, t, isPlayer) {
           if (hori) {
             obj.xv = Math.sign(tempObj.g) * -375;
             obj.currentJump--;
-            canJump = false;
-            player.jumpOn = !player.jumpOn;
-            updateAll(27);
-            forAllBlock(updateSubBlock, 27);
+            jumpEvent();
           }
         } else {
           if (vert) {
             obj.yv = Math.sign(tempObj.g) * -375;
             obj.currentJump--;
-            canJump = false;
-            player.jumpOn = !player.jumpOn;
-            updateAll(27);
-            forAllBlock(updateSubBlock, 27);
+            jumpEvent();
           }
         }
       }
@@ -1167,43 +902,37 @@ function doPhysics(obj, t, isPlayer) {
       }
     }
     // change acceleration
-    let dtv = tempObj.g < 0 && topBlock?.dynamic ? topBlock?.xv ?? 0 : 0;
-    if (dtv !== 0 && topBlock?.g > 0 && !topBlock.xg) {
-      if (topBlock === player && (control.left || control.right)) {
-        dtv = -topBlock.xv;
+    let dv = [];
+    for (let i in dirBlock) {
+      let sign = i % 2 ? 1 : -1;
+      let hori = i < 2;
+      dv[i] =
+        tempObj.g * sign > 0 && (dirBlock[i]?.dynamic || dirBlock[i]?.moving)
+          ? dirBlock[i]?.[hori ? "yv" : "xv"] ?? 0
+          : 0;
+      if (dv[i] !== 0 && dirBlock[i]?.g > 0 && dirBlock[i].xg) {
+        if (
+          dirBlock[i ^ 1] === player &&
+          (hori ? control.up || control.down : control.left || control.right)
+        ) {
+          dv[i] = -dirBlock[i][hori ? "yv" : "xv"];
+        }
+      }
+      if (conveyorBlocks.includes(dirBlock[i]?.type)) {
+        if (hori) {
+          gdyv += dirBlock[i][dirWord[i ^ 1].toLowerCase() + "Speed"];
+        } else gdxv += dirBlock[i][dirWord[i ^ 1].toLowerCase() + "Speed"];
+      }
+      if (conveyorBlocks.includes(subObj.type)) {
+        if (dirBlock[i]) {
+          if (hori) {
+            gdyv -= dirBlock[i][dirWord[i].toLowerCase() + "Speed"];
+          } else gdxv -= dirBlock[i][dirWord[i].toLowerCase() + "Speed"];
+        }
       }
     }
-    let dbv = tempObj.g > 0 && bottomBlock?.dynamic ? bottomBlock?.xv ?? 0 : 0;
-    if (dbv !== 0 && bottomBlock?.g < 0 && !bottomBlock.xg) {
-      if (bottomBlock === player && (control.left || control.right)) {
-        dbv = -bottomBlock.xv;
-      }
-    }
-    let dlv = tempObj.g < 0 && leftBlock?.dynamic ? leftBlock?.yv ?? 0 : 0;
-    if (dlv !== 0 && leftBlock?.g > 0 && leftBlock.xg) {
-      if (topBlock === player && (control.up || control.down)) {
-        dlv = -leftBlock.yv;
-      }
-    }
-    let drv = tempObj.g > 0 && rightBlock?.dynamic ? rightBlock?.yv ?? 0 : 0;
-    if (drv !== 0 && rightBlock?.g < 0 && rightBlock.xg) {
-      if (rightBlock === player && (control.up || control.down)) {
-        drv = -rightBlock.yv;
-      }
-    }
-    if (conveyorBlocks.includes(topBlock?.type)) gdxv += topBlock.bottomSpeed;
-    if (conveyorBlocks.includes(bottomBlock?.type))
-      gdxv += bottomBlock.topSpeed;
-    if (conveyorBlocks.includes(leftBlock?.type)) gdyv += leftBlock.rightSpeed;
-    if (conveyorBlocks.includes(rightBlock?.type)) gdyv += rightBlock.leftSpeed;
-    if (conveyorBlocks.includes(subObj.type)) {
-      if (topBlock) gdxv -= subObj.topSpeed;
-      if (bottomBlock) gdxv -= subObj.bottomSpeed;
-      if (leftBlock) gdyv -= subObj.leftSpeed;
-      if (rightBlock) gdyv -= subObj.rightSpeed;
-    }
-    let dxv = obj.xv - dtv - dbv;
-    let dyv = obj.yv - dlv - drv;
+    let dxv = obj.xv - dv[2] - dv[3];
+    let dyv = obj.yv - dv[0] - dv[1];
     let xFric = true;
     let yFric = true;
     if (tempObj.xg) {
@@ -1223,11 +952,11 @@ function doPhysics(obj, t, isPlayer) {
     }
     if (tempObj.xg || gdyv !== 0) {
       let fricAcc = -dyv * yFric * friction + gdyv;
-      if (!(topBlock?.yv > 0) && !(bottomBlock?.yv < 0)) obj.ya += fricAcc;
+      if (!(dirBlock[2]?.yv > 0) && !(dirBlock[3]?.yv < 0)) obj.ya += fricAcc;
     }
     if (!tempObj.xg || gdxv !== 0) {
       let fricAcc = -dxv * xFric * friction + gdxv;
-      if (!(leftBlock?.xv > 0) && !(rightBlock?.xv < 0)) obj.xa += fricAcc;
+      if (!(dirBlock[0]?.xv > 0) && !(dirBlock[1]?.xv < 0)) obj.xa += fricAcc;
     }
     // change velocity
     if (dashTimer === 0) {
@@ -1240,8 +969,8 @@ function doPhysics(obj, t, isPlayer) {
       )
         obj.xv =
           obj.xa +
-          (tempObj.g < 0 ? topBlock?.xv ?? 0 : 0) +
-          (tempObj.g > 0 ? bottomBlock?.xv ?? 0 : 0);
+          (tempObj.g < 0 ? dirBlock[2]?.xv ?? 0 : 0) +
+          (tempObj.g > 0 ? dirBlock[3]?.xv ?? 0 : 0);
       if (
         accely &&
         Math.abs(dyv - gdxv) > Math.abs(obj.ya) &&
@@ -1249,32 +978,42 @@ function doPhysics(obj, t, isPlayer) {
       )
         obj.yv =
           obj.ya +
-          (tempObj.g < 0 ? leftBlock?.yv ?? 0 : 0) +
-          (tempObj.g > 0 ? rightBlock?.yv ?? 0 : 0);
+          (tempObj.g < 0 ? dirBlock[0]?.yv ?? 0 : 0) +
+          (tempObj.g > 0 ? dirBlock[1]?.yv ?? 0 : 0);
       if (tempObj.xg) {
         if (Math.abs(dyv - gdxv) < 0.1 && accely) obj.yv -= dyv - gdxv;
       } else {
         if (Math.abs(dxv - gdxv) < 0.1 && accelx) obj.xv -= dxv - gdxv;
       }
-      if (leftBlock && accelx) {
-        if (leftBlock.dynamic || leftBlock === player) {
-          obj.xv = Math.max(obj.xv, (obj.xv + leftBlock.xv) / 2);
-        } else obj.xv = Math.max(obj.xv, leftBlock.xv);
-      }
-      if (rightBlock && accelx) {
-        if (rightBlock.dynamic || rightBlock === player) {
-          obj.xv = Math.min(obj.xv, (obj.xv + rightBlock.xv) / 2);
-        } else obj.xv = Math.min(obj.xv, rightBlock.xv);
-      }
-      if (topBlock && accely) {
-        if (topBlock.dynamic || topBlock === player) {
-          obj.yv = Math.max(obj.yv, (obj.yv + topBlock.yv) / 2);
-        } else obj.yv = Math.max(obj.yv, topBlock.yv);
-      }
-      if (bottomBlock && accely) {
-        if (bottomBlock.dynamic || bottomBlock === player) {
-          obj.yv = Math.min(obj.yv, (obj.yv + bottomBlock.yv) / 2);
-        } else obj.yv = Math.min(obj.yv, bottomBlock.yv);
+      for (let i in dirBlock) {
+        let hori = i < 2;
+        let axis = hori ? "xv" : "yv";
+        let sign = i % 2 ? 1 : -1;
+        let func = i % 2 ? "min" : "max";
+        if (dirBlock[i] && (hori ? accelx : accely)) {
+          if (dirBlock[i].dynamic || dirBlock[i] === player) {
+            obj[axis] = Math[func](
+              obj[axis],
+              (obj[axis] + dirBlock[i][axis]) / 2
+            );
+          } else if (dirBlock[i].moving) {
+            if (Math.sign(dirBlock[i][axis]) === sign) {
+              obj[axis] = dirBlock[i][axis];
+              if (Math.sign(obj[axis.charAt(0) + "a"]) === sign)
+                obj[axis.charAt(0)] =
+                  dirBlock[i][axis.charAt(0)] +
+                  (sign > 0 ? -obj.size : dirBlock[i].size) +
+                  1;
+            } else {
+              obj[axis] = Math[func](obj[axis], dirBlock[i][axis]);
+              if (Math.sign(obj[axis.charAt(0) + "a"]) === sign)
+                obj[axis.charAt(0)] =
+                  dirBlock[i][axis.charAt(0)] +
+                  (sign > 0 ? -obj.size : dirBlock[i].size) +
+                  0.5;
+            }
+          } else obj[axis] = Math[func](obj[axis], 0);
+        }
       }
     } else {
       obj.xa = 0;
@@ -1293,16 +1032,14 @@ function doPhysics(obj, t, isPlayer) {
         obj.yv * t + (obj.ya * t * t) / 2 + yWarp
       );
     }
-    if (obj.currentRoom !== rWarp) {
-      if (subObj.dynamic) {
-        removeBlock(obj);
-        obj.dupSprite = null;
-      }
-      obj.currentRoom = rWarp;
-      if (subObj.dynamic) addBlock(obj);
+    if (rWarp !== undefined) {
       if (isPlayer) {
+        obj.currentRoom = rWarp;
         drawLevel(true);
         adjustLevelSize();
+        runEvent(roomEvents[obj.currentRoom].onEnter, obj.currentRoom);
+      } else {
+        moveBlockRoom(obj, rWarp);
       }
     }
   } else {
@@ -1317,17 +1054,33 @@ function setLevel(name) {
   player.currentRoom = name;
   drawLevel(true);
   adjustLevelSize();
+  adjustScreen(true);
 }
 function setSpawn(start = false) {
+  saveState = deepCopy(player, false, [false,false,true]);
+  saveState.isDead = false;
+  for (let i in diffSave) {
+    let diff = diffSave[i];
+    if (diffStart.find((x) => x[1] === diff[0])) {
+      let index = diffStart.findIndex((x) => x[1] === diff[0]);
+      let start = diffStart[index];
+      if (!start[0]) {
+        diffStart.splice(index,1);
+      } else {
+        Object.assign(diff[1], start[0]);
+        start[0] = diff[1];
+        start[1] = undefined;
+      }
+    } else if (!diffStart.find((x) => x[1] === diff[1])) {
+      diffStart.push(diff);
+    }
+  }
+  diffSave = [];
   if (start) {
-    startState = deepCopy(player);
+    startState = saveState;
     startState.isDead = false;
-    dynamicInit = deepCopy(dynamicObjs);
     if (editor) save();
   }
-  saveState = deepCopy(player);
-  saveState.isDead = false;
-  dynamicSave = deepCopy(dynamicObjs);
 }
 function respawn(start = false, draw = true) {
   let prevRoom = player.currentRoom;
@@ -1340,38 +1093,13 @@ function respawn(start = false, draw = true) {
     player.dupSprite.destroy();
     player.dupSprite = null;
   }
-  rollBack();
-  if (!editor?.playMode ?? false) {
-    dynamicInit = deepCopy(dynamicObjs);
-    dynamicSave = deepCopy(dynamicObjs);
-  }
-  if (editor?.playMode ?? true) {
-    for (let i = 0; i < dynamicObjs.length; i++) {
-      if (dynamicObjs[i].dynamic) {
-        removeBlock(dynamicObjs[i], false);
-        i--;
-      }
-    }
-  }
-  player = deepCopy(start ? startState : saveState);
-  if (editor?.playMode ?? true) {
-    let newDynamicObjs = deepCopy(start ? dynamicInit : dynamicSave);
-    for (let i in newDynamicObjs) {
-      if (newDynamicObjs[i].dynamic) addBlock(newDynamicObjs[i], false);
-    }
-  }
-  if (start) {
-    saveState = deepCopy(startState);
-    dynamicSave = deepCopy(dynamicInit);
-  }
-  if (editor && !editor.playMode) {
-    player.blockAdded = [];
-    player.blockChanged = [];
-    player.blockRemoved = [];
-  }
-  rollForward(player.currentRoom === prevRoom);
+  rollBack(start);
+  if (start) saveState = startState;
+  player = deepCopy(saveState, false, [false,false,true]);
   infoDisp.coins = player.coins;
-  for (let i in hasSubBlock) forAllBlock(updateSubBlock, hasSubBlock[i]);
+  for (let i in hasSubBlock) forAllBlock(updateBlockState, hasSubBlock[i]);
+  if (startState === saveState) runEvent(globalEvents.onStart);
+  coyoteTimer = -1;
   if (draw) {
     drawLevel(player.currentRoom !== prevRoom);
     if (
@@ -1381,65 +1109,62 @@ function respawn(start = false, draw = true) {
     if (player.jump !== prevJump) updateAll(27);
     if (player.coins !== prevCoin) updateAll(30);
     adjustLevelSize();
+    if (player.currentRoom !== prevRoom) adjustScreen(true);
   }
 }
-function rollBack() {
-  for (let i in player.blockChanged) {
-    let data = player.blockChanged[i];
-    let block = getGridBlock(data[1]);
-    scaleBlock(block, data[0].size / block.size, block.x, block.y);
-    moveBlock(block, data[0].x - block.x, data[0].y - block.y);
-    for (let i in data[0]) {
-      if (["lastCollided", "sprite", "dupSprite", "link"].includes(i)) {
-        delete data[0][i];
-      }
-    }
-    Object.assign(block, data[0]);
-    if (block.index === data[0].index) continue;
-    let gridSpace = getGridSpace(block);
-    gridSpace.splice(
-      gridSpace.findIndex((x) => x === block),
-      1
-    );
-    gridSpace.splice(block.index, 0, block);
-    for (let i = parseInt(block.index) + 1; i < gridSpace.length; i++)
-      gridSpace[i].index++;
+function shiftIndex(block, index) {
+  let gridSpace = getGridSpace(block);
+  if (gridSpace.length <= index) return;
+  let initIndex = gridSpace.findIndex((x) => x === block);
+  if (initIndex === index) return;
+  gridSpace.splice(initIndex, 1);
+  gridSpace.splice(index, 0, block);
+  block.index = index;
+  if (initIndex < index) {
+    for (let i = initIndex; i <= index - 1; i++) gridSpace[i].index--;
+  } else {
+    for (let i = index + 1; i <= initIndex; i++) gridSpace[i].index++;
   }
-  player.blockChanged = [];
-  for (let i in player.blockRemoved) addBlock(player.blockRemoved[i], false);
-  player.blockRemoved = [];
-  for (let i in player.blockAdded) removeBlock(player.blockAdded[i], false);
-  player.blockAdded = [];
 }
-function rollForward(draw) {
-  for (let i in player.blockRemoved) {
-    let data = player.blockRemoved[i];
-    let block = getGridBlock(data);
-    removeBlock(block, false);
+function rollBack(start, diffs) {
+  if (!diffs) {
+    rollBack(start, diffSave);
+    diffSave = [];
+    if (start) {
+      rollBack(start, diffStart);
+      diffStart = [];
+    }
+    return;
   }
-  for (let i in player.blockAdded) addBlock(player.blockAdded[i], false);
-  for (let i in player.blockChanged) {
-    let data = player.blockChanged[i];
-    let block = getGridBlock(data[0]);
-    scaleBlock(block, data[1].size / block.size, block.x, block.y, draw);
-    moveBlock(block, data[1].x - block.x, data[1].y - block.y, draw);
-    for (let i in data[1]) {
-      if (["lastCollided", "sprite", "dupSprite", "link"].includes(i)) {
-        delete data[1][i];
-      }
+  for (let i = diffs.length - 1; i > -1; i--) {
+    let diff = diffs[i];
+    let start = diff[0];
+    let end = diff[1];
+    if (start?.ran !== undefined) {
+      Object.assign(end, start);
+    } else if (!start) {
+      removeBlock(end, false);
+    } else if (!end) {
+      let index = start.index;
+      let block = addBlock(start, false);
+      shiftIndex(block, index);
+    } else {
+      let block = getGridBlock(end);
+      moveBlockRoom(block, start.currentRoom, false);
+      scaleBlock(block, start.size / block.size, block.x, block.y, true, false);
+      moveBlock(block, start.x - block.x, start.y - block.y, true, false);
+      let updateTexture =
+        block.type !== start.type ||
+        blockData[block.type].textureFactor.some((p) => block[p] !== start[p]);
+      Object.assign(block, {
+        ...start,
+        index: block.index,
+        events: block.events
+      });
+      shiftIndex(block, start.index);
+      updateBlock(block, updateTexture);
+      updateBlockState(block);
     }
-    Object.assign(block, data[1]);
-    if (block.index !== data[1].index) {
-      let gridSpace = getGridSpace(block);
-      gridSpace.splice(
-        gridSpace.findIndex((x) => x === block),
-        1
-      );
-      gridSpace.splice(block.index, 0, block);
-      for (let i = parseInt(block.index) + 1; i < gridSpace.length; i++)
-        gridSpace[i].index++;
-    }
-    data[1] = block;
   }
 }
 function gridUnit(
@@ -1467,7 +1192,19 @@ function getGridSpace(
 function getGridBlock(block) {
   return getGridSpace(block)[block.index];
 }
-function createSprite(block) {
+function getGridEventData(data) {
+  switch (data._scope) {
+    case "block":
+      let block = getGridBlock(data.source);
+      return block.events[data._eventType][0];
+    case "room":
+      return roomEvents[data.source][data._eventType][0];
+    case "global":
+      return globalEvents[data._eventType][0];
+    default:
+  }
+}
+function createTexture(block, app) {
   let t;
   let isDefault = true;
   for (let i in blockData[block.type].textureFactor) {
@@ -1477,9 +1214,18 @@ function createSprite(block) {
       break;
     }
   }
-  if (isDefault) {
+  if (isDefault && app === display) {
     t = blockData[block.type].defaultTexture;
-  } else t = blockData[block.type].getTexture(block);
+  } else t = blockData[block.type].getTexture(block, app);
+  return t;
+}
+function updateTexture(block) {
+  if (block.sprite.texture !== blockData[block.type].defaultTexture)
+    block.sprite.texture.destroy(true);
+  block.sprite.texture = createTexture(block);
+}
+function createSprite(block) {
+  let t = createTexture(block);
   let s = new PIXI.Sprite(t);
   s.x = block.x;
   s.y = block.y;
@@ -1488,25 +1234,49 @@ function createSprite(block) {
   s.zIndex = block.eventPriority;
   return s;
 }
-function isColliding(blockA, blockB, areSquares = false) {
+function addSprite(block) {
+  if (block.currentRoom === player.currentRoom) {
+    let s = createSprite(block);
+    levelLayer.addChild(s);
+    block.sprite = s;
+    updateBlock(block);
+  }
+}
+function removeSprite(block) {
+  let s = block.sprite;
+  if (block.currentRoom === player.currentRoom) {
+    for (let i in s.children) s.children[i].destroy();
+    s.destroy({
+      texture: s.texture !== blockData[block.type].defaultTexture
+    });
+  }
+  if (block.dupSprite !== null) {
+    for (let i in block.dupSprite.children)
+      block.dupSprite.children[i].destroy();
+    block.dupSprite.destroy({
+      texture: block.dupSprite.texture !== blockData[block.type].defaultTexture
+    });
+  }
+}
+function isColliding(blockA, blockB, areSquares = false, bxOff = 0, byOff = 0) {
   let ax1, ax2, ay1, ay2, bx1, bx2, by1, by2;
   if (!areSquares) {
     ax1 = blockA.x;
     ax2 = ax1 + (blockA.width ?? blockA.size);
     ay1 = blockA.y;
     ay2 = ay1 + (blockA.height ?? blockA.size);
-    bx1 = blockB.x;
+    bx1 = blockB.x + bxOff;
     bx2 = bx1 + (blockB.width ?? blockB.size);
-    by1 = blockB.y;
+    by1 = blockB.y + byOff;
     by2 = by1 + (blockB.height ?? blockB.size);
   } else {
     ax1 = blockA.x;
     ax2 = ax1 + blockA.size;
     ay1 = blockA.y;
     ay2 = ay1 + blockA.size;
-    bx1 = blockB.x;
+    bx1 = blockB.x + bxOff;
     bx2 = bx1 + blockB.size;
-    by1 = blockB.y;
+    by1 = blockB.y + byOff;
     by2 = by1 + blockB.size;
   }
   return ax1 < bx2 && ax2 > bx1 && ay1 < by2 && ay2 > by1;
@@ -1516,18 +1286,18 @@ function getSubBlock(block) {
   switch (block.type) {
     case 26:
       if (isSwitchOn(block)) {
-        if (block.blockB !== null) subBlock = block.blockB;
-      } else if (block.blockA !== null) subBlock = block.blockA;
+        if (block.blockB?.isBlock) subBlock = block.blockB;
+      } else if (block.blockA?.isBlock) subBlock = block.blockA;
       break;
     case 27:
       if (player.jumpOn ^ block.invert) {
-        if (block.blockB !== null) subBlock = block.blockB;
-      } else if (block.blockA !== null) subBlock = block.blockA;
+        if (block.blockB?.isBlock) subBlock = block.blockB;
+      } else if (block.blockA?.isBlock) subBlock = block.blockA;
       break;
     case 30:
       if ((player.coins >= block.value) ^ block.invert) {
-        if (block.blockB !== null) subBlock = block.blockB;
-      } else if (block.blockA !== null) subBlock = block.blockA;
+        if (block.blockB?.isBlock) subBlock = block.blockB;
+      } else if (block.blockA?.isBlock) subBlock = block.blockA;
       break;
     default:
   }
@@ -1537,33 +1307,20 @@ function getSubBlock(block) {
 }
 function addBlock(block, log = true) {
   block.index = getGridSpace(block).push(block) - 1;
-  let s;
-  if (block.currentRoom === player.currentRoom) {
-    s = createSprite(block);
-    levelLayer.addChild(s);
-    block.sprite = s;
-    updateBlock(block);
+  addSprite(block);
+  block.removed = undefined;
+  block.isRootBlock = true;
+  updateBlockState(block);
+  if ((!editor || editor.playMode) && log) {
+    let diff = [undefined, block];
+    diffSave.push(diff);
   }
-  if (getSubBlock(block).dynamic) dynamicObjs.push(block);
-  if (animatedTypes.includes(getSubBlock(block).type)) animatedObjs.push(block);
-  if ((!editor || editor.playMode) && !block.dynamic && log)
-    player.blockAdded.push(block);
   return block;
 }
 function removeBlock(block, log = true) {
   block = getGridBlock(block);
-  let s = block.sprite;
-  if (block.currentRoom === player.currentRoom) {
-    for (let i in s.children) s.children[i].destroy();
-    s.destroy({ texture: s.texture !== blockData[block.type].defaultTexture });
-  }
-  if (block.dupSprite !== null) {
-    for (let i in block.dupSprite.children)
-      block.dupSprite.children[i].destroy();
-    block.dupSprite.destroy({
-      texture: block.dupSprite.texture !== blockData[block.type].defaultTexture
-    });
-  }
+  block.removed = true;
+  removeSprite(block);
   if (dynamicObjs.includes(block))
     dynamicObjs.splice(dynamicObjs.indexOf(block), 1);
   if (animatedObjs.includes(block))
@@ -1572,31 +1329,39 @@ function removeBlock(block, log = true) {
   for (let i = parseInt(block.index) + 1; i < gridSpace.length; i++) {
     gridSpace[i].index--;
   }
-  if (log) {
-    let logIndex = player.blockChanged.findIndex((x) => x[1] === block);
-    if (logIndex > -1) {
-      let removed = player.blockChanged.splice(logIndex, 1);
-      if ((!editor || editor.playMode) && !block.dynamic)
-        player.blockRemoved.push(removed[0][0]);
-    }
-    logIndex = player.blockAdded.findIndex((x) => x === block);
-    if (logIndex > -1) player.blockAdded.splice(logIndex, 1);
-  }
+  block.isDead = undefined;
   gridSpace.splice(block.index, 1);
+  if ((!editor || editor.playMode) && log) {
+    let index = diffSave.findIndex((x) => x[1] === block);
+    let diff = diffSave[index];
+    if (index !== -1) {
+      if (!diff[0]) {
+        diffSave.splice(index, 1);
+      } else {
+        Object.assign(diff[1], diff[0]);
+        diff[0] = diff[1];
+        diff[1] = undefined;
+      }
+    } else {
+      diffSave.push([block, undefined]);
+    }
+  }
 }
-function scaleBlock(block, factor, focusX, focusY, draw = true) {
+function scaleBlock(block, factor, focusX, focusY, draw = true, log = true) {
+  if (log && (!editor || editor.playMode) && block !== player) logChange(block);
   block.size = Math.max(Math.min(block.size * factor, maxBlockSize), 6.25);
   if (focusX !== undefined) {
     let dx = focusX - block.x;
     let dy = focusY - block.y;
-    moveBlock(block, dx * (1 - factor), dy * (1 - factor), draw);
+    moveBlock(block, dx * (1 - factor), dy * (1 - factor), draw, log);
   }
   if (block.currentRoom === player.currentRoom && draw) {
     block.sprite.width = block.size;
     block.sprite.height = block.size;
   }
 }
-function moveBlock(block, dx, dy, draw = true) {
+function moveBlock(block, dx, dy, draw = true, log = true) {
+  if (log && (!editor || editor.playMode) && block !== player) logChange(block);
   let gridSpace = getGridSpace(block);
   let sprite = block.sprite;
   block.x += dx;
@@ -1623,7 +1388,21 @@ function moveBlock(block, dx, dy, draw = true) {
   if (block.currentRoom === player.currentRoom && block.type === 23)
     updateBlock(block);
 }
-function rotateBlock(block, dtheta, cx, cy, rad = false) {
+function moveBlockRoom(block, room, log = true) {
+  block = getGridBlock(block);
+  if (block.currentRoom === room) return;
+  if (log && (!editor || editor.playMode) && block !== player) logChange(block);
+  removeSprite(block);
+  let gridSpace = getGridSpace(block);
+  for (let i = parseInt(block.index) + 1; i < gridSpace.length; i++) {
+    gridSpace[i].index--;
+  }
+  gridSpace.splice(block.index, 1);
+  block.currentRoom = room;
+  block.index = getGridSpace(block).push(block) - 1;
+  addSprite(block);
+}
+function rotateBlock(block, dtheta, cx, cy, rad = false, log = true) {
   let x = block.x + block.size / 2 - cx;
   let y = block.y + block.size / 2 - cy;
   let r = (x ** 2 + y ** 2) ** 0.5;
@@ -1642,13 +1421,15 @@ function rotateBlock(block, dtheta, cx, cy, rad = false) {
       ny = -x;
     }
   }
-  moveBlock(block, nx - x, ny - y);
+  moveBlock(block, nx - x, ny - y, true, log);
 }
-function flipBlock(block, pos, y = false) {
+function flipBlock(block, pos, y = false, log = true) {
   moveBlock(
     block,
     y ? 0 : (pos - block.x - block.size / 2) * 2,
-    y ? (pos - block.y - block.size / 2) * 2 : 0
+    y ? (pos - block.y - block.size / 2) * 2 : 0,
+    true,
+    log
   );
 }
 function arraysEqual(a, b, isBlock = true) {
@@ -1665,7 +1446,12 @@ function arraysEqual(a, b, isBlock = true) {
   }
   return true;
 }
-function deepCopy(inObject) {
+function deepCopy(
+  inObject,
+  inEvent = false,
+  override = [false, false, false],
+  ...ignore
+) {
   let outObject, value, key;
   if (typeof inObject !== "object" || inObject === null) {
     return inObject;
@@ -1674,14 +1460,21 @@ function deepCopy(inObject) {
   for (key in inObject) {
     value = inObject[key];
     if (
-      key === "lastCollided" ||
-      key === "sprite" ||
-      key === "dupSprite" ||
-      key === "link"
+      ["lastCollided", "sprite", "dupSprite", "link", "_controls", "_loops"].includes(key) ||
+      ignore.includes(key) ||
+      (((value?.isRootBlock && !value?.removed && !override[0]) ||
+        (value?.isPlayer && !override[1]) ||
+        (value?.ran !== undefined && !override[2])) &&
+        inEvent)
     ) {
       outObject[key] = value;
     } else {
-      outObject[key] = deepCopy(value);
+      outObject[key] = deepCopy(
+        value,
+        ["events", "eventQueue", "actionQueue", "timerList"].includes(key) ||
+          inEvent,
+        override
+      );
     }
   }
   return outObject;
@@ -1969,6 +1762,13 @@ function drawStr(g, str, color, space = 3, maxWidth = Infinity) {
         g.lineTo(x, 25);
         g.lineTo(x + w, 25);
         break;
+      case ".":
+        g.moveTo(x + (2 * w) / 5, 45);
+        g.lineTo(x + (3 * w) / 5, 45);
+        g.lineTo(x + (3 * w) / 5, 40);
+        g.lineTo(x + (2 * w) / 5, 40);
+        g.lineTo(x + (2 * w) / 5, 45);
+        break;
       default:
     }
   }
@@ -1980,7 +1780,7 @@ function isSwitchOn(block) {
     block.invert
   );
 }
-function updateSubBlock(block) {
+function updateBlockState(block) {
   let subBlock = getSubBlock(block);
   subBlock.x = block.x;
   subBlock.y = block.y;
@@ -2006,8 +1806,8 @@ function updateSubBlock(block) {
   }
 }
 function logChange(block) {
-  if (!player.blockChanged.find((x) => x[1] === block)) {
-    player.blockChanged.push([deepCopy(block), block]);
+  if (!diffSave.find((x) => x[1] === block)) {
+    diffSave.push([deepCopy(block), block]);
   }
 }
 function assignIndex() {
@@ -2019,4 +1819,19 @@ function assignIndex() {
     }
   };
   forAllBlock(func);
+}
+function isBlockRef(val) {
+  return (
+    Array.isArray(val) &&
+    !val.find((x) => !(x.isRootBlock && !x.removed) && !getBlockFromAddress(x))
+  );
+}
+function getBlockAddress(block) {
+  return [block.currentRoom, gridUnit(block.x), gridUnit(block.y), block.index];
+}
+function getBlockFromAddress(address, lvls = levels) {
+  return lvls[address[0]]?.[address[1]]?.[address[2]]?.[address[3]];
+}
+function addTimer(obj, prop, func = () => {}) {
+  player.timerList.push([obj, prop, func]);
 }

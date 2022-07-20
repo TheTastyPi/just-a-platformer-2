@@ -470,7 +470,45 @@
 - Force Fields with addVel false now disables acceleration via other sources
 - Added a description for the "addVel" property of Force Fields
 
-## 31 Mar. 2022
+### 31 Mar. 2022
 
 - Changed the look of Dash Restore Fields when cooling down
 - Wall-jumping now take priority over normal jumps if the player is not on the floor
+
+## 20 Jul. 2022
+
+- Added events
+  - Allows one to write a 'script' that can interact with the level and player
+  - Read the in-game documentation for more info
+  - Added 'Event Clear' block along with this
+- Added 'color' property to Teleporters
+- Added 'color' and 'hideDetails' property to Switch
+  - Changed the display of global and used switches as a result
+- Added a description to 'passOnPush'
+- Links are now saved along with level data
+- Removed Check Point's "SHFT" display and replaced it with normal text
+- Block states now also saves out of play mode
+- Slightly optimized multi-state blocks
+- All non-solid blocks' default eventPriority are now 3
+- You can no longer select non-input texts
+- Teleporting to another room now instantly sets the camera position
+- You can now set eventPriority to negative numbers
+  - z-index of blocks are equal to eventPriority, and the player has z-index of -1, so now you can have blocks in the background
+- Fixed some bugs where:
+  - Velocity-on-collision of multi-state blocks are retained even when they're turned static
+  - The game sometime crashes on respawn for reasons related to multi-state blocks
+  - Sometimes wall-jumping doesn't work
+  - Editing properties of linked blocks doesn't work
+  - The player can start in the wrong room on load
+  - Text Field's text position doesn't respect the in-game zoom
+  - You can jump after respawning on a solid block with giveJump false
+  - Deleting or renaming the room the player's in crashes the game if the player is touching a non-solid block
+  - Textures are incorrectly updated after rotating/flipping
+  - Jump/Dash Restore Field and Unstable Block states are not saved/reverted
+  - Respawning after changing the state of blocks across a Boundary Warp crashes the game
+  - Blocks can desync from the mouse position when moving them
+  - Pasting blocks while zoomed in/out behaves weirdly
+  - Touching multiple Text Fields in succession doesn't display subsequent text
+  - Teleporting across rooms doesn't work
+- Refactored a bunch of code (seriously)
+- Probably a whole bunch of other things I forgot to write here

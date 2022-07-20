@@ -1,6 +1,9 @@
 * {
   font-family: "Courier New", Courier, monospace;
 }
+body {
+  user-select: none;
+}
 body::after {
   position: absolute;
   width: 0;
@@ -134,13 +137,12 @@ body::after {
   position: absolute;
   top: 0;
   left: 0;
-  width: 150px;
-  border-radius: 0 0 25px 0;
+  width: 300px;
   background: #bbbbbbbb;
   text-align: center;
   overflow-x: hidden;
   font-size: 15px;
-  height: 25px;
+  min-height: 25px;
   line-height: 25px;
 }
 .helpMenu {
@@ -156,8 +158,24 @@ body::after {
   text-align: left;
 }
 .eventEditor {
-  display: none;
   background: #bbbbbbbb;
+}
+.eventOption {
+  position: absolute;
+  top: 0;
+  right: 100%;
+  background: #bbbbbbbb;
+  width: 200px;
+}
+.eventDoc {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  background: #bbbbbbbb;
+  width: 400px;
+  overflow-y: scroll;
+  max-height: 100%;
+  overflow-wrap: break-word;
 }
 .key {
   display: inline-block;
