@@ -1814,7 +1814,7 @@ function assignIndex() {
   let func = function (block, x, y, i) {
     block.index = parseInt(i);
     for (let j in block) {
-      if (propData[j]?.[0] === "block" && block[j] !== null)
+      if (propData[j]?.[0] === "block" && block[j]?.type !== undefined)
         func(block[j], x, y, i);
     }
   };

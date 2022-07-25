@@ -918,11 +918,11 @@ function select(selectRect, single = false, prev, build = false) {
           if (single) {
             if (editor.chooseType) {
               editor.chooseFor[0] = block;
-              editor.chooseType = undefined;
               if (editor.chooseType === "block") {
                 editor.chooseFor[0] = deepCopy(editor.chooseFor[0]);
                 editor.chooseFor[0].isRootBlock = false;
               }
+              editor.chooseType = undefined;
               return;
             }
             first ??= block;
@@ -1595,10 +1595,7 @@ function compressEvents(events) {
         if (k === "0") continue;
         if (isBlockRef(line[k])) {
           line[k] = line[k].map((adr) => getBlockAddress(adr));
-        } else if (
-          Array.isArray(line[k]) &&
-          line[k][0]?.isBlock
-        ) {
+        } else if (Array.isArray(line[k]) && line[k][0]?.isBlock) {
           line[k].map((b) => compressBlock(b));
         }
       }
@@ -1658,7 +1655,7 @@ function compressBlock(block) {
     if (block[prop] === Infinity) {
       block[prop] = "Infinity";
     }
-    if (propData[prop][0] === "block" && block[prop].type !== undefined)
+    if (propData[prop][0] === "block" && block[prop]?.type !== undefined)
       compressBlock(block[prop]);
     if (propData[prop][1] !== prop) {
       block[propData[prop][1]] = block[prop];
@@ -1682,7 +1679,7 @@ function decompressBlock(block, room, root = true) {
     if (block[prop] === "Infinity") {
       block[prop] = Infinity;
     }
-    if (propData[prop][0] === "block" && block[prop].type !== undefined)
+    if (propData[prop][0] === "block" && block[prop]?.t !== undefined)
       decompressBlock(block[prop], room, false);
   }
   for (let prop in blockData[block.type].defaultBlock) {
@@ -1695,13 +1692,13 @@ function decompressBlock(block, room, root = true) {
 function lvl2str(lvl) {
   let w = lvl.length;
   let h = lvl[0].length;
-  lvl = deepCopy(lvl, false, [false,false,true]).flat().flat();
+  lvl = deepCopy(lvl, false, [false, false, true]).flat().flat();
   for (let i in lvl) compressBlock(lvl[i]);
   let str = JSON.stringify([lvl, w, h]);
   return str;
 }
 function lvls2str(lvls) {
-  lvls = deepCopy(lvls, false, [false,false,true]);
+  lvls = deepCopy(lvls, false, [false, false, true]);
   let newlvls = [];
   for (let i in editor.roomOrder)
     newlvls[i] = lvl2str(lvls[editor.roomOrder[i]]);
@@ -1858,7 +1855,9 @@ function load(name) {
         lvlsTemp[editor.roomOrder[i]] = levels[i];
       }
       levels = lvlsTemp;
-      forAllBlock((b, x, y, i, room) => decompressEvents(b.events, "block", room));
+      forAllBlock((b, x, y, i, room) =>
+        decompressEvents(b.events, "block", room)
+      );
       let roomEventsComp = JSON.parse(
         LZString.decompressFromEncodedURIComponent(save[4])
       );

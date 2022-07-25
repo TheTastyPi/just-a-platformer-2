@@ -512,3 +512,8 @@
   - Teleporting across rooms doesn't work
 - Refactored a bunch of code (seriously)
 - Probably a whole bunch of other things I forgot to write here
+
+### 25 Jul. 2022
+
+- Fixed a bug where levels with blocks that has properties of type 'block' doesn't save/load properly
+- Fixed a bug where editing properties of type 'block' can have weird behavior
