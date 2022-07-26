@@ -740,12 +740,12 @@ function doPhysics(obj, t, isPlayer) {
           let h = id("textBlockText").clientHeight;
           style.left =
             Math.max(
-              Math.min(x + camx + (s - w) / 2, window.innerWidth - w),
+              Math.min(x + lvlxOffset + (s - w) / 2, window.innerWidth - w),
               0
             ) + "px";
           style.top =
             Math.max(
-              Math.min(y + camy + (s - h) / 2, window.innerHeight - h),
+              Math.min(y + lvlyOffset + (s - h) / 2, window.innerHeight - h),
               0
             ) + "px";
           prevTextDisp = [...tempObj.textDisp];

@@ -521,3 +521,7 @@
 ### 26 Jul. 2022
 
 - Fixed a bug where deleting blocks while moved by a command can crash the game
+
+#### 26 Jul. 2022 #2
+
+- Text now displays based on target camera position instead of current camera position
