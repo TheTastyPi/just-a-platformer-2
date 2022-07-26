@@ -426,3 +426,37 @@ function runAction(action, context, command) {
   action.unshift({ ...context });
   player.actionQueue.push(action);
 }
+function handleActions() {
+  for (let i = 0; i < player.actionQueue.length; i++) {
+    let action = player.actionQueue[i];
+    let err;
+    let output;
+    for (let j in action) {
+      if (j === "0") continue;
+      let inputType =
+        commandData[action[0]._type].inputType[parseInt(j) - 1];
+      if (
+        inputType === "blockRef" &&
+        action[j].some((x) => !x.isBlock || x.removed)
+      ) {
+        err = "NONEXISTENT_BLOCK_REF";
+      }
+    }
+    if (!err) {
+      output = commandData[action[0]._type].actionFunc({
+        args: [...action],
+        action: action
+      });
+    } else {
+      if (editor) {
+        let errPath = createErrPath(action[0], err);
+        editor.errorLog.push(errPath);
+      }
+      output = "END";
+    }
+    if (output === "END") {
+      player.actionQueue.splice(i, 1);
+      i--;
+    }
+  }
+}

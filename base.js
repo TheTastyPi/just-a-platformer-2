@@ -157,39 +157,8 @@ function nextFrame(timeStamp) {
       }
       runEvent(globalEvents.onTick);
       runEvent(roomEvents[player.currentRoom].onTick, player.currentRoom);
+      handleActions();
       handleEvents();
-      for (let i = 0; i < player.actionQueue.length; i++) {
-        let action = player.actionQueue[i];
-        let err;
-        let output;
-        for (let j in action) {
-          if (j === "0") continue;
-          let inputType =
-            commandData[action[0]._type].inputType[parseInt(j) - 1];
-          if (
-            inputType === "blockRef" &&
-            action[j].some((x) => !x.isBlock || x.removed)
-          ) {
-            err = "NONEXISTENT_BLOCK_REF";
-          }
-        }
-        if (!err) {
-          output = commandData[action[0]._type].actionFunc({
-            args: [...action],
-            action: action
-          });
-        } else {
-          if (editor) {
-            let errPath = createErrPath(action[0], err);
-            editor.errorLog.push(errPath);
-          }
-          output = "END";
-        }
-        if (output === "END") {
-          player.actionQueue.splice(i, 1);
-          i--;
-        }
-      }
       for (let i = 0; i < simReruns; i++) {
         prevDynObjs = deepCopy(dynamicObjs);
         doPhysics(player, interval / 1000 / simReruns, true);
@@ -680,7 +649,7 @@ function doPhysics(obj, t, isPlayer) {
     }
     for (let i in dirBlock) {
       if (dirBlock[i])
-        runEvent(dirBlock[i].events?.["onTouch" + dirWord[i]], dirBlock[i], {
+        runEvent(dirBlock[i].events?.["onTouch" + dirWord[i^1]], dirBlock[i], {
           cause: obj
         });
     }
@@ -1319,8 +1288,6 @@ function addBlock(block, log = true) {
 }
 function removeBlock(block, log = true) {
   block = getGridBlock(block);
-  block.removed = true;
-  removeSprite(block);
   if (dynamicObjs.includes(block))
     dynamicObjs.splice(dynamicObjs.indexOf(block), 1);
   if (animatedObjs.includes(block))
@@ -1329,7 +1296,6 @@ function removeBlock(block, log = true) {
   for (let i = parseInt(block.index) + 1; i < gridSpace.length; i++) {
     gridSpace[i].index--;
   }
-  block.isDead = undefined;
   gridSpace.splice(block.index, 1);
   if ((!editor || editor.playMode) && log) {
     let index = diffSave.findIndex((x) => x[1] === block);
@@ -1346,6 +1312,9 @@ function removeBlock(block, log = true) {
       diffSave.push([block, undefined]);
     }
   }
+  block.removed = true;
+  block.isDead = undefined;
+  removeSprite(block);
 }
 function scaleBlock(block, factor, focusX, focusY, draw = true, log = true) {
   if (log && (!editor || editor.playMode) && block !== player) logChange(block);
