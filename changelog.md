@@ -533,4 +533,4 @@
 ### 31 Jul. 2022 #2
 
 - Block references now no longer breaks after deleting blocks and undoing it
-- Fixed a bug where undo/redoing event edits with relf-reference crashes the game
+- Fixed a bug where undo/redoing event edits with self-reference crashes the game
