@@ -529,3 +529,8 @@
 ### 31 Jul. 2022
 
 - Broken block references in events now reconnect after saving
+
+### 31 Jul. 2022 #2
+
+- Block references now no longer breaks after deleting blocks and undoing it
+- Fixed a bug where undo/redoing event edits with relf-reference crashes the game

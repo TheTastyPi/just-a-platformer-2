@@ -5,20 +5,6 @@ function runEvent(event, source, extraContext = {}) {
     if (extraContext.cause === player && !event[0]._playerTrigger) return;
     if (extraContext.cause.isBlock && !event[0]._blockTrigger) return;
   }
-  // reconnecting block reference
-  if (editor) {
-    for (let i in event) {
-      if (i === "0") continue;
-      let command = event[i];
-      for (let j in command) {
-        if (j == 0) continue;
-        let inputType = commandData[command[0]].inputType[parseInt(j) - 1];
-        if (inputType === "blockRef" && typeof command[j] !== "string") {
-          attemptReconnect(command[j]);
-        }
-      }
-    }
-  }
   event[0].source = source;
   logChange(event[0]);
   if (!event[0].ran || (event[0]._multiRun && event[0]._delayTimer === 0)) {
@@ -33,23 +19,6 @@ function runEvent(event, source, extraContext = {}) {
     player.eventQueue.push(copy);
   }
   event[0].ran = true;
-}
-function attemptReconnect(ref) {
-  for (let k in ref) {
-    let blockRef = ref[k];
-    if (Array.isArray(blockRef))
-      blockRef = getBlockFromAddress(blockRef);
-    if (blockRef) {
-      let reconnect = getGridBlock(blockRef);
-      if (
-        reconnect &&
-        reconnect.x == blockRef.x &&
-        reconnect.y == blockRef.y
-      ) {
-        ref[k] = reconnect;
-      }
-    }
-  }
 }
 function evalExp(exp, context, final = true, restrict = false) {
   // ()
@@ -436,8 +405,7 @@ function handleActions() {
     let output;
     for (let j in action) {
       if (j === "0") continue;
-      let inputType =
-        commandData[action[0]._type].inputType[parseInt(j) - 1];
+      let inputType = commandData[action[0]._type].inputType[parseInt(j) - 1];
       if (
         inputType === "blockRef" &&
         action[j].some((x) => !x.isBlock || x.removed)

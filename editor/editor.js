@@ -330,7 +330,7 @@ document.addEventListener("keydown", function (event) {
         if (eventEditor.active) {
           removeCommand();
         } else {
-          addAction("removeBlock", deepCopy(editor.editSelect));
+          addAction("removeBlock", [...editor.editSelect]);
           for (let i in editor.editSelect) {
             removeBlock(editor.editSelect[i]);
           }
@@ -357,7 +357,7 @@ document.addEventListener("keydown", function (event) {
           removeCommand();
         } else {
           copy();
-          addAction("removeBlock", deepCopy(editor.editSelect));
+          addAction("removeBlock", [...editor.editSelect]);
           for (let i in editor.editSelect) {
             removeBlock(editor.editSelect[i]);
           }
@@ -1018,7 +1018,7 @@ function reselect() {
       if (editor.editBlock[i] === "MIXED") continue;
       if (editor.editBlock[i] === undefined) {
         editor.editBlock[i] = block[i];
-        editor.editBlockProp.push(i);
+        if (propData[i] !== undefined) editor.editBlockProp.push(i);
       }
       if (block[i] !== editor.editBlock[i]) {
         editor.editBlock[i] = "MIXED";
@@ -1447,8 +1447,7 @@ function doAction(action) {
     case "editProp": {
       let blocks = action[1].map((b) => getGridBlock(b));
       for (let i in action[2]) {
-        addBlock(action[2][i]);
-        removeBlock(blocks[i]);
+        rollBackBlock(blocks[i],action[2][i]);
       }
       editor.editSelect = action[2];
       reselect();
@@ -1491,7 +1490,7 @@ function undoAction(action) {
       break;
     }
     case "removeBlock": {
-      let blocks = deepCopy(action[1]);
+      let blocks = action[1];
       for (let i in blocks) {
         let index = blocks[i].index;
         let block = addBlock(blocks[i], false);
@@ -1532,8 +1531,7 @@ function undoAction(action) {
     case "editProp": {
       let blocks = action[2].map((b) => getGridBlock(b));
       for (let i in action[1]) {
-        addBlock(action[1][i]);
-        removeBlock(blocks[i]);
+        rollBackBlock(blocks[i],action[1][i]);
       }
       editor.editSelect = action[1];
       reselect();
@@ -1593,10 +1591,6 @@ function compressEvents(events) {
       let line = event[j];
       for (let k in line) {
         if (k === "0") continue;
-        let inputType = commandData[line[0]].inputType[parseInt(k) - 1];
-        if (inputType === "blockRef" && typeof line[k] !== "string") {
-          attemptReconnect(line[k]);
-        }
         if (isBlockRef(line[k])) {
           line[k] = line[k].map((adr) => getBlockAddress(adr));
         } else if (Array.isArray(line[k]) && line[k][0]?.isBlock) {

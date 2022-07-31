@@ -1095,6 +1095,22 @@ function shiftIndex(block, index) {
     for (let i = index + 1; i <= initIndex; i++) gridSpace[i].index++;
   }
 }
+function rollBackBlock(block,start) {
+  moveBlockRoom(block, start.currentRoom, false);
+  scaleBlock(block, start.size / block.size, block.x, block.y, true, false);
+  moveBlock(block, start.x - block.x, start.y - block.y, true, false);
+  let updateTexture =
+    block.type !== start.type ||
+    blockData[block.type].textureFactor.some((p) => block[p] !== start[p]);
+  Object.assign(block, {
+    ...start,
+    index: block.index,
+    events: block.events
+  });
+  shiftIndex(block, start.index);
+  updateBlock(block, updateTexture);
+  updateBlockState(block);
+}
 function rollBack(start, diffs) {
   if (!diffs) {
     rollBack(start, diffSave);
@@ -1119,20 +1135,7 @@ function rollBack(start, diffs) {
       shiftIndex(block, index);
     } else {
       let block = getGridBlock(end);
-      moveBlockRoom(block, start.currentRoom, false);
-      scaleBlock(block, start.size / block.size, block.x, block.y, true, false);
-      moveBlock(block, start.x - block.x, start.y - block.y, true, false);
-      let updateTexture =
-        block.type !== start.type ||
-        blockData[block.type].textureFactor.some((p) => block[p] !== start[p]);
-      Object.assign(block, {
-        ...start,
-        index: block.index,
-        events: block.events
-      });
-      shiftIndex(block, start.index);
-      updateBlock(block, updateTexture);
-      updateBlockState(block);
+      rollBackBlock(block,start);
     }
   }
 }
@@ -1304,7 +1307,10 @@ function removeBlock(block, log = true) {
       if (!diff[0]) {
         diffSave.splice(index, 1);
       } else {
-        Object.assign(diff[1], diff[0]);
+        Object.assign(diff[1], {
+          ...diff[0],
+          events: block.events
+        });
         diff[0] = diff[1];
         diff[1] = undefined;
       }
