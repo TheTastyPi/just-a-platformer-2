@@ -14,21 +14,7 @@ function runEvent(event, source, extraContext = {}) {
         if (j == 0) continue;
         let inputType = commandData[command[0]].inputType[parseInt(j) - 1];
         if (inputType === "blockRef" && typeof command[j] !== "string") {
-          for (let k in command[j]) {
-            let blockRef = command[j][k];
-            if (Array.isArray(blockRef))
-              blockRef = getBlockFromAddress(blockRef);
-            if (blockRef) {
-              let reconnect = getGridBlock(blockRef);
-              if (
-                reconnect &&
-                reconnect.x == blockRef.x &&
-                reconnect.y == blockRef.y
-              ) {
-                command[j][k] = reconnect;
-              }
-            }
-          }
+          attemptReconnect(command[j]);
         }
       }
     }
@@ -47,6 +33,23 @@ function runEvent(event, source, extraContext = {}) {
     player.eventQueue.push(copy);
   }
   event[0].ran = true;
+}
+function attemptReconnect(ref) {
+  for (let k in ref) {
+    let blockRef = ref[k];
+    if (Array.isArray(blockRef))
+      blockRef = getBlockFromAddress(blockRef);
+    if (blockRef) {
+      let reconnect = getGridBlock(blockRef);
+      if (
+        reconnect &&
+        reconnect.x == blockRef.x &&
+        reconnect.y == blockRef.y
+      ) {
+        ref[k] = reconnect;
+      }
+    }
+  }
 }
 function evalExp(exp, context, final = true, restrict = false) {
   // ()

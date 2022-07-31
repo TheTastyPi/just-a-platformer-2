@@ -525,3 +525,7 @@
 #### 26 Jul. 2022 #2
 
 - Text now displays based on target camera position instead of current camera position
+
+### 31 Jul. 2022
+
+- Broken block references in events now reconnect after saving

@@ -1593,6 +1593,10 @@ function compressEvents(events) {
       let line = event[j];
       for (let k in line) {
         if (k === "0") continue;
+        let inputType = commandData[line[0]].inputType[parseInt(k) - 1];
+        if (inputType === "blockRef" && typeof line[k] !== "string") {
+          attemptReconnect(line[k]);
+        }
         if (isBlockRef(line[k])) {
           line[k] = line[k].map((adr) => getBlockAddress(adr));
         } else if (Array.isArray(line[k]) && line[k][0]?.isBlock) {
