@@ -1141,7 +1141,12 @@ function updateGrid() {
   editor.gridSize = +parseFloat(editor.gridSize).toFixed(2);
   if (isNaN(editor.gridSize)) editor.gridSize = 50;
   editor.gridSize = Math.min(Math.max(editor.gridSize, 6.25), maxBlockSize);
-  if (prevGridSize !== editor.gridSize) gridDisp.texture = createGridTexture();
+  if (prevGridSize !== editor.gridSize) {
+    gridDisp.texture = createGridTexture();
+    let scale = editor.gridSize/Math.floor(editor.gridSize);
+    gridDisp.tileScale.x = scale;
+    gridDisp.tileScale.y = scale;
+  }
   prevGridSize = editor.gridSize;
 }
 function createGridTexture() {

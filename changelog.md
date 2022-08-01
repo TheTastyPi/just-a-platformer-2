@@ -534,3 +534,7 @@
 
 - Block references now no longer breaks after deleting blocks and undoing it
 - Fixed a bug where undo/redoing event edits with self-reference crashes the game
+
+#### 1 Aug. 2022
+
+- Fixed a bug where non-integer grid size does not display properly
