@@ -60,14 +60,14 @@ const propData = {
   x: [
     "num",
     "x",
-    () => 0,
-    (block) => levels[player.currentRoom].length * 50 - block.size
+    (block) => -block.size,
+    (block) => levels[player.currentRoom].length * 50
   ],
   y: [
     "num",
     "y",
-    () => 0,
-    (block) => levels[player.currentRoom][0].length * 50 - block.size
+    (block) => -block.size,
+    (block) => levels[player.currentRoom][0].length * 50
   ],
   targetSize: ["num", "tS", () => 6.25, () => maxBlockSize],
   size: ["num", "s", () => 6.25, () => maxBlockSize],

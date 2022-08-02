@@ -538,3 +538,7 @@
 #### 1 Aug. 2022
 
 - Fixed a bug where non-integer grid size does not display properly
+
+### 2 Aug. 2022
+
+- You can now move blocks outside the room boundary via property editing.
