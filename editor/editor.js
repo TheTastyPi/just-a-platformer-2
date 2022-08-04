@@ -1682,7 +1682,7 @@ function decompressBlock(block, room, root = true) {
     if (block[prop] === "Infinity") {
       block[prop] = Infinity;
     }
-    if (propData[prop][0] === "block" && block[prop]?.t !== undefined)
+    if (propData[prop][0] === "block" && (block[prop]?.t !== undefined || block[prop].type !== undefined))
       decompressBlock(block[prop], room, false);
   }
   for (let prop in blockData[block.type].defaultBlock) {

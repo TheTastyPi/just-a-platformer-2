@@ -542,3 +542,7 @@
 ### 2 Aug. 2022
 
 - You can now move blocks outside the room boundary via property editing.
+
+### 4 Aug. 2022
+
+- Fixed a bug where level with subblocks from previous versions did not load properly
