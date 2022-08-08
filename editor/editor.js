@@ -1596,7 +1596,8 @@ function compressEvents(events) {
       let line = event[j];
       for (let k in line) {
         if (k === "0") continue;
-        if (isBlockRef(line[k])) {
+        if (isBlockRef(line[k], true)) {
+          line[k] = line[k].filter(x=>isBlockRef([x]));
           line[k] = line[k].map((adr) => getBlockAddress(adr));
         } else if (Array.isArray(line[k]) && line[k][0]?.isBlock) {
           line[k].map((b) => compressBlock(b));

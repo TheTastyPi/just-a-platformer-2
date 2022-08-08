@@ -551,3 +551,4 @@
 ### 8 Aug. 2022
 
 - Fixed a bug where the game doesn't work on Safari
+- Fixed a bug where saving with a partially deleted block reference can cause the level to corrupt on save

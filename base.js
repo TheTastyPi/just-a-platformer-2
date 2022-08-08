@@ -1795,11 +1795,18 @@ function assignIndex() {
   };
   forAllBlock(func);
 }
-function isBlockRef(val) {
-  return (
-    Array.isArray(val) &&
-    !val.find((x) => !(x.isRootBlock && !x.removed) && !getBlockFromAddress(x))
-  );
+function isBlockRef(val, some=false) {
+  if (some) {
+    return (
+      Array.isArray(val) &&
+      val.find((x) => (x.isRootBlock && !x.removed) || getBlockFromAddress(x))
+    );
+  } else {
+    return (
+      Array.isArray(val) &&
+      !val.find((x) => !(x.isRootBlock && !x.removed) && !getBlockFromAddress(x))
+    );
+  }
 }
 function getBlockAddress(block) {
   return [block.currentRoom, gridUnit(block.x), gridUnit(block.y), block.index];
