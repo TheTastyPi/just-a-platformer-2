@@ -546,3 +546,8 @@
 ### 4 Aug. 2022
 
 - Fixed a bug where level with subblocks from previous versions did not load properly
+
+
+### 8 Aug. 2022
+
+- Fixed a bug where the game doesn't work on Safari

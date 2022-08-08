@@ -91,7 +91,7 @@ function evalExp(exp, context, final = true, restrict = false) {
           (unary.includes(op) ? "(?!=)" : ""),
         "g"
       );
-      str = str.replace(regex, (x) => "^" + x);
+      str = str.replace(regex, (x) => x + "^");
     }
     return str;
   });
@@ -99,8 +99,7 @@ function evalExp(exp, context, final = true, restrict = false) {
   for (let i in ops) {
     let op = ops[i];
     let regex = RegExp(
-      "(?<!\\^)" +
-        op.replaceAll("", "\\").slice(0, -1) +
+        op.replaceAll("", "\\").slice(0, -1) + "(?!\\^)" +
         (unary.includes(op) ? "(?!=)" : "")
     );
     let fullRegex = RegExp(
@@ -183,7 +182,7 @@ function evalExp(exp, context, final = true, restrict = false) {
   }
   exp = parseValue(exp, context, restrict);
   return final && typeof exp === "string"
-    ? exp.replace(/\^./g, (x) => x.charAt(1))
+    ? exp.replace(/.\^/g, (x) => x.charAt(1))
     : exp;
 }
 function parseValue(str, context, restrict = false) {
@@ -196,8 +195,8 @@ function parseValue(str, context, restrict = false) {
   if (fixedStr == value) return value;
   str = str.replace(/\$/g, "~");
   // str
-  if (/^(?=").*(?<=")$|^(?=').*(?<=')$/.test(str)) return str.slice(1, -1);
-  if (/^(?=["'])|(?<=["'])$/.test(str)) return "ERROR:INVALID_STRING;";
+  if (/^".*"$|^'.*'$/.test(str)) return str.slice(1, -1);
+  if (/^["']|["']$/.test(str)) return "ERROR:INVALID_STRING;";
   // obj
   value = undefined;
   str = str.replaceAll("{", ".{").replace(/["']/g, "");
