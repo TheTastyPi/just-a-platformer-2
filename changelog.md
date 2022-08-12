@@ -547,8 +547,12 @@
 
 - Fixed a bug where level with subblocks from previous versions did not load properly
 
-
 ### 8 Aug. 2022
 
 - Fixed a bug where the game doesn't work on Safari
 - Fixed a bug where saving with a partially deleted block reference can cause the level to corrupt on save
+
+### 12 Aug. 2022
+
+- Fixed a bug where dashing causes dynamic block velocity to become static
+- Fixed a bug where dynamic blocks can spontaneously clip through blocks

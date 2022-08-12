@@ -615,12 +615,7 @@ function doPhysics(obj, t, isPlayer) {
     }
     let horiPush = dirPush[0] + dirPush[1];
     let vertPush = dirPush[2] + dirPush[3];
-    if (isPlayer) {
-      obj.x += horiPush;
-      obj.y += vertPush;
-    } else {
-      moveBlock(obj, horiPush, vertPush);
-    }
+    moveBlock(obj, horiPush, vertPush);
     // OoB
     if (
       px2 < 0 ||
@@ -697,11 +692,7 @@ function doPhysics(obj, t, isPlayer) {
       if (
         [15, 19].includes(dirBlock[i]?.type) &&
         sign * (hori ? obj.xv : obj.yv) >= 0
-      ) {
-        if (isPlayer) {
-          obj[hori ? "x" : "y"] += sign;
-        } else moveBlock(obj, hori * sign, !hori * sign);
-      }
+      ) moveBlock(obj, hori * sign, !hori * sign);
     }
     friction = tempObj.friction && friction;
     if (isPlayer) {
@@ -928,7 +919,7 @@ function doPhysics(obj, t, isPlayer) {
       if (!(dirBlock[0]?.xv > 0) && !(dirBlock[1]?.xv < 0)) obj.xa += fricAcc;
     }
     // change velocity
-    if (dashTimer === 0) {
+    if (dashTimer === 0 || !isPlayer) {
       if (accelx) obj.xv += obj.xa * t * (!tempObj.xg * 74 + 1);
       if (accely) obj.yv += obj.ya * t * (tempObj.xg * 74 + 1);
       if (
@@ -957,6 +948,7 @@ function doPhysics(obj, t, isPlayer) {
       for (let i in dirBlock) {
         let hori = i < 2;
         let axis = hori ? "xv" : "yv";
+        let moveFunc = (o,n) => {hori?moveBlock(o,n-o.x,0):moveBlock(o,0,n-o.y)};
         let sign = i % 2 ? 1 : -1;
         let func = i % 2 ? "min" : "max";
         if (dirBlock[i] && (hori ? accelx : accely)) {
@@ -969,17 +961,17 @@ function doPhysics(obj, t, isPlayer) {
             if (Math.sign(dirBlock[i][axis]) === sign) {
               obj[axis] = dirBlock[i][axis];
               if (Math.sign(obj[axis.charAt(0) + "a"]) === sign)
-                obj[axis.charAt(0)] =
+                moveFunc(obj,
                   dirBlock[i][axis.charAt(0)] +
                   (sign > 0 ? -obj.size : dirBlock[i].size) +
-                  1;
+                  1);
             } else {
               obj[axis] = Math[func](obj[axis], dirBlock[i][axis]);
               if (Math.sign(obj[axis.charAt(0) + "a"]) === sign)
-                obj[axis.charAt(0)] =
+                moveFunc(obj,
                   dirBlock[i][axis.charAt(0)] +
                   (sign > 0 ? -obj.size : dirBlock[i].size) +
-                  0.5;
+                  0.5);
             }
           } else obj[axis] = Math[func](obj[axis], 0);
         }
@@ -991,16 +983,11 @@ function doPhysics(obj, t, isPlayer) {
     if (!accelx) obj.xa = 0;
     if (!accely) obj.ya = 0;
     // change position
-    if (isPlayer) {
-      obj.x += obj.xv * t + (obj.xa * t * t) / 2 + xWarp;
-      obj.y += obj.yv * t + (obj.ya * t * t) / 2 + yWarp;
-    } else {
-      moveBlock(
-        obj,
-        obj.xv * t + (obj.xa * t * t) / 2 + xWarp,
-        obj.yv * t + (obj.ya * t * t) / 2 + yWarp
-      );
-    }
+    moveBlock(
+      obj,
+      obj.xv * t + (obj.xa * t * t) / 2 + xWarp,
+      obj.yv * t + (obj.ya * t * t) / 2 + yWarp
+    );
     if (rWarp !== undefined) {
       if (isPlayer) {
         obj.currentRoom = rWarp;
@@ -1341,6 +1328,7 @@ function moveBlock(block, dx, dy, draw = true, log = true) {
   let sprite = block.sprite;
   block.x += dx;
   block.y += dy;
+  if (block === player) return;
   if (block.currentRoom === player.currentRoom && draw) {
     sprite.x = block.x;
     sprite.y = block.y;
