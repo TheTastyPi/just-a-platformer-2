@@ -1997,16 +1997,17 @@ function deleteRoom(name) {
   delete levels[name];
   delete roomEvents[name];
   editor.roomOrder.splice(editor.roomOrder.indexOf(name), 1);
-  if (player.currentRoom === name) {
-    player.currentRoom = editor.roomOrder[0];
-    drawLevel(true);
-  }
+  if (startState.currentRoom === name) startState.currentRoom = editor.roomOrder[0];
+  if (saveState.currentRoom === name) saveState.currentRoom = editor.roomOrder[0];
+  if (player.currentRoom === name) setLevel(editor.roomOrder[0]);
   editor.editSelect = editor.editSelect.filter((b) => b.currentRoom !== name);
   reselect();
   save();
 }
 function renameRoom(name) {
   let newName = prompt("Please input new name.");
+  while (editor.roomOrder.includes(newName))
+    newName = prompt("Name taken. Please input new save name.");
   if (newName !== null && newName !== name) {
     editor.roomOrder.splice(editor.roomOrder.indexOf(name), 1, newName);
     levels[newName] = levels[name];

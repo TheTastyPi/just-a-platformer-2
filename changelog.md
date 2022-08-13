@@ -556,3 +556,9 @@
 
 - Fixed a bug where dashing causes dynamic block velocity to become static
 - Fixed a bug where dynamic blocks can spontaneously clip through blocks
+
+### 13 Aug. 2022
+
+- Fixed a visual bug related to deleting the room the player is in
+- Fixed a bug where you can respawn to a deleted room and crash the game
+- Fixed a bug where you can rename a room to have the same name as another room
