@@ -52,7 +52,7 @@ var editor = {
   editEvent: undefined,
   eventSelect: [0, 0],
   eventClipboard: [],
-  errorLog: []
+  console: []
 };
 const propData = {
   // general
@@ -161,7 +161,7 @@ const blockList = {
   "Multi-State": [28, 25, 26, 27, 29, 30]
 };
 const commandList = {
-  Control: [1, 3, 6, 5, 4, 7, 8, 9],
+  Control: [1, 3, 6, 5, 4, 7, 8, 9, 20, 21],
   Variable: [2, 16, 15, 18, 19],
   Gameplay: [0, 10, 11, 17, 14, 13, 12]
 };
@@ -2288,7 +2288,7 @@ function pasteCommand() {
   );
 }
 function clearErr() {
-  editor.errorLog.splice(0);
+  editor.console.splice(0);
 }
 function chooseFromLevel(type, chooseObj, chooseKey, inEvent = false) {
   editor.chooseType = type;

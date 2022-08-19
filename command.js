@@ -524,3 +524,23 @@ new CommandType(
     if (err) return err;
   }
 );
+new CommandType(
+  "log",
+  ["str"],
+  [""],
+  "log(text)\nAdds a message to the console.",
+  ({ args }) => {
+    let [text] = args;
+    consoleLog(text, "#FFFF00");
+  }
+);
+new CommandType(
+  "err",
+  ["str"],
+  [""],
+  "err(text)\nAdds an error to the console.",
+  ({ args }) => {
+    let [text] = args;
+    consoleLog(text, "#FF0000");
+  }
+);

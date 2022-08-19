@@ -433,10 +433,8 @@
     </div>
     <div id="infoDisp" class="infoDisp" v-bind:style="{left:(editor.playMode||!editor.showMenus)?'0':'200px'}">
       Coins: {{coins}}<br>
-      Error Log <button onclick="clearErr()">Clear</button><br>
-      <div v-for="err in editor.errorLog" style="background:red;overflow-wrap:break-word">
-        {{err[0]}}<br>{{err.slice(1).join(" ")}}
-      </div>
+      Console <button onclick="clearErr()">Clear</button><br>
+      <div v-for="line in editor.console" style="overflow-wrap:break-word; white-space:pre-line" v-bind:style="{background:line[1]}">{{line[0]}}</div>
     </div>
     <div id="helpMenu" class="helpMenu centered">
       <div style="font-size: 20px; text-align: center; background:#ffffff88">CONTROLS</div><br>
@@ -997,7 +995,7 @@
           Square brackets also acts like parenthesis, so it allows one to use an expression in place of a property name.
         </div>
         <div v-else-if="docTab=='errors'">
-          All errors occur in runtime, as in, they’ll only occur as the script is running. During gameplay, if any error occurs, then it will halt the event and have it displayed in the in-game error log, in this format:
+          All errors occur in runtime, as in, they’ll only occur as the script is running. During gameplay, if any error occurs, then it will halt the event and have it displayed in the in-game console, in this format:
           <br><br>
           ERROR_TYPE
           at scope source(if applicable) eventType line #

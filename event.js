@@ -99,7 +99,8 @@ function evalExp(exp, context, final = true, restrict = false) {
   for (let i in ops) {
     let op = ops[i];
     let regex = RegExp(
-        op.replaceAll("", "\\").slice(0, -1) + "(?!\\^)" +
+      op.replaceAll("", "\\").slice(0, -1) +
+        "(?!\\^)" +
         (unary.includes(op) ? "(?!=)" : "")
     );
     let fullRegex = RegExp(
@@ -277,8 +278,8 @@ function handleEvents() {
       }
     }
     if (editor && err) {
-      let errPath = createErrPath(data, err);
-      editor.errorLog.push(errPath);
+      let errText = createErrText(data, err);
+      consoleLog(errText, "#FF0000");
     }
     if (!pause) {
       data._lineNum++;
@@ -376,21 +377,14 @@ function parseCommand(command, data) {
     if (err) return err;
   }
 }
-function createErrPath(data, err) {
-  if (data.source) {
-    let source = data.source;
-    if (data._scope === "block") source = getBlockAddress(source);
-    return [
-      err,
-      "at",
-      data._scope,
-      source,
-      data._eventType,
-      "line " + data._lineNum
-    ];
-  } else {
-    return [err, "at", data._scope, data._eventType, "line " + data._lineNum];
-  }
+function createErrText(data, err) {
+  let source = data.source;
+  if (data._scope === "block") source = getBlockAddress(source).toString();
+  if (data._scope === "global") {
+    source = "";
+  } else source += " ";
+  return `${err}
+at ${data._scope} ${source}${data._eventType} line ${data._lineNum}`;
 }
 function runAction(action, context, command) {
   context._type = command[0];
@@ -419,8 +413,8 @@ function handleActions() {
       });
     } else {
       if (editor) {
-        let errPath = createErrPath(action[0], err);
-        editor.errorLog.push(errPath);
+        let errText = createErrText(action[0], err);
+        consoleLog(errText, "#FF0000");
       }
       output = "END";
     }
@@ -429,4 +423,7 @@ function handleActions() {
       i--;
     }
   }
+}
+function consoleLog(text, color) {
+  editor.console.push([text, color]);
 }
