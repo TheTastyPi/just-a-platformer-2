@@ -1143,7 +1143,7 @@ function updateGrid() {
   editor.gridSize = Math.min(Math.max(editor.gridSize, 6.25), maxBlockSize);
   if (prevGridSize !== editor.gridSize) {
     gridDisp.texture = createGridTexture();
-    let scale = editor.gridSize/Math.floor(editor.gridSize);
+    let scale = editor.gridSize / Math.floor(editor.gridSize);
     gridDisp.tileScale.x = scale;
     gridDisp.tileScale.y = scale;
   }
@@ -1452,7 +1452,7 @@ function doAction(action) {
     case "editProp": {
       let blocks = action[1].map((b) => getGridBlock(b));
       for (let i in action[2]) {
-        rollBackBlock(blocks[i],action[2][i]);
+        rollBackBlock(blocks[i], action[2][i]);
       }
       editor.editSelect = action[2];
       reselect();
@@ -1536,7 +1536,7 @@ function undoAction(action) {
     case "editProp": {
       let blocks = action[2].map((b) => getGridBlock(b));
       for (let i in action[1]) {
-        rollBackBlock(blocks[i],action[1][i]);
+        rollBackBlock(blocks[i], action[1][i]);
       }
       editor.editSelect = action[1];
       reselect();
@@ -1597,7 +1597,7 @@ function compressEvents(events) {
       for (let k in line) {
         if (k === "0") continue;
         if (isBlockRef(line[k], true)) {
-          line[k] = line[k].filter(x=>isBlockRef([x]));
+          line[k] = line[k].filter((x) => isBlockRef([x]));
           line[k] = line[k].map((adr) => getBlockAddress(adr));
         } else if (Array.isArray(line[k]) && line[k][0]?.isBlock) {
           line[k].map((b) => compressBlock(b));
@@ -1645,13 +1645,12 @@ function decompressEvents(events, scope, room) {
 function compressBlock(block) {
   compressEvents(block.events);
   if (Object.keys(block.events).length === 0) delete block.events;
-  let isRef = isBlockRef([block]);
   for (let prop in block) {
     if (prop === "type") continue;
     if (
       block[prop] === blockData[block.type].defaultBlock[prop] ||
       propData[prop] === undefined ||
-      (prop === "currentRoom" && isRef)
+      prop === "currentRoom"
     ) {
       delete block[prop];
       continue;
@@ -1659,8 +1658,11 @@ function compressBlock(block) {
     if (block[prop] === Infinity) {
       block[prop] = "Infinity";
     }
-    if (propData[prop][0] === "block" && block[prop]?.type !== undefined)
-      compressBlock(block[prop]);
+    if (propData[prop][0] === "block") {
+      if (block[prop]?.type !== undefined) {
+        compressBlock(block[prop]);
+      } else block[prop] = {};
+    }
     if (propData[prop][1] !== prop) {
       block[propData[prop][1]] = block[prop];
       delete block[prop];
@@ -1683,7 +1685,10 @@ function decompressBlock(block, room, root = true) {
     if (block[prop] === "Infinity") {
       block[prop] = Infinity;
     }
-    if (propData[prop][0] === "block" && (block[prop]?.t !== undefined || block[prop].type !== undefined))
+    if (
+      propData[prop][0] === "block" &&
+      (block[prop]?.t !== undefined || block[prop].type !== undefined)
+    )
       decompressBlock(block[prop], room, false);
   }
   for (let prop in blockData[block.type].defaultBlock) {
@@ -1997,8 +2002,10 @@ function deleteRoom(name) {
   delete levels[name];
   delete roomEvents[name];
   editor.roomOrder.splice(editor.roomOrder.indexOf(name), 1);
-  if (startState.currentRoom === name) startState.currentRoom = editor.roomOrder[0];
-  if (saveState.currentRoom === name) saveState.currentRoom = editor.roomOrder[0];
+  if (startState.currentRoom === name)
+    startState.currentRoom = editor.roomOrder[0];
+  if (saveState.currentRoom === name)
+    saveState.currentRoom = editor.roomOrder[0];
   if (player.currentRoom === name) setLevel(editor.roomOrder[0]);
   editor.editSelect = editor.editSelect.filter((b) => b.currentRoom !== name);
   reselect();

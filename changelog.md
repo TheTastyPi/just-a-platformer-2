@@ -566,3 +566,7 @@
 ### 19 Aug. 2022
 
 - Added two new commands: log() and err()
+
+### 23 Aug. 2022
+
+- Fixed a bug where sub-blocks didn't get compressed properly when saving

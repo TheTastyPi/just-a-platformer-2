@@ -262,6 +262,7 @@ function doPhysics(obj, t, isPlayer) {
       if (subBlock !== block) {
         block = {
           ...getSubBlock(block),
+          currentRoom: block.currentRoom,
           x: block.x,
           y: block.y,
           xv: block.xv,
