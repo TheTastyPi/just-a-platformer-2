@@ -570,3 +570,7 @@
 ### 23 Aug. 2022
 
 - Fixed a bug where sub-blocks didn't get compressed properly when saving
+
+### 24 Aug. 2022
+
+- Improved how wall sliding on wall-jump blocks is handled

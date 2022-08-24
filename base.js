@@ -240,6 +240,7 @@ function doPhysics(obj, t, isPlayer) {
   if (hasSubBlock.includes(obj.type)) {
     subObj = {
       ...getSubBlock(subObj),
+      currentRoom: obj.currentRoom,
       x: obj.x,
       y: obj.y,
       xv: obj.xv,
@@ -251,12 +252,17 @@ function doPhysics(obj, t, isPlayer) {
   }
   let doCollision = function (block, xOffset = 0, yOffset = 0) {
     let colliding = isColliding(obj, block, true, xOffset, yOffset);
-    if (
-      !colliding ||
-      (block.x === obj.x && block.y === obj.y && block.index === obj.index) ||
-      (block.type === 28 && !block.active)
-    )
-      return;
+    let collideBound = false;
+    if (![15,19].includes(block?.type) || !isColliding(obj, block, true, xOffset, yOffset, true)) {
+      if (
+        !colliding ||
+        (block.x === obj.x && block.y === obj.y && block.index === obj.index) ||
+        (block.type === 28 && !block.active)
+      )
+        return;
+    } else {
+      collideBound = true;
+    }
     if (hasSubBlock.includes(block.type)) {
       let subBlock = getSubBlock(block);
       if (subBlock !== block) {
@@ -291,6 +297,12 @@ function doPhysics(obj, t, isPlayer) {
       let isRight = bx1 < px2 && bx2 > px2 && bx1 > px1;
       let isTop = by1 < py1 && by2 > py1 && by2 < py2;
       let isBottom = by1 < py2 && by2 > py2 && by1 > py1;
+      if (collideBound) {
+        isLeft = bx1 <= px1 && bx2 >= px1 && bx2 <= px2;
+        isRight = bx1 <= px2 && bx2 >= px2 && bx1 >= px1;
+        isTop = by1 <= py1 && by2 >= py1 && by2 <= py2;
+        isBottom = by1 <= py2 && by2 >= py2 && by1 >= py1;
+      }
       let dir;
       // block inside
       if (
@@ -652,7 +664,9 @@ function doPhysics(obj, t, isPlayer) {
     for (let i in eventList) {
       for (let j in eventList[i]) {
         let block = eventList[i][j][0];
-        if (!isColliding(obj, block, true) && !block.isSolid) continue;
+        if (![15,19].includes(block.type) || !isColliding(obj, block, true, 0, 0, true)) {
+          if (!isColliding(obj, block, true) && !block.isSolid) continue;
+        }
         eventList[i][j][1](
           obj,
           block,
@@ -687,14 +701,6 @@ function doPhysics(obj, t, isPlayer) {
       }
     }
     obj.lastCollided = collided;
-    for (let i in dirBlock) {
-      let sign = i % 2 ? 1 : -1;
-      let hori = i < 2;
-      if (
-        [15, 19].includes(dirBlock[i]?.type) &&
-        sign * (hori ? obj.xv : obj.yv) >= 0
-      ) moveBlock(obj, hori * sign, !hori * sign);
-    }
     friction = tempObj.friction && friction;
     if (isPlayer) {
       if (
@@ -1218,7 +1224,7 @@ function removeSprite(block) {
     });
   }
 }
-function isColliding(blockA, blockB, areSquares = false, bxOff = 0, byOff = 0) {
+function isColliding(blockA, blockB, areSquares = false, bxOff = 0, byOff = 0, edge = false) {
   let ax1, ax2, ay1, ay2, bx1, bx2, by1, by2;
   if (!areSquares) {
     ax1 = blockA.x;
@@ -1239,7 +1245,9 @@ function isColliding(blockA, blockB, areSquares = false, bxOff = 0, byOff = 0) {
     by1 = blockB.y + byOff;
     by2 = by1 + blockB.size;
   }
-  return ax1 < bx2 && ax2 > bx1 && ay1 < by2 && ay2 > by1;
+  if (edge) {
+    return ax1 <= bx2 && ax2 >= bx1 && ay1 <= by2 && ay2 >= by1;
+  } else return ax1 < bx2 && ax2 > bx1 && ay1 < by2 && ay2 > by1;
 }
 function getSubBlock(block) {
   let subBlock;
