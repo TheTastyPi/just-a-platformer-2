@@ -252,7 +252,6 @@ function doPhysics(obj, t, isPlayer) {
   }
   let doCollision = function (block, xOffset = 0, yOffset = 0) {
     let colliding = isColliding(obj, block, true, xOffset, yOffset);
-    let collideBound = false;
     if (![15,19].includes(block?.type) || !isColliding(obj, block, true, xOffset, yOffset, true)) {
       if (
         !colliding ||
@@ -260,8 +259,6 @@ function doPhysics(obj, t, isPlayer) {
         (block.type === 28 && !block.active)
       )
         return;
-    } else {
-      collideBound = true;
     }
     if (hasSubBlock.includes(block.type)) {
       let subBlock = getSubBlock(block);
@@ -293,16 +290,10 @@ function doPhysics(obj, t, isPlayer) {
       let tx2 = Math.abs(px2 - bx1);
       let ty1 = Math.abs(py1 - by2);
       let ty2 = Math.abs(py2 - by1);
-      let isLeft = bx1 < px1 && bx2 > px1 && bx2 < px2;
-      let isRight = bx1 < px2 && bx2 > px2 && bx1 > px1;
-      let isTop = by1 < py1 && by2 > py1 && by2 < py2;
-      let isBottom = by1 < py2 && by2 > py2 && by1 > py1;
-      if (collideBound) {
-        isLeft = bx1 <= px1 && bx2 >= px1 && bx2 <= px2;
-        isRight = bx1 <= px2 && bx2 >= px2 && bx1 >= px1;
-        isTop = by1 <= py1 && by2 >= py1 && by2 <= py2;
-        isBottom = by1 <= py2 && by2 >= py2 && by1 >= py1;
-      }
+      let isLeft = bx1 <= px1 && bx2 >= px1 && bx2 <= px2;
+      let isRight = bx1 <= px2 && bx2 >= px2 && bx1 >= px1;
+      let isTop = by1 <= py1 && by2 >= py1 && by2 <= py2;
+      let isBottom = by1 <= py2 && by2 >= py2 && by1 >= py1;
       let dir;
       // block inside
       if (
