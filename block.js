@@ -1837,7 +1837,7 @@ new BlockType(
     if (!block.hideDetails) {
       let g = new PIXI.Graphics();
       g.alpha = 0.75;
-      let color = 0xffffff;
+      let color = PIXI.utils.string2hex(block.color);
       drawStr(
         g,
         block.id.toString(),
@@ -1869,11 +1869,6 @@ new BlockType(
   [() => {}, () => {}, () => {}, () => {}, () => {}],
   (block, sprite = block.sprite, app) => {
     sprite.texture = createTexture(block, app);
-    sprite.tint = PIXI.utils.string2hex(block.color);
-    if (!isSwitchOn(block))
-      sprite.tint = PIXI.utils.rgb2hex(
-        PIXI.utils.hex2rgb(sprite.tint).map((x) => x / 2)
-      );
   },
   {
     id: [() => 0, () => Infinity],
