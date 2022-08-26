@@ -1818,6 +1818,7 @@ new BlockType(
     ...new Block(26, 0, 0, 50, false, false, 3),
     id: 0,
     global: false,
+    color: "#88ff88",
     blockA: {},
     blockB: blockData[0].defaultBlock,
     invert: false,
@@ -1836,8 +1837,7 @@ new BlockType(
     if (!block.hideDetails) {
       let g = new PIXI.Graphics();
       g.alpha = 0.75;
-      let color = PIXI.utils.rgb2hex([0.5, 1, 0.5]);
-      if (block.global) color = PIXI.utils.rgb2hex([0.5, 0.5, 1]);
+      let color = 0xffffff;
       drawStr(
         g,
         block.id.toString(),
@@ -1849,6 +1849,13 @@ new BlockType(
         5,
         PIXI.utils.rgb2hex(PIXI.utils.hex2rgb(color).map((x) => x / 2))
       );
+      if (block.global) {
+        g.moveTo(47, 4);
+        g.lineTo(41, 4);
+        g.lineTo(41, 12);
+        g.lineTo(47, 12);
+        g.lineTo(47, 7);
+      }
       g.drawRect(0, 0, 50, 50);
       c.addChild(g);
     }
@@ -1862,10 +1869,16 @@ new BlockType(
   [() => {}, () => {}, () => {}, () => {}, () => {}],
   (block, sprite = block.sprite, app) => {
     sprite.texture = createTexture(block, app);
+    sprite.tint = PIXI.utils.string2hex(block.color);
+    if (!isSwitchOn(block))
+      sprite.tint = PIXI.utils.rgb2hex(
+        PIXI.utils.hex2rgb(sprite.tint).map((x) => x / 2)
+      );
   },
   {
     id: [() => 0, () => Infinity],
     global: [],
+    color: [],
     blockA: [],
     blockB: [],
     invert: [],

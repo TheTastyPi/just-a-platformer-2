@@ -574,3 +574,7 @@
 ### 24 Aug. 2022
 
 - Improved how wall sliding on wall-jump blocks is handled
+
+### 26 Aug. 2022
+
+- Added the 'color' property to Switch Blocks
