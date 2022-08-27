@@ -578,3 +578,7 @@
 ### 26 Aug. 2022
 
 - Added the 'color' property to Switch Blocks
+
+#### 27 Aug. 2022
+
+- Fixed a bug where text doesn't properly display after panning the camera.

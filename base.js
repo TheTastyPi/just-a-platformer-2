@@ -727,14 +727,20 @@ function doPhysics(obj, t, isPlayer) {
           id("textBlockText").innerText = tempObj.textDisp[3];
           let w = id("textBlockText").clientWidth;
           let h = id("textBlockText").clientHeight;
+          let posX = lvlxOffset;
+          let posY = lvlyOffset;
+          if (!camFocused) {
+            posX = camx;
+            posY = camy;
+          }
           style.left =
             Math.max(
-              Math.min(x + lvlxOffset + (s - w) / 2, window.innerWidth - w),
+              Math.min(x + posX + (s - w) / 2, window.innerWidth - w),
               0
             ) + "px";
           style.top =
             Math.max(
-              Math.min(y + lvlyOffset + (s - h) / 2, window.innerHeight - h),
+              Math.min(y + posY + (s - h) / 2, window.innerHeight - h),
               0
             ) + "px";
           prevTextDisp = [...tempObj.textDisp];
