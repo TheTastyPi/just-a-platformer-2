@@ -1394,7 +1394,7 @@ new BlockType(
       if (isPlayer) {
         obj.x = nx;
         obj.y = ny;
-        if (move) setLevel(block.newPos[0]);
+        if (move) toRoom(block.newPos[0]);
       } else moveBlock(obj, nx - obj.x, ny - obj.y);
     }
   ],

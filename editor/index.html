@@ -398,7 +398,7 @@
             {{name}}<br>
             <button
               class="optionButton"
-              v-on:click="setLevel(name)"
+              v-on:click="toRoom(name)"
               style="background-image: url(../pics/load.png);"
               v-on:mousemove="showTooltips('Go to room')"
               v-on:mouseleave="hideTooltips"
@@ -1106,11 +1106,14 @@
   <script src="../lz-string.min.js"></script>
   <script src="../pixi-legacy.min.js"></script>
   <script src="../vue.min.js"></script>
+  <script src="../utility.js"></script>
   <script src="../base.js"></script>
   <script src="../block.js"></script>
+  <script src="../blockFunc.js"></script>
   <script src="../command.js"></script>
-  <script src="../event.js"></script>
   <script src="../control.js"></script>
   <script src="../draw.js"></script>
+  <script src="../event.js"></script>
+  <script src="../respawn.js"></script>
   <script src="editor.js"></script>
 </html>

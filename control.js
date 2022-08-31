@@ -6,7 +6,6 @@ const control = {
   shift: false,
   dash: false
 };
-
 document.addEventListener("keydown", function (event) {
   let key = event.code;
   runEvent(globalEvents.onKeyDown, undefined, { key: key });
@@ -44,7 +43,6 @@ document.addEventListener("keydown", function (event) {
     default:
   }
 });
-
 document.addEventListener("keyup", function (event) {
   let key = event.code;
   runEvent(globalEvents.onKeyUp, undefined, { key: key });
@@ -84,4 +82,3 @@ document.addEventListener("keyup", function (event) {
     default:
   }
 });
-// 10 (whyyyy)

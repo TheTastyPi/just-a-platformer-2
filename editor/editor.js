@@ -2006,7 +2006,7 @@ function deleteRoom(name) {
     startState.currentRoom = editor.roomOrder[0];
   if (saveState.currentRoom === name)
     saveState.currentRoom = editor.roomOrder[0];
-  if (player.currentRoom === name) setLevel(editor.roomOrder[0]);
+  if (player.currentRoom === name) toRoom(editor.roomOrder[0]);
   editor.editSelect = editor.editSelect.filter((b) => b.currentRoom !== name);
   reselect();
   save();

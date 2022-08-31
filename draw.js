@@ -312,6 +312,60 @@ function cullBlock(block) {
     block.x < (window.innerWidth - camx) / cams &&
     block.y < (window.innerHeight - camy) / cams;
 }
+function createTexture(block, app) {
+  let t;
+  let isDefault = true;
+  for (let i in blockData[block.type].textureFactor) {
+    let prop = blockData[block.type].textureFactor[i];
+    if (block[prop] !== blockData[block.type].defaultBlock[prop]) {
+      isDefault = false;
+      break;
+    }
+  }
+  if (isDefault && app === display) {
+    t = blockData[block.type].defaultTexture;
+  } else t = blockData[block.type].getTexture(block, app);
+  return t;
+}
+function updateTexture(block) {
+  if (block.sprite.texture !== blockData[block.type].defaultTexture)
+    block.sprite.texture.destroy(true);
+  block.sprite.texture = createTexture(block);
+}
+function createSprite(block) {
+  let t = createTexture(block);
+  let s = new PIXI.Sprite(t);
+  s.x = block.x;
+  s.y = block.y;
+  s.width = block.size;
+  s.height = block.size;
+  s.zIndex = block.eventPriority;
+  return s;
+}
+function addSprite(block) {
+  if (block.currentRoom === player.currentRoom) {
+    let s = createSprite(block);
+    levelLayer.addChild(s);
+    block.sprite = s;
+    updateBlock(block);
+  }
+}
+function removeSprite(block) {
+  let s = block.sprite;
+  if (block.currentRoom === player.currentRoom) {
+    for (let i in s.children) s.children[i].destroy();
+    s.destroy({
+      texture: s.texture !== blockData[block.type].defaultTexture
+    });
+  }
+  if (block.dupSprite !== null) {
+    for (let i in block.dupSprite.children)
+      block.dupSprite.children[i].destroy();
+    block.dupSprite.destroy({
+      texture: block.dupSprite.texture !== blockData[block.type].defaultTexture
+    });
+  }
+}
 var convTex = createConveyorTexture();
 function createConveyorTexture(app = display) {
   let vert = new PIXI.Graphics();

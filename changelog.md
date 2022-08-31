@@ -582,3 +582,7 @@
 #### 27 Aug. 2022
 
 - Fixed a bug where text doesn't properly display after panning the camera.
+
+### 31 Aug. 2022
+
+- Heavily reorganized the code
