@@ -586,3 +586,7 @@
 ### 31 Aug. 2022
 
 - Heavily reorganized the code
+
+### 1 Sep. 2022
+
+- Fixed a bug where an object can clip into a block's corner in very precise circumstances.
