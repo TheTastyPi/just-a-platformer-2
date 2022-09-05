@@ -590,3 +590,17 @@
 ### 1 Sep. 2022
 
 - Fixed a bug where an object can clip into a block's corner in very precise circumstances.
+
+### 5 Sep. 2022
+
+- Added an options menu in the main page of jap2, which has options for:
+  - Dark theme
+  - Custom BG Color
+  - Custom keybinds
+    - There are some presets:
+    - Type A, new default. Z or Period to jump, X or Comma to dash
+    - Type B, same as before. Directional key to jump, but still X or Comma to dash
+  - Default autosave in editor
+- Added a loading screen
+- Added a more info button in the miscellaneous section
+  - Allows you to go to the main page from the editor

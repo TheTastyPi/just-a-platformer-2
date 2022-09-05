@@ -142,9 +142,9 @@ new BlockType(
     (obj, block, tempObj, isPlayer) => {
       if (isPlayer) {
         tempObj.textDisp = [block.x, block.y, block.size, "Shift to use"];
-        if (control.shift && canSave) {
+        if (control.interact && canInteract) {
           setSpawn();
-          canSave = false;
+          canInteract = false;
           updateBlock(getGridBlock(block));
           drawLevel();
         }

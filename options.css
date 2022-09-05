@@ -1,0 +1,8 @@
+* {
+  font-family: "Courier New", Courier, monospace;
+}
+.smolButton {
+  height: 16px;
+  min-width: 16px;
+  padding: 0;
+}

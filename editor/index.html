@@ -4,6 +4,8 @@
     <title>just a level editor 2</title>
     <link rel="icon" type="image/png" href="../pics/just-a-level-editor-2.png" />
     <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="editor.css" />
+    <link id="hide.css" rel="stylesheet" href="../hide.css" />
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
     <meta
       name="viewport"
@@ -15,1098 +17,1109 @@
     />
     <meta name="author" content="TheTastyPi" />
   </head>
-  <body
-    onresize="adjustLevelSize()"
-    style="
-      height: 100%;
-      margin: 0;
-      overflow: hidden;
-      background: #eeeeee;
-      font-family: monospace;
-    "
-  >
-    <div id="background" style="position: absolute; background: #ffffff;"></div>
-    <canvas id="display" style="position: absolute;"></canvas>
-    <div id="textBlockText" class="textBlockText"></div>
-    <div id="blockSelect" class="blockSelect">
-      <div v-for="(ids,groupName) in blocks" class="blockSect">
-        <div class="blockSectLabel">{{groupName}}</div>
-        <div class="blockSelectGroup">
-          <div v-for="id in ids" class="blockSelectLabel">
-            <canvas
-              v-bind:id="'blockSelect'+id"
-              width="50"
-              height="50"
-              v-on:click="changeBuildSelect(blockData[id].defaultBlock)"
-              v-bind:class="{blockSelected:selectType==id}"
-            ></canvas
-            ><br />
-            {{blockData[id].name}}
+  <body onresize="adjustLevelSize()">
+    <div id="loading" class="centered">Loading...</div>
+    <div id="everything">
+      <div id="background"></div>
+      <canvas id="display" style="position: absolute;"></canvas>
+      <div id="textBlockText" class="textBlockText"></div>
+      <div id="blockSelect" class="blockSelect">
+        <div v-for="(ids,groupName) in blocks" class="blockSect">
+          <div class="blockSectLabel">{{groupName}}</div>
+          <div class="blockSelectGroup">
+            <div v-for="id in ids" class="blockSelectLabel">
+              <canvas
+                v-bind:id="'blockSelect'+id"
+                width="50"
+                height="50"
+                v-on:click="changeBuildSelect(blockData[id].defaultBlock)"
+                v-bind:class="{blockSelected:selectType==id}"
+              ></canvas
+              ><br />
+              {{blockData[id].name}}
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    <div id="blockEdit" class="blockEdit">
-      <div id="blockEditMenu" class="blockEditMenu" v-if="editor.editBlock !== undefined" v-on:keydown.stop>
-        <div class="propContainer">
-          <div v-for="prop in editOrder" class="blockProp">
-            <span style="width:50%" v-bind:style="{textDecoration:desc[prop]?'underline':''}"
-            v-on:mousemove="if (desc[prop]) showTooltips(desc[prop])"
-            v-on:mouseleave="hideTooltips">{{prop}}</span>
-            <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll">
-              <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
-                <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
-              </optgroup>
-            </select>
-            <textarea v-else-if="inputType[propData[prop][0]] == 'textarea'"style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></textarea>
-            <button v-else-if="propData[prop][0] == 'events'" onclick="toggleEventEditor('block',editor.editBlock.events)" style="width:50%">Toggle event editor</button>
-            <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></input>
+      <div id="blockEdit" class="blockEdit">
+        <div id="blockEditMenu" class="blockEditMenu" v-if="editor.editBlock !== undefined" v-on:keydown.stop>
+          <div class="propContainer">
+            <div v-for="prop in editOrder" class="blockProp">
+              <span style="width:50%" v-bind:style="{textDecoration:desc[prop]?'underline':''}"
+              v-on:mousemove="if (desc[prop]) showTooltips(desc[prop])"
+              v-on:mouseleave="hideTooltips">{{prop}}</span>
+              <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll">
+                <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
+                  <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
+                </optgroup>
+              </select>
+              <textarea v-else-if="inputType[propData[prop][0]] == 'textarea'"style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></textarea>
+              <button v-else-if="propData[prop][0] == 'events'" onclick="toggleEventEditor('block',editor.editBlock.events)" style="width:50%">Toggle event editor</button>
+              <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></input>
+            </div>
+            <div v-for="prop in solidProps" class="blockProp" v-if="editor.editBlock.isSolid">
+              <span style="width:50%"v-bind:style="{textDecoration:desc[prop]?'underline':''}"
+              v-on:mousemove="if (desc[prop]) showTooltips(desc[prop])"
+              v-on:mouseleave="hideTooltips">{{prop}}</span>
+              <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll">
+                <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
+                  <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
+                </optgroup>
+              </select>
+              <textarea v-else-if="inputType[propData[prop][0]] == 'textarea'"style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></textarea>
+              <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></input>
+            </div>
+            <div v-for="prop in dynamicProps" class="blockProp" v-if="editor.editBlock.dynamic">
+              <span style="width:50%"v-bind:style="{textDecoration:desc[prop]?'underline':''}"
+              v-on:mousemove="if (desc[prop]) showTooltips(desc[prop])"
+              v-on:mouseleave="hideTooltips">{{prop}}</span>
+              <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll">
+                <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
+                  <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
+                </optgroup>
+              </select>
+              <textarea v-else-if="inputType[propData[prop][0]] == 'textarea'"style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></textarea>
+              <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></input>
+            </div>
+            <div v-if="Object.keys(editor.editBlockProp).length > 0 && inputType[propData[prop][0]] !== 'none'" v-for="prop in editor.editBlockProp" class="blockProp">
+              <span style="width:50%"v-bind:style="{textDecoration:desc[prop]?'underline':''}"
+              v-on:mousemove="if (desc[prop]) showTooltips(desc[prop])"
+              v-on:mouseleave="hideTooltips">{{prop}}</span>
+              <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll">
+                <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
+                  <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
+                </optgroup>
+              </select>
+              <textarea v-else-if="inputType[propData[prop][0]] == 'textarea'"style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></textarea>
+              <button v-else-if="propData[prop][0] == 'pos'"style="width:50%" v-on:click="chooseFromLevel('pos',editor.editBlock,prop)" v-on:keydown.enter="confirmEditAll">{{(editor.chooseType === "pos" && editor.chooseFor === editor.editBlock[prop])?"Ctrl LMB to select. Esc to cancel.":editor.editBlock[prop][0]===undefined?"Select position":editor.editBlock[prop]}}</button>
+              <button v-else-if="propData[prop][0] == 'block'"style="width:50%" v-on:click="chooseFromLevel('block',editor.editBlock,prop)" v-on:keydown.enter="confirmEditAll">{{(editor.chooseType === "block" && editor.chooseFor === editor.editBlock[prop])?"Select block. Delete to remove, Ctrl-C to copy, Esc to cancel.":!editor.editBlock[prop]?.isBlock?"Select block":(editor.editBlock[prop]==="MIXED"?"MIXED":blockData[editor.editBlock[prop].type].name)}}</button>
+              <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></input>
+            </div>
           </div>
-          <div v-for="prop in solidProps" class="blockProp" v-if="editor.editBlock.isSolid">
-            <span style="width:50%"v-bind:style="{textDecoration:desc[prop]?'underline':''}"
-            v-on:mousemove="if (desc[prop]) showTooltips(desc[prop])"
-            v-on:mouseleave="hideTooltips">{{prop}}</span>
-            <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll">
-              <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
-                <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
-              </optgroup>
-            </select>
-            <textarea v-else-if="inputType[propData[prop][0]] == 'textarea'"style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></textarea>
-            <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></input>
-          </div>
-          <div v-for="prop in dynamicProps" class="blockProp" v-if="editor.editBlock.dynamic">
-            <span style="width:50%"v-bind:style="{textDecoration:desc[prop]?'underline':''}"
-            v-on:mousemove="if (desc[prop]) showTooltips(desc[prop])"
-            v-on:mouseleave="hideTooltips">{{prop}}</span>
-            <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll">
-              <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
-                <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
-              </optgroup>
-            </select>
-            <textarea v-else-if="inputType[propData[prop][0]] == 'textarea'"style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></textarea>
-            <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></input>
-          </div>
-          <div v-if="Object.keys(editor.editBlockProp).length > 0 && inputType[propData[prop][0]] !== 'none'" v-for="prop in editor.editBlockProp" class="blockProp">
-            <span style="width:50%"v-bind:style="{textDecoration:desc[prop]?'underline':''}"
-            v-on:mousemove="if (desc[prop]) showTooltips(desc[prop])"
-            v-on:mouseleave="hideTooltips">{{prop}}</span>
-            <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll">
-              <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
-                <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
-              </optgroup>
-            </select>
-            <textarea v-else-if="inputType[propData[prop][0]] == 'textarea'"style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></textarea>
-            <button v-else-if="propData[prop][0] == 'pos'"style="width:50%" v-on:click="chooseFromLevel('pos',editor.editBlock,prop)" v-on:keydown.enter="confirmEditAll">{{(editor.chooseType === "pos" && editor.chooseFor === editor.editBlock[prop])?"Ctrl LMB to select. Esc to cancel.":editor.editBlock[prop][0]===undefined?"Select position":editor.editBlock[prop]}}</button>
-            <button v-else-if="propData[prop][0] == 'block'"style="width:50%" v-on:click="chooseFromLevel('block',editor.editBlock,prop)" v-on:keydown.enter="confirmEditAll">{{(editor.chooseType === "block" && editor.chooseFor === editor.editBlock[prop])?"Select block. Delete to remove, Ctrl-C to copy, Esc to cancel.":!editor.editBlock[prop]?.isBlock?"Select block":(editor.editBlock[prop]==="MIXED"?"MIXED":blockData[editor.editBlock[prop].type].name)}}</button>
-            <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></input>
+          <div>
+            <button onclick="confirmEditAll()">Confirm</button>
+            <button onclick="reselect()">Reset</button>
           </div>
         </div>
+        <div v-if="editor.editBlock === undefined">
+          <span class="centered noEditText">Select blocks to edit</span>
+        </div>
+      </div>
+      <div id="editOptions" class="editOptions">
+        <div>Building</div>
+        Size:<input v-model="editor.buildSelect.size" onchange="updateBuildDisp()" v-on:keydown.stop style="width:100px"></input>px<br>
+        <div>Grid & Snapping</div>
+        <button
+          v-bind:class="{buttonOn:grid.visible}"
+          class="optionButton"
+          onclick="gridDisp.visible = !gridDisp.visible;"
+          style="background-image: url(../pics/grid.png);"
+          v-on:mousemove="showTooltips('Toggle grid display')"
+          v-on:mouseleave="hideTooltips"
+        ></button><br>
+        Size:<input v-model="editor.gridSize" onchange="updateGrid()" v-on:keydown.stop style="width:100px"></input>px<br>
+        <button
+          v-bind:class="{buttonOn:editor.snapOverride}"
+          class="optionButton"
+          onclick="editor.snapOverride = !editor.snapOverride"
+          style="background-image: url(../pics/noSnap.png);"
+          v-on:mousemove="showTooltips('Disable all snapping')"
+          v-on:mouseleave="hideTooltips"
+        ></button>
+        <button
+          v-bind:class="{buttonOn:editor.gridSnap[0]}"
+          class="optionButton"
+          onclick="editor.gridSnap.splice(0,1,!editor.gridSnap[0])"
+          style="background-image: url(../pics/cornerSnap.png);"
+          v-on:mousemove="showTooltips('Toggle corner snapping')"
+          v-on:mouseleave="hideTooltips"
+        ></button><br>
+        <button
+          v-bind:class="{buttonOn:editor.gridSnap[1]}"
+          class="optionButton"
+          onclick="editor.gridSnap.splice(1,1,!editor.gridSnap[1])"
+          style="background-image: url(../pics/edgeSnap.png);"
+          v-on:mousemove="showTooltips('Toggle edge snapping')"
+          v-on:mouseleave="hideTooltips"
+        ></button>
+        <button
+          v-bind:class="{buttonOn:editor.gridSnap[2]}"
+          class="optionButton"
+          onclick="editor.gridSnap.splice(2,1,!editor.gridSnap[2])"
+          style="background-image: url(../pics/centerSnap.png);"
+          v-on:mousemove="showTooltips('Toggle center snapping')"
+          v-on:mouseleave="hideTooltips"
+        ></button><br>
+        <div>Transform</div>
+        <button
+          class="optionButton"
+          onclick="rotateSelected(true)"
+          style="background-image: url(../pics/rotateccw.png);"
+          v-on:mousemove="showTooltips('Rotate selected blocks counter-clockwise')"
+          v-on:mouseleave="hideTooltips"
+        ></button>
+        <button
+          class="optionButton"
+          onclick="rotateSelected(false)"
+          style="background-image: url(../pics/rotatecw.png);"
+          v-on:mousemove="showTooltips('Rotate selected blocks clockwise')"
+          v-on:mouseleave="hideTooltips"
+        ></button><br>
+        <button
+          class="optionButton"
+          onclick="flipSelected(false)"
+          style="background-image: url(../pics/flipHori.png);"
+          v-on:mousemove="showTooltips('Flip selected blocks horizontally')"
+          v-on:mouseleave="hideTooltips"
+        ></button>
+        <button
+          class="optionButton"
+          onclick="flipSelected(true)"
+          style="background-image: url(../pics/flipVert.png);"
+          v-on:mousemove="showTooltips('Flip selected blocks vertically')"
+          v-on:mouseleave="hideTooltips"
+        ></button>
+        <div>Level Size</div>
+        {{width+"x"+height}}<br>
+        {{editor.invertExpand?'Retract':'Expand'}} level by <input v-model="editor.expandAmt" onchange="editor.expandAmt = Math.round(editor.expandAmt)" v-on:keydown.stop style="width:100px"></input><br>
+        <button
+          class="optionButton"
+          onclick="changeLevelSize('up',editor.expandAmt*(editor.invertExpand?-1:1))"
+          v-bind:style="{backgroundImage: `url(../pics/${editor.invertExpand?'downArrow':'upArrow'}.png)`}"
+        ></button><br>
+        <button
+          class="optionButton"
+          onclick="changeLevelSize('left',editor.expandAmt*(editor.invertExpand?-1:1))"
+          v-bind:style="{backgroundImage: `url(../pics/${editor.invertExpand?'rightArrow':'leftArrow'}.png)`}"
+        ></button>
+        <button
+          class="optionButton"
+          onclick="editor.invertExpand = !editor.invertExpand"
+          v-bind:style="{backgroundImage: `url(../pics/${editor.invertExpand?'minus':'plus'}.png)`}"
+          v-on:mousemove="showTooltips('Toggle level size increase/decrease')"
+          v-on:mouseleave="hideTooltips"
+        ></button>
+        <button
+          class="optionButton"
+          onclick="changeLevelSize('right',editor.expandAmt*(editor.invertExpand?-1:1))"
+          v-bind:style="{backgroundImage: `url(../pics/${editor.invertExpand?'leftArrow':'rightArrow'}.png)`}"
+        ></button><br>
+        <button
+          class="optionButton"
+          onclick="changeLevelSize('down',editor.expandAmt*(editor.invertExpand?-1:1))"
+          v-bind:style="{backgroundImage: `url(../pics/${editor.invertExpand?'upArrow':'downArrow'}.png)`}"
+        ></button>
+        <div>Miscellaneous</div>
+        <button
+          class="optionButton"
+          onclick="setSpawn(true)"
+          style="background-image: url(../pics/startPoint.png);"
+          v-on:mousemove="showTooltips('Set start point')"
+          v-on:mouseleave="hideTooltips"
+        ></button>
+        <button
+          v-bind:class="{buttonOn:editor.invincible}"
+          class="optionButton"
+          onclick="editor.invincible = !editor.invincible"
+          style="background-image: url(../pics/godMode.png);"
+          v-on:mousemove="showTooltips('Toggle god mode (G)')"
+          v-on:mouseleave="hideTooltips"
+        ></button>
+        <button
+          v-bind:class="{buttonOn:editor.showMenus}"
+          class="optionButton"
+          onclick="editor.showMenus = !editor.showMenus; updateMenus();"
+          style="background-image: url(../pics/showMenus.png);"
+          v-on:mousemove="showTooltips('Toggle menus (M)')"
+          v-on:mouseleave="hideTooltips"
+        ></button><br>
+        <button
+          v-bind:class="{buttonOn:editor.playMode}"
+          class="optionButton"
+          onclick="togglePlayMode()"
+          style="background-image: url(../pics/playMode.png);"
+          v-on:mousemove="showTooltips('Toggle play mode (P): Enable dynamic blocks, but disable editing')"
+          v-on:mouseleave="hideTooltips"
+        ></button>
+        <button
+          v-bind:class="{buttonOn:editor.doAnimation}"
+          class="optionButton"
+          onclick="editor.doAnimation = !editor.doAnimation"
+          style="background-image: url(../pics/doAnimation.png);"
+          v-on:mousemove="showTooltips('Toggle animation')"
+          v-on:mouseleave="hideTooltips"
+        ></button>
+        <button
+          class="optionButton"
+          onclick="openInfo()"
+          style="background-image: url(../pics/moreInfo.png);"
+          v-on:mousemove="showTooltips('Show more info')"
+          v-on:mouseleave="hideTooltips"
+        ></button><br>
+        <button
+          class="optionButton"
+          onclick="linkSelected()"
+          style="background-image: url(../pics/linkSelected.png);"
+          v-on:mousemove="showTooltips('Link Selected Blocks')"
+          v-on:mouseleave="hideTooltips"
+        ></button>
+        <button
+          class="optionButton"
+          onclick="delinkSelected()"
+          style="background-image: url(../pics/delinkSelected.png);"
+          v-on:mousemove="showTooltips('Delink Selected Blocks')"
+          v-on:mouseleave="hideTooltips"
+        ></button>
+      </div>
+      <div id="saveMenu" class="saveMenu">
+        <button 
+          class="tabButton" 
+          onclick="editor.rightTab = 'save'" 
+          v-bind:class="{buttonOn:editor.rightTab === 'save'}"
+        >Saves</button>
+        <button 
+          class="tabButton" 
+          onclick="editor.rightTab = 'room'" 
+          v-bind:class="{buttonOn:editor.rightTab === 'room'}"
+        >Rooms</button>
+        <div v-if="editor.rightTab === 'save'">
+          <button
+            class="optionButton"
+            onclick="addSave()"
+            style="background-image: url(../pics/addSave.png);"
+            v-on:mousemove="showTooltips('Add save')"
+            v-on:mouseleave="hideTooltips"
+          ></button>
+          <button
+            class="optionButton"
+            onclick="save()"
+            style="background-image: url(../pics/save.png);"
+            v-on:mousemove="showTooltips('Save')"
+            v-on:mouseleave="hideTooltips"
+          ></button><br>
+          <button
+            class="optionButton"
+            onclick="importSave()"
+            style="background-image: url(../pics/importSave.png);"
+            v-on:mousemove="showTooltips('Import save')"
+            v-on:mouseleave="hideTooltips"
+          ></button>
+          <button
+            v-bind:class="{buttonOn:editor.autoSave}"
+            class="optionButton"
+            onclick="editor.autoSave = !editor.autoSave"
+            style="background-image: url(../pics/autosave.png);"
+            v-on:mousemove="showTooltips('Toggle autosave (every 5 sec)')"
+            v-on:mouseleave="hideTooltips"
+          ></button><br>
+          <div>Saves</div>
+          <div v-for="name in editor.saveOrder" v-bind:style="{background: ((editor.currentSave === name) ? '#8888ff88' : '')}" style="margin-top: 5px; display:flex; align-items:center; justify-content: space-evenly">
+            <div>
+              <button
+                class="optionButton small"
+                v-on:click="moveSave(name,-1)"
+                style="background-image: url(../pics/upArrow.png);"
+                v-on:mousemove="showTooltips('Move up')"
+                v-on:mouseleave="hideTooltips"
+              ></button><br>
+              <button
+                class="optionButton small"
+                v-on:click="moveSave(name,1)"
+                style="background-image: url(../pics/downArrow.png);"
+                v-on:mousemove="showTooltips('Move down')"
+                v-on:mouseleave="hideTooltips"
+              ></button>
+            </div>
+            <div>
+              {{name}}<br>
+              <button
+                class="optionButton"
+                v-on:click="load(name)"
+                style="background-image: url(../pics/load.png);"
+                v-on:mousemove="showTooltips('Load')"
+                v-on:mouseleave="hideTooltips"
+              ></button>
+              <button
+                class="optionButton"
+                v-on:click="exportSave(name)"
+                style="background-image: url(../pics/exportSave.png);"
+                v-on:mousemove="showTooltips('Export')"
+                v-on:mouseleave="hideTooltips"
+              ></button><br>
+              <button
+                class="optionButton"
+                v-on:click="deleteSave(name)"
+                style="background-image: url(../pics/deleteSave.png);"
+                v-on:mousemove="showTooltips('Delete')"
+                v-on:mouseleave="hideTooltips"
+              ></button>
+              <button
+                class="optionButton"
+                v-on:click="renameSave(name)"
+                style="background-image: url(../pics/renameSave.png);"
+                v-on:mousemove="showTooltips('Rename')"
+                v-on:mouseleave="hideTooltips"
+              ></button><br>
+            </div>
+          </div>
+        </div>
+        <div v-if="editor.rightTab === 'room'">
+          <button
+            class="optionButton"
+            onclick="addRoom()"
+            style="background-image: url(../pics/addSave.png);"
+            v-on:mousemove="showTooltips('Add room')"
+            v-on:mouseleave="hideTooltips"
+          ></button>
+          <button
+            class="optionButton"
+            v-on:click="toggleEventEditor('global',globalEvents)"
+            style="background-image: url(../pics/editEvent.png);"
+            v-on:mousemove="showTooltips('Edit global event')"
+            v-on:mouseleave="hideTooltips"
+          ></button>
+          <div>Rooms</div>
+          <div v-for="name in editor.roomOrder" v-bind:style="{background: ((editor.currentRoom === name) ? '#8888ff88' : '')}" style="margin-top: 5px; display:flex; align-items:center; justify-content: space-evenly">
+            <div>
+              <button
+                class="optionButton small"
+                v-on:click="moveRoom(name,-1)"
+                style="background-image: url(../pics/upArrow.png);"
+                v-on:mousemove="showTooltips('Move up')"
+                v-on:mouseleave="hideTooltips"
+              ></button><br>
+              <button
+                class="optionButton small"
+                v-on:click="moveRoom(name,1)"
+                style="background-image: url(../pics/downArrow.png);"
+                v-on:mousemove="showTooltips('Move down')"
+                v-on:mouseleave="hideTooltips"
+              ></button>
+            </div>
+            <div>
+              {{name}}<br>
+              <button
+                class="optionButton"
+                v-on:click="toRoom(name)"
+                style="background-image: url(../pics/load.png);"
+                v-on:mousemove="showTooltips('Go to room')"
+                v-on:mouseleave="hideTooltips"
+              ></button>
+              <button
+                class="optionButton"
+                v-on:click="deleteRoom(name)"
+                style="background-image: url(../pics/deleteSave.png);"
+                v-on:mousemove="showTooltips('Delete')"
+                v-on:mouseleave="hideTooltips"
+              ></button><br>
+              <button
+                class="optionButton"
+                v-on:click="renameRoom(name)"
+                style="background-image: url(../pics/renameSave.png);"
+                v-on:mousemove="showTooltips('Rename')"
+                v-on:mouseleave="hideTooltips"
+              ></button>
+              <button
+                class="optionButton"
+                v-on:click="toggleEventEditor('room',roomEvents[name])"
+                style="background-image: url(../pics/editEvent.png);"
+                v-on:mousemove="showTooltips('Edit room event')"
+                v-on:mouseleave="hideTooltips"
+              ></button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="playDisp" class="playDisp" v-bind:style="{display:editor.playMode?'block':'none'}">
+        PLAY MODE
+      </div>
+      <div id="infoDisp" class="infoDisp" v-bind:style="{left:(editor.playMode||!editor.showMenus)?'0':'200px'}">
+        Coins: {{coins}}<br>
+        Console <button onclick="clearErr()">Clear</button><br>
+        <div v-for="line in editor.console" style="overflow-wrap:break-word; white-space:pre-line" v-bind:style="{background:line[1]}">{{line[0]}}</div>
+      </div>
+      <div id="helpMenu" class="helpMenu centered">
+        <div style="font-size: 20px; text-align: center; background:#ffffff88">CONTROLS</div><br>
+        <div style="text-align: center; background:#ffffff88"">General</div>
         <div>
-          <button onclick="confirmEditAll()">Confirm</button>
-          <button onclick="reselect()">Reset</button>
-        </div>
-      </div>
-      <div v-if="editor.editBlock === undefined">
-        <span class="centered noEditText">Select blocks to edit</span>
-      </div>
-    </div>
-    <div id="editOptions" class="editOptions">
-      <div>Building</div>
-      Size:<input v-model="editor.buildSelect.size" onchange="updateBuildDisp()" v-on:keydown.stop style="width:100px"></input>px<br>
-      <div>Grid & Snapping</div>
-      <button
-        v-bind:class="{buttonOn:grid.visible}"
-        class="optionButton"
-        onclick="gridDisp.visible = !gridDisp.visible;"
-        style="background-image: url(../pics/grid.png);"
-        v-on:mousemove="showTooltips('Toggle grid display')"
-        v-on:mouseleave="hideTooltips"
-      ></button><br>
-      Size:<input v-model="editor.gridSize" onchange="updateGrid()" v-on:keydown.stop style="width:100px"></input>px<br>
-      <button
-        v-bind:class="{buttonOn:editor.snapOverride}"
-        class="optionButton"
-        onclick="editor.snapOverride = !editor.snapOverride"
-        style="background-image: url(../pics/noSnap.png);"
-        v-on:mousemove="showTooltips('Disable all snapping')"
-        v-on:mouseleave="hideTooltips"
-      ></button>
-      <button
-        v-bind:class="{buttonOn:editor.gridSnap[0]}"
-        class="optionButton"
-        onclick="editor.gridSnap.splice(0,1,!editor.gridSnap[0])"
-        style="background-image: url(../pics/cornerSnap.png);"
-        v-on:mousemove="showTooltips('Toggle corner snapping')"
-        v-on:mouseleave="hideTooltips"
-      ></button><br>
-      <button
-        v-bind:class="{buttonOn:editor.gridSnap[1]}"
-        class="optionButton"
-        onclick="editor.gridSnap.splice(1,1,!editor.gridSnap[1])"
-        style="background-image: url(../pics/edgeSnap.png);"
-        v-on:mousemove="showTooltips('Toggle edge snapping')"
-        v-on:mouseleave="hideTooltips"
-      ></button>
-      <button
-        v-bind:class="{buttonOn:editor.gridSnap[2]}"
-        class="optionButton"
-        onclick="editor.gridSnap.splice(2,1,!editor.gridSnap[2])"
-        style="background-image: url(../pics/centerSnap.png);"
-        v-on:mousemove="showTooltips('Toggle center snapping')"
-        v-on:mouseleave="hideTooltips"
-      ></button><br>
-      <div>Transform</div>
-      <button
-        class="optionButton"
-        onclick="rotateSelected(true)"
-        style="background-image: url(../pics/rotateccw.png);"
-        v-on:mousemove="showTooltips('Rotate selected blocks counter-clockwise')"
-        v-on:mouseleave="hideTooltips"
-      ></button>
-      <button
-        class="optionButton"
-        onclick="rotateSelected(false)"
-        style="background-image: url(../pics/rotatecw.png);"
-        v-on:mousemove="showTooltips('Rotate selected blocks clockwise')"
-        v-on:mouseleave="hideTooltips"
-      ></button><br>
-      <button
-        class="optionButton"
-        onclick="flipSelected(false)"
-        style="background-image: url(../pics/flipHori.png);"
-        v-on:mousemove="showTooltips('Flip selected blocks horizontally')"
-        v-on:mouseleave="hideTooltips"
-      ></button>
-      <button
-        class="optionButton"
-        onclick="flipSelected(true)"
-        style="background-image: url(../pics/flipVert.png);"
-        v-on:mousemove="showTooltips('Flip selected blocks vertically')"
-        v-on:mouseleave="hideTooltips"
-      ></button>
-      <div>Level Size</div>
-      {{width+"x"+height}}<br>
-      {{editor.invertExpand?'Retract':'Expand'}} level by <input v-model="editor.expandAmt" onchange="editor.expandAmt = Math.round(editor.expandAmt)" v-on:keydown.stop style="width:100px"></input><br>
-      <button
-        class="optionButton"
-        onclick="changeLevelSize('up',editor.expandAmt*(editor.invertExpand?-1:1))"
-        v-bind:style="{backgroundImage: `url(../pics/${editor.invertExpand?'downArrow':'upArrow'}.png)`}"
-      ></button><br>
-      <button
-        class="optionButton"
-        onclick="changeLevelSize('left',editor.expandAmt*(editor.invertExpand?-1:1))"
-        v-bind:style="{backgroundImage: `url(../pics/${editor.invertExpand?'rightArrow':'leftArrow'}.png)`}"
-      ></button>
-      <button
-        class="optionButton"
-        onclick="editor.invertExpand = !editor.invertExpand"
-        v-bind:style="{backgroundImage: `url(../pics/${editor.invertExpand?'minus':'plus'}.png)`}"
-        v-on:mousemove="showTooltips('Toggle level size increase/decrease')"
-        v-on:mouseleave="hideTooltips"
-      ></button>
-      <button
-        class="optionButton"
-        onclick="changeLevelSize('right',editor.expandAmt*(editor.invertExpand?-1:1))"
-        v-bind:style="{backgroundImage: `url(../pics/${editor.invertExpand?'leftArrow':'rightArrow'}.png)`}"
-      ></button><br>
-      <button
-        class="optionButton"
-        onclick="changeLevelSize('down',editor.expandAmt*(editor.invertExpand?-1:1))"
-        v-bind:style="{backgroundImage: `url(../pics/${editor.invertExpand?'upArrow':'downArrow'}.png)`}"
-      ></button>
-      <div>Miscellaneous</div>
-      <button
-        class="optionButton"
-        onclick="setSpawn(true)"
-        style="background-image: url(../pics/startPoint.png);"
-        v-on:mousemove="showTooltips('Set start point')"
-        v-on:mouseleave="hideTooltips"
-      ></button>
-      <button
-        v-bind:class="{buttonOn:editor.invincible}"
-        class="optionButton"
-        onclick="editor.invincible = !editor.invincible"
-        style="background-image: url(../pics/godMode.png);"
-        v-on:mousemove="showTooltips('Toggle god mode (G)')"
-        v-on:mouseleave="hideTooltips"
-      ></button>
-      <button
-        v-bind:class="{buttonOn:editor.showMenus}"
-        class="optionButton"
-        onclick="editor.showMenus = !editor.showMenus; updateMenus();"
-        style="background-image: url(../pics/showMenus.png);"
-        v-on:mousemove="showTooltips('Toggle menus (M)')"
-        v-on:mouseleave="hideTooltips"
-      ></button><br>
-      <button
-        v-bind:class="{buttonOn:editor.playMode}"
-        class="optionButton"
-        onclick="togglePlayMode()"
-        style="background-image: url(../pics/playMode.png);"
-        v-on:mousemove="showTooltips('Toggle play mode (P): Enable dynamic blocks, but disable editing')"
-        v-on:mouseleave="hideTooltips"
-      ></button>
-      <button
-        v-bind:class="{buttonOn:editor.doAnimation}"
-        class="optionButton"
-        onclick="editor.doAnimation = !editor.doAnimation"
-        style="background-image: url(../pics/doAnimation.png);"
-        v-on:mousemove="showTooltips('Toggle animation')"
-        v-on:mouseleave="hideTooltips"
-      ></button><br>
-      <button
-        class="optionButton"
-        onclick="linkSelected()"
-        style="background-image: url(../pics/linkSelected.png);"
-        v-on:mousemove="showTooltips('Link Selected Blocks')"
-        v-on:mouseleave="hideTooltips"
-      ></button>
-      <button
-        class="optionButton"
-        onclick="delinkSelected()"
-        style="background-image: url(../pics/delinkSelected.png);"
-        v-on:mousemove="showTooltips('Delink Selected Blocks')"
-        v-on:mouseleave="hideTooltips"
-      ></button>
-    </div>
-    <div id="saveMenu" class="saveMenu">
-      <button 
-        class="tabButton" 
-        onclick="editor.rightTab = 'save'" 
-        v-bind:class="{buttonOn:editor.rightTab === 'save'}"
-      >Saves</button>
-      <button 
-        class="tabButton" 
-        onclick="editor.rightTab = 'room'" 
-        v-bind:class="{buttonOn:editor.rightTab === 'room'}"
-      >Rooms</button>
-      <div v-if="editor.rightTab === 'save'">
-        <button
-          class="optionButton"
-          onclick="addSave()"
-          style="background-image: url(../pics/addSave.png);"
-          v-on:mousemove="showTooltips('Add save')"
-          v-on:mouseleave="hideTooltips"
-        ></button>
-        <button
-          class="optionButton"
-          onclick="save()"
-          style="background-image: url(../pics/save.png);"
-          v-on:mousemove="showTooltips('Save')"
-          v-on:mouseleave="hideTooltips"
-        ></button><br>
-        <button
-          class="optionButton"
-          onclick="importSave()"
-          style="background-image: url(../pics/importSave.png);"
-          v-on:mousemove="showTooltips('Import save')"
-          v-on:mouseleave="hideTooltips"
-        ></button>
-        <button
-          v-bind:class="{buttonOn:editor.autoSave}"
-          class="optionButton"
-          onclick="editor.autoSave = !editor.autoSave"
-          style="background-image: url(../pics/autosave.png);"
-          v-on:mousemove="showTooltips('Toggle autosave (every 5 sec)')"
-          v-on:mouseleave="hideTooltips"
-        ></button><br>
-        <div>Saves</div>
-        <div v-for="name in editor.saveOrder" v-bind:style="{background: ((editor.currentSave === name) ? '#8888ff88' : '')}" style="margin-top: 5px; display:flex; align-items:center; justify-content: space-evenly">
-          <div>
-            <button
-              class="optionButton small"
-              v-on:click="moveSave(name,-1)"
-              style="background-image: url(../pics/upArrow.png);"
-              v-on:mousemove="showTooltips('Move up')"
-              v-on:mouseleave="hideTooltips"
-            ></button><br>
-            <button
-              class="optionButton small"
-              v-on:click="moveSave(name,1)"
-              style="background-image: url(../pics/downArrow.png);"
-              v-on:mousemove="showTooltips('Move down')"
-              v-on:mouseleave="hideTooltips"
-            ></button>
+          <div style="display:inline-block;">
+            Toggle Help Menu: <span class=key>H</span><br>
+            Toggle Play Mode: <span class=key>P</span><br>
+            Teleport Player: <span class=key>Ctrl</span> <span class=key>LClick</span><br>
+            Move Camera: <span class=key>Shift</span> <span class=key>Ctrl</span> <span class=key>LDrag</span><br>
+            Zoom Camera: <span class=key>Shift</span> <span class=key>Ctrl</span> <span class=key>Scroll</span><br>
+            Undo Action: <span class=key>Ctrl</span> <span class=key>Z</span><br>
           </div>
-          <div>
-            {{name}}<br>
-            <button
-              class="optionButton"
-              v-on:click="load(name)"
-              style="background-image: url(../pics/load.png);"
-              v-on:mousemove="showTooltips('Load')"
-              v-on:mouseleave="hideTooltips"
-            ></button>
-            <button
-              class="optionButton"
-              v-on:click="exportSave(name)"
-              style="background-image: url(../pics/exportSave.png);"
-              v-on:mousemove="showTooltips('Export')"
-              v-on:mouseleave="hideTooltips"
-            ></button><br>
-            <button
-              class="optionButton"
-              v-on:click="deleteSave(name)"
-              style="background-image: url(../pics/deleteSave.png);"
-              v-on:mousemove="showTooltips('Delete')"
-              v-on:mouseleave="hideTooltips"
-            ></button>
-            <button
-              class="optionButton"
-              v-on:click="renameSave(name)"
-              style="background-image: url(../pics/renameSave.png);"
-              v-on:mousemove="showTooltips('Rename')"
-              v-on:mouseleave="hideTooltips"
-            ></button><br>
+          <div style="display:inline-block;">
+            Toggle Menus: <span class=key>M</span><br>
+            Switch Mode (Build/Edit): <span class=key>E</span><br>
+            Toggle God Mode: <span class=key>G</span><br>
+            Focus Camera: <span class=key>Shift</span> <span class=key>Ctrl</span> <span class=key>RClick</span><br>
+            Reset Zoom: <span class=key>Shift</span> <span class=key>Ctrl</span> <span class=key>MClick</span><br>
+            Redo Action: <span class=key>Shift</span> <span class=key>Ctrl</span> <span class=key>Z</span> or <span class=key>Ctrl</span> <span class=key>Y</span><br>
+          </div>
+        </div><br>
+        <div>
+          <div style="display:inline-block;">
+            <div style="text-align: center; background:#ffffff88"">Build Mode</div>
+            Place Block: <span class=key>LClick</span><br>
+            Multi-Place: <span class=key>Shift</span> <span class=key>LDrag</span><br>
+            Change Build Size: <span class=key>Scroll</span><br>
+            Double/Halve Size: <span class=key>Shift</span> <span class=key>Scroll</span><br>
+            Select From Level: <span class=key>MClick</span><br>
+          </div>
+          <div style="display:inline-block;">
+            <div style="text-align: center; background:#ffffff88"">Edit Mode</div>
+            Select Blocks: <span class=key>LDrag</span><br>
+            Multi-Select: <span class=key>Shift</span> <span class=key>LDrag</span><br>
+            Cycle Select: <span class=key>LClick</span><br>
+            Delete Selected: <span class=key>Backspace</span><br>
+            Move Selected: <span class=key>RDrag</span><br>
+            Scale Selected: <span class=key>Scroll</span><br>
+            Double/Halve Scale: <span class=key>Shift</span> <span class=key>Scroll</span><br>
+            Cut Selected: <span class=key>Ctrl</span> <span class=key>X</span><br>
+            Copy Selected: <span class=key>Ctrl</span> <span class=key>C</span><br>
+            Paste Copied: <span class=key>Ctrl</span> <span class=key>V</span><br>
           </div>
         </div>
       </div>
-      <div v-if="editor.rightTab === 'room'">
-        <button
-          class="optionButton"
-          onclick="addRoom()"
-          style="background-image: url(../pics/addSave.png);"
-          v-on:mousemove="showTooltips('Add room')"
-          v-on:mouseleave="hideTooltips"
-        ></button>
-        <button
-          class="optionButton"
-          v-on:click="toggleEventEditor('global',globalEvents)"
-          style="background-image: url(../pics/editEvent.png);"
-          v-on:mousemove="showTooltips('Edit global event')"
-          v-on:mouseleave="hideTooltips"
-        ></button>
-        <div>Rooms</div>
-        <div v-for="name in editor.roomOrder" v-bind:style="{background: ((editor.currentRoom === name) ? '#8888ff88' : '')}" style="margin-top: 5px; display:flex; align-items:center; justify-content: space-evenly">
-          <div>
-            <button
-              class="optionButton small"
-              v-on:click="moveRoom(name,-1)"
-              style="background-image: url(../pics/upArrow.png);"
-              v-on:mousemove="showTooltips('Move up')"
-              v-on:mouseleave="hideTooltips"
-            ></button><br>
-            <button
-              class="optionButton small"
-              v-on:click="moveRoom(name,1)"
-              style="background-image: url(../pics/downArrow.png);"
-              v-on:mousemove="showTooltips('Move down')"
-              v-on:mouseleave="hideTooltips"
-            ></button>
-          </div>
-          <div>
-            {{name}}<br>
-            <button
-              class="optionButton"
-              v-on:click="toRoom(name)"
-              style="background-image: url(../pics/load.png);"
-              v-on:mousemove="showTooltips('Go to room')"
-              v-on:mouseleave="hideTooltips"
-            ></button>
-            <button
-              class="optionButton"
-              v-on:click="deleteRoom(name)"
-              style="background-image: url(../pics/deleteSave.png);"
-              v-on:mousemove="showTooltips('Delete')"
-              v-on:mouseleave="hideTooltips"
-            ></button><br>
-            <button
-              class="optionButton"
-              v-on:click="renameRoom(name)"
-              style="background-image: url(../pics/renameSave.png);"
-              v-on:mousemove="showTooltips('Rename')"
-              v-on:mouseleave="hideTooltips"
-            ></button>
-            <button
-              class="optionButton"
-              v-on:click="toggleEventEditor('room',roomEvents[name])"
-              style="background-image: url(../pics/editEvent.png);"
-              v-on:mousemove="showTooltips('Edit room event')"
-              v-on:mouseleave="hideTooltips"
-            ></button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div id="playDisp" class="playDisp" v-bind:style="{display:editor.playMode?'block':'none'}">
-      PLAY MODE
-    </div>
-    <div id="infoDisp" class="infoDisp" v-bind:style="{left:(editor.playMode||!editor.showMenus)?'0':'200px'}">
-      Coins: {{coins}}<br>
-      Console <button onclick="clearErr()">Clear</button><br>
-      <div v-for="line in editor.console" style="overflow-wrap:break-word; white-space:pre-line" v-bind:style="{background:line[1]}">{{line[0]}}</div>
-    </div>
-    <div id="helpMenu" class="helpMenu centered">
-      <div style="font-size: 20px; text-align: center; background:#ffffff88">CONTROLS</div><br>
-      <div style="text-align: center; background:#ffffff88"">General</div>
-      <div>
-        <div style="display:inline-block;">
-          Toggle Help Menu: <span class=key>H</span><br>
-          Toggle Play Mode: <span class=key>P</span><br>
-          Teleport Player: <span class=key>Ctrl</span> <span class=key>LClick</span><br>
-          Move Camera: <span class=key>Shift</span> <span class=key>Ctrl</span> <span class=key>LDrag</span><br>
-          Zoom Camera: <span class=key>Shift</span> <span class=key>Ctrl</span> <span class=key>Scroll</span><br>
-          Undo Action: <span class=key>Ctrl</span> <span class=key>Z</span><br>
-        </div>
-        <div style="display:inline-block;">
-          Toggle Menus: <span class=key>M</span><br>
-          Switch Mode (Build/Edit): <span class=key>E</span><br>
-          Toggle God Mode: <span class=key>G</span><br>
-          Focus Camera: <span class=key>Shift</span> <span class=key>Ctrl</span> <span class=key>RClick</span><br>
-          Reset Zoom: <span class=key>Shift</span> <span class=key>Ctrl</span> <span class=key>MClick</span><br>
-          Redo Action: <span class=key>Shift</span> <span class=key>Ctrl</span> <span class=key>Z</span> or <span class=key>Ctrl</span> <span class=key>Y</span><br>
-        </div>
-      </div><br>
-      <div>
-        <div style="display:inline-block;">
-          <div style="text-align: center; background:#ffffff88"">Build Mode</div>
-          Place Block: <span class=key>LClick</span><br>
-          Multi-Place: <span class=key>Shift</span> <span class=key>LDrag</span><br>
-          Change Build Size: <span class=key>Scroll</span><br>
-          Double/Halve Size: <span class=key>Shift</span> <span class=key>Scroll</span><br>
-          Select From Level: <span class=key>MClick</span><br>
-        </div>
-        <div style="display:inline-block;">
-          <div style="text-align: center; background:#ffffff88"">Edit Mode</div>
-          Select Blocks: <span class=key>LDrag</span><br>
-          Multi-Select: <span class=key>Shift</span> <span class=key>LDrag</span><br>
-          Cycle Select: <span class=key>LClick</span><br>
-          Delete Selected: <span class=key>Backspace</span><br>
-          Move Selected: <span class=key>RDrag</span><br>
-          Scale Selected: <span class=key>Scroll</span><br>
-          Double/Halve Scale: <span class=key>Shift</span> <span class=key>Scroll</span><br>
-          Cut Selected: <span class=key>Ctrl</span> <span class=key>X</span><br>
-          Copy Selected: <span class=key>Ctrl</span> <span class=key>C</span><br>
-          Paste Copied: <span class=key>Ctrl</span> <span class=key>V</span><br>
-        </div>
-      </div>
-    </div>
-    <div id="eventEditor" class="eventEditor centered" v-if="active && editor.editEvent !== undefined && !(editor.chooseType && editor.chooseInEvent)" v-on:keydown.stop>
-      <button onclick="toggleEventEditor()">x</button>
-      <span style="float:right">
-        <button v-on:click="optionsOpen = !optionsOpen">Options</button>
-        <button v-on:click="docOpen = !docOpen">Documentation</button>
-        <button v-on:click="copyCommand()">Copy</button>
-        <button v-on:click="copyCommand();removeCommand()">Cut</button>
-        <button v-on:click="pasteCommand()">Paste</button>
-        <button v-on:click="removeCommand()">Delete</button>
-      </span><br>
-      <div style="display:flex">
-        <div id="eventTypeSelect">
-          <button v-for="eventType in eventTypes[editor.eventScope]" v-on:click="typeSelected = eventType; selectCommand(editor.editEvent[typeSelected]?.length ?? 1)" style="display:block" v-bind:style="{background:typeSelected === eventType?'lightgreen':(editor.editEvent[eventType] !== undefined?'lightyellow':'')}">
-            {{eventType}}
-          </button>
-        </div>
-        <div id="eventScript" style="max-height:350px; overflow-y:scroll; flex-grow:1">
-          <div v-if="typeSelected === null">Select event type</div>
-          <div v-else-if="editor.editEvent[typeSelected] === undefined || editor.editEvent[typeSelected].length === 1">Nothing here...</div>
-          <div v-else>
-            <div v-for="(line, index) in editor.editEvent[typeSelected]" v-on:click="selectCommand(parseInt(index),$event.shiftKey)" v-bind:style="{background: ((editor.eventSelect[0] <= index && index <= editor.eventSelect[1]) ? '#8888ff88' : '')}">
-              <div v-if="index != 0" v-bind:style="{marginLeft:(editor.editEvent[typeSelected].length-1).toString().length-(parseInt(index)-1).toString().length+'ch'}">
-                {{parseInt(index)-1}}|{{commandData[line[0]].name}}(<span v-for="(arg, pos) in line">
-                  <span v-if="pos!=0">
-                    <span v-if="commandData[line[0]].inputType[pos-1].charAt(0) == '+'">
-                      [<span v-for="(subArg, subPos) in arg">
-                        <span v-if="/block|obj|any/.test(commandData[line[0]].inputType[pos-1])">
-                          <button v-on:click="Vue.set(arg,subPos,typeof arg[subPos] === 'string'?[]:'')"
-                          v-on:mousemove="showTooltips('Toggle input type')"
-                          v-on:mouseleave="hideTooltips"
-                          >{{typeof arg[subPos] === 'string'?"Expr":"Block"}}</button><button v-if="typeof arg[subPos] !== 'string'" v-on:click="chooseFromLevel(commandData[line[0]].inputType[pos-1]==='block'?'block':'ref',arg,subPos,true)">{{arg[subPos].length === 0?"Select Block":arg[subPos].length+" block"}}</button>
-                          <input v-else v-model="arg[subPos]" v-bind:style="{width:Math.min(Math.max(arg[subPos].length,3),40)+'ch'}"></input>
-                        </span>
-                        <input v-else v-model="arg[subPos]" v-bind:style="{width:Math.min(Math.max(arg[subPos].length,3),40)+'ch'}"></input><span v-if="subPos != arg.length-1">,</span>
-                      </span><button v-if="arg.length > 1" v-on:click="arg.pop()">-</button><button v-on:click="arg.push('')">+</button>]
-                    </span>
-                    <span v-else>
-                      <span v-if="/block|obj|any/.test(commandData[line[0]].inputType[pos-1])">
-                        <button v-on:click="Vue.set(line,pos,typeof line[pos] === 'string'?[]:'')"
-                        v-on:mousemove="showTooltips('Toggle input type')"
-                        v-on:mouseleave="hideTooltips"
-                        >{{typeof line[pos] === 'string'?"Expr":"Block"}}</button><button v-if="typeof line[pos] !== 'string'" v-on:click="chooseFromLevel(commandData[line[0]].inputType[pos-1]==='block'?'block':'ref',line,pos,true)">{{line[pos].length === 0?"Select Block":line[pos].length+" block"}}</button>
-                        <input v-else v-model="line[pos]" v-bind:style="{width:Math.min(Math.max(line[pos].length,3),40)+'ch'}"></input>
-                      </span>
-                      <input v-else v-model="line[pos]" v-bind:style="{width:Math.min(Math.max(line[pos].length,3),40)+'ch'}"></input><span v-if="pos != line.length-1">,</span>
-                    </span>
-                  </span>
-                </span>)
-              </div>
-            </div>
-            <div v-on:click="selectCommand(editor.editEvent[typeSelected].length,$event.shiftKey)" v-bind:style="{background: ((editor.eventSelect[1] == editor.editEvent[typeSelected].length) ? '#8888ff88' : '')}">
-              {{editor.editEvent[typeSelected].length-1}}|
-            </div>
-          </div>
-        </div>
-        <div id="commandList" style="max-height:350px; overflow-y:scroll; flex-shrink:0">
-          <div v-for="(commandGroup, groupName) in commands">
-            <div style="background:#ffffff88">{{groupName}}</div>
-            <button v-for="commandId in commandGroup" v-on:click="addCommand(commandId)" style="display:block" 
-            v-on:mousemove="showTooltips(commandData[commandId].tooltip)"
-            v-on:mouseleave="hideTooltips">
-              {{commandData[commandId].name}}
+      <div id="eventEditor" class="eventEditor centered" v-if="active && editor.editEvent !== undefined && !(editor.chooseType && editor.chooseInEvent)" v-on:keydown.stop>
+        <button onclick="toggleEventEditor()">x</button>
+        <span style="float:right">
+          <button v-on:click="optionsOpen = !optionsOpen">Options</button>
+          <button v-on:click="docOpen = !docOpen">Documentation</button>
+          <button v-on:click="copyCommand()">Copy</button>
+          <button v-on:click="copyCommand();removeCommand()">Cut</button>
+          <button v-on:click="pasteCommand()">Paste</button>
+          <button v-on:click="removeCommand()">Delete</button>
+        </span><br>
+        <div style="display:flex">
+          <div id="eventTypeSelect">
+            <button v-for="eventType in eventTypes[editor.eventScope]" v-on:click="typeSelected = eventType; selectCommand(editor.editEvent[typeSelected]?.length ?? 1)" style="display:block" v-bind:class="{buttonOn:typeSelected === eventType, buttonOccupied: typeSelected !== eventType && editor.editEvent[eventType] !== undefined}">
+              {{eventType}}
             </button>
           </div>
+          <div id="eventScript" style="max-height:350px; overflow-y:scroll; flex-grow:1">
+            <div v-if="typeSelected === null">Select event type</div>
+            <div v-else-if="editor.editEvent[typeSelected] === undefined || editor.editEvent[typeSelected].length === 1">Nothing here...</div>
+            <div v-else>
+              <div v-for="(line, index) in editor.editEvent[typeSelected]" v-on:click="selectCommand(parseInt(index),$event.shiftKey)" v-bind:style="{background: ((editor.eventSelect[0] <= index && index <= editor.eventSelect[1]) ? '#8888ff88' : '')}">
+                <div v-if="index != 0" v-bind:style="{marginLeft:(editor.editEvent[typeSelected].length-1).toString().length-(parseInt(index)-1).toString().length+'ch'}">
+                  {{parseInt(index)-1}}|{{commandData[line[0]].name}}(<span v-for="(arg, pos) in line">
+                    <span v-if="pos!=0">
+                      <span v-if="commandData[line[0]].inputType[pos-1].charAt(0) == '+'">
+                        [<span v-for="(subArg, subPos) in arg">
+                          <span v-if="/block|obj|any/.test(commandData[line[0]].inputType[pos-1])">
+                            <button v-on:click="Vue.set(arg,subPos,typeof arg[subPos] === 'string'?[]:'')"
+                            v-on:mousemove="showTooltips('Toggle input type')"
+                            v-on:mouseleave="hideTooltips"
+                            >{{typeof arg[subPos] === 'string'?"Expr":"Block"}}</button><button v-if="typeof arg[subPos] !== 'string'" v-on:click="chooseFromLevel(commandData[line[0]].inputType[pos-1]==='block'?'block':'ref',arg,subPos,true)">{{arg[subPos].length === 0?"Select Block":arg[subPos].length+" block"}}</button>
+                            <input v-else v-model="arg[subPos]" v-bind:style="{width:Math.min(Math.max(arg[subPos].length,3),40)+'ch'}"></input>
+                          </span>
+                          <input v-else v-model="arg[subPos]" v-bind:style="{width:Math.min(Math.max(arg[subPos].length,3),40)+'ch'}"></input><span v-if="subPos != arg.length-1">,</span>
+                        </span><button v-if="arg.length > 1" v-on:click="arg.pop()">-</button><button v-on:click="arg.push('')">+</button>]
+                      </span>
+                      <span v-else>
+                        <span v-if="/block|obj|any/.test(commandData[line[0]].inputType[pos-1])">
+                          <button v-on:click="Vue.set(line,pos,typeof line[pos] === 'string'?[]:'')"
+                          v-on:mousemove="showTooltips('Toggle input type')"
+                          v-on:mouseleave="hideTooltips"
+                          >{{typeof line[pos] === 'string'?"Expr":"Block"}}</button><button v-if="typeof line[pos] !== 'string'" v-on:click="chooseFromLevel(commandData[line[0]].inputType[pos-1]==='block'?'block':'ref',line,pos,true)">{{line[pos].length === 0?"Select Block":line[pos].length+" block"}}</button>
+                          <input v-else v-model="line[pos]" v-bind:style="{width:Math.min(Math.max(line[pos].length,3),40)+'ch'}"></input>
+                        </span>
+                        <input v-else v-model="line[pos]" v-bind:style="{width:Math.min(Math.max(line[pos].length,3),40)+'ch'}"></input><span v-if="pos != line.length-1">,</span>
+                      </span>
+                    </span>
+                  </span>)
+                </div>
+              </div>
+              <div v-on:click="selectCommand(editor.editEvent[typeSelected].length,$event.shiftKey)" v-bind:style="{background: ((editor.eventSelect[1] == editor.editEvent[typeSelected].length) ? '#8888ff88' : '')}">
+                {{editor.editEvent[typeSelected].length-1}}|
+              </div>
+            </div>
+          </div>
+          <div id="commandList" style="max-height:350px; overflow-y:scroll; flex-shrink:0">
+            <div v-for="(commandGroup, groupName) in commands">
+              <div>{{groupName}}</div>
+              <button v-for="commandId in commandGroup" v-on:click="addCommand(commandId)" style="display:block" 
+              v-on:mousemove="showTooltips(commandData[commandId].tooltip)"
+              v-on:mouseleave="hideTooltips">
+                {{commandData[commandId].name}}
+              </button>
+            </div>
+          </div>
+        </div>
+        <button style="float: right" onclick="confirmEventEdit();toggleEventEditor()">Confirm</button><br>
+        <div class="eventOption" v-if="optionsOpen">
+          <button v-on:click="if (typeSelected) editor.editEvent[typeSelected][0]._multiRun = !editor.editEvent[typeSelected][0]._multiRun">multiRun: {{editor.editEvent[typeSelected]?.[0]?._multiRun ?? 'N/A'}}</button>
+          <div v-if="editor.editEvent[typeSelected]?.[0]?._multiRun">Delay:<input style="width:50px" v-model="editor.editEvent[typeSelected][0]._multiRunDelay"></input>s</div>
+          <div v-if="editor.eventScope === 'block'">
+            <button v-on:click="if (typeSelected) editor.editEvent[typeSelected][0]._playerTrigger = !editor.editEvent[typeSelected][0]._playerTrigger">playerTrigger: {{editor.editEvent[typeSelected]?.[0]?._playerTrigger ?? 'N/A'}}</button><br>
+            <button v-on:click="if (typeSelected) editor.editEvent[typeSelected][0]._blockTrigger = !editor.editEvent[typeSelected][0]._blockTrigger">blockTrigger: {{editor.editEvent[typeSelected]?.[0]?._blockTrigger ?? 'N/A'}}</button>
+          </div>
+        </div>
+        <div class="eventDoc" v-if="docOpen">
+          <h1>japascript Documentation</h1>
+          <button v-on:click="docTab='intro'" v-bind:class="{buttonOn:docTab==='intro'}">Introduction</button>
+          <button v-on:click="docTab='eventTypes'" v-bind:class="{buttonOn:docTab==='eventTypes'}">Event Types</button>
+          <button v-on:click="docTab='commands'" v-bind:class="{buttonOn:docTab==='commands'}">Commands</button>
+          <button v-on:click="docTab='expressions'" v-bind:class="{buttonOn:docTab==='expressions'}">Expressions</button>
+          <button v-on:click="docTab='errors'" v-bind:class="{buttonOn:docTab==='errors'}">Errors</button>
+          <button v-on:click="docTab='appendix'" v-bind:class="{buttonOn:docTab==='appendix'}">Appendix</button>
+          <div v-if="docTab=='intro'">
+            Welcome to japascript (funny name, I know), where all kinds of wacky stuff can be done!
+            <br><br>
+            You start off by choosing an event type from the left, then clicking the commands from the right. This will place them in the center, where they’ll eventually be ran in sequential order. You are able to select where you want to place these commands by clicking on the lines, the command will be inserted at the line selected. You can then edit the parameters to these commands, making them do what you want. Within each parameter, you are allowed to use ‘expressions’, which can do a lot of things you can’t normally do.
+            <br><br>
+            For more information, continue reading this documentation.            
+            <br><br>
+            To see the same documentation on Google Docs, see <a href="https://docs.google.com/document/d/1lJRI417NnFa6ykXE7SNQWw081tly2xj5KWnryhyksOE/edit?usp=sharing">here</a>.
+          </div>
+          <div v-else-if="docTab=='eventTypes'">
+            Event types are separated by ‘scope’, the range in which the event can be triggered. There are three types of scopes: global (can be triggered anywhere), room (can be triggered within a room), and block (can be triggered while touching a block). Each has different event types, with global and room sharing many event types.
+            <h2>Global/Room Event Types</h2>
+            <ul>
+              <li>
+                onTick
+                <ul>
+                  <li>Runs each frame the game is played.</li>
+                  <li>If multi-run is not true, then it will only run once, akin to onStart/onEnter.</li>
+                  <li>Please avoid excessive use of this event type as to avoid performance issues.</li>
+                </ul>
+              </li>
+              <li>
+                onStart/onEnter
+                <ul>
+                  <li>Exclusive for global/room scope respectively.</li>
+                  <li>Runs upon starting the level/entering a room.</li>
+                </ul>
+              </li>
+              <li>
+                onJump
+                <ul>
+                  <li>Runs whenever the player jumps.</li>
+                  <li>Wall-jumps count.</li>
+                </ul>
+              </li>
+              <li>
+                onDash
+                <ul>
+                  <li>Runs whenever the player starts a dash.</li>
+                </ul>
+              </li>
+              <li>
+                onKeyDown
+                <ul>
+                  <li>Runs whenever a key is pressed</li>
+                  <li>Gives a special variable ‘key’. See the Special Variable list for more details.</li>
+                </ul>
+              </li>
+              <li>
+                onKeyUp
+                <ul>
+                  <li>Runs whenever a key is released</li>
+                  <li>Gives a special variable ‘key’. See the Special Variable list for more details.</li>
+                </ul>  
+              </li>
+            </ul>
+            <h2>Block Event Types</h2>
+            <ul>
+              <li>
+                onTouch
+                <ul>
+                  <li>Runs whenever something (player or dynamic blocks) is touching the block.</li>
+                  <li>Gives a special variable cause. See the Special Variable list for more details.</li>
+                </ul>
+              </li>
+              <li>
+                onTouchLeft/Right/Top/Bottom
+                <ul>
+                  <li>Run whenever something (player or dynamic blocks) is touching the left/right/top/bottom side of the block.</li>
+                  <li>Will only work with solid blocks.</li>
+                  <li>Gives a special variable cause. See the Special Variable list for more details.</li>
+                </ul>    
+              </li>
+            </ul>
+            <h2>Event Options</h2>
+            For each event, there are some options that can influence how they function. Some options are exclusive to events of block scope.
+            <h3>General Options</h3>
+            <ul>
+              <li>multiRun: Allows the event to be ran multiple times.</li>
+              <li>
+                multiRunDelay: The delay between when an event is allowed to run again, in seconds.
+                <ul>
+                  <li>This option is only available if multiRun is true.</li>
+                </ul>
+              </li>
+            </ul>
+            <h3>Block Scope Exclusive Options</h3>
+            <ul>
+              <li>playerTrigger: If true, allows the player to trigger this event.</li>
+              <li>blockTrigger: If true, allows dynamic blocks to trigger this event.</li>
+            </ul>
+          </div>
+          <div v-else-if="docTab=='commands'">
+            Commands are split into three types: control, variable, and gameplay. Control commands control the flow of commands, variable commands affect the variables in the event, and gameplay commands affect the level and the player.
+            <br><br>
+            Each parameter has a variable type after it in square brackets. This is the required variable for this parameter. You are not allowed to input a value that is not the specified type, otherwise, it will give an error.
+            <br><br>
+            Note that a “...” before the parameter name indicates that the parameter can have an indefinite amount of inputs. Additional inputs can be added/removed using the buttons labeled “+” and “-”.
+            <h2>Control Commands</h2>
+            <ul>
+              <li>
+                wait(time[num])
+                <ul>
+                  <li>Halt the script for ‘time’ seconds.</li>
+                </ul>
+              </li>
+              <li>
+                if(condition[bool])
+                <ul>
+                  <li>If condition is true, then run following commands, otherwise, skip.</li>
+                </ul>
+              </li>
+              <li>
+                elseIf(condition[bool])
+                <ul>
+                  <li>Used in conjunction with if() to create an extra condition.</li>
+                  <li>If previous conditions have all been false, and the current condition is true, then run following commands, otherwise, skip.</li>
+                  <li>Will give a INVALID_ELSE_IF_COMMAND error if it is not preceded by a if() command.</li>
+                  <li>Can technically be placed after an else(), but it is not advised, as it will be treated as if the else() was given a true statement, making elseIf() always skip follow commands.</li>
+                </ul>
+              </li>
+              <li>
+                else()
+                <ul>
+                  <li>Used in conjunction with if() to create a negative condition.</li>
+                  <li>If all previous conditions are false, then run following commands, otherwise, skip.</li>
+                  <li>Will give a INVALID_ELSE_COMMAND error if it is not preceded by a if() command.</li>
+                </ul>
+              </li>
+              <li>
+                end()
+                <ul>
+                  <li>
+                    Terminates the latest control command.
+                    <ul>
+                      <li>if, while, for, forEach</li>
+                    </ul>
+                  </li>
+                  <li>An example of proper usage of if(), elseIf(), and else() follows.</li><br>
+                  if(condition1)<br>
+                  [commands]<br>
+                  elseIf(condition2)<br>
+                  [commands]<br>
+                  elseIf(condition3)<br>
+                  [commands]<br>
+                  else()<br>
+                  [commands]<br>
+                  end()<br><br>
+                  <li>If the command is not successfully matched with a control command, then it’ll give a UNMATCHED_END_COMMAND error.</li>
+                </ul>
+              </li>
+              <li>
+                while(condition[bool])
+                <ul>
+                  <li>Repeatedly run following commands while the condition is true.</li>
+                  <li>Infinite loops are allowed as long as there exists a pause (via a wait()) in the loop.</li>
+                  <li>Otherwise, excessive commands ran in a single session (maximum 1000) will result in a MAXIMUM_COMMAND_PER_SESSION_REACHED error.</li>
+                </ul>
+              </li>
+              <li>
+                for(varName[str], start[num], end[num], step[num])
+                <ul>
+                  <li>Repeatedly run following commands, setting base variable ‘varName’ to ‘start’ initially, and add ‘step’ to varName until it is equal or greater (or lesser, when step is negative) than ‘end’.</li>
+                  <li>If ‘step’ is 0, then it will give an INVALID_STEP_FOR_FOR error.</li>
+                </ul>
+              </li>
+              <li>
+                forEach(array[array], itemName[str], indexName[str][optional])
+                <ul>
+                  <li>Repeatedly run following commands for each item of ‘array’, setting base variable 'itemName' to each item.</li>
+                  <li>If 'indexName' is filled, then the index of each item will be stored in base variable ‘indexName’.</li>
+                </ul>
+              </li>
+            </ul>
+            <h2>Variable Commands</h2>
+            <ul>
+              <li>
+                set(object[obj][optional],property[str],value[any])
+                <ul>
+                  <li>Sets ‘object[property]’ to ‘value’.</li>
+                  <li>Leave 'object' empty to access base variables.</li>
+                  <li>If you attempt to alter a special variable (which are all read-only), then it’ll give a CANNOT_SET_READ_ONLY_VARIABLE_[propertyName] error.</li>
+                  <li>If you attempt to alter a read-only property of the player/a block, then it’ll give a CANNOT_SET_READ_ONLY_PLAYER/BLOCK_PROPERTY_[propertyName] error.</li>
+                  <li>If you attempt to alter an inherited property of an object/array (ie. “constructor”), then you’ll get a CANNOT_SET_INVALID_VARIABLE_[propertyName] error.</li>
+                  <li>If you attempt to add a property to an object or array, then you will get a CANNOT_ADD_PROPERTY_TO_OBJECT error.</li>
+                  <li>If you attempt to change a variable’s type, you will get an INVALID_ASSIGNMENT_TYPE error.</li>
+                  <li>All these error conditions apply to other instances of assignment.</li>
+                </ul>
+              </li>
+              <li>
+                setSingleBlock(object[obj][optional],property[str],block[blockRef])
+                <ul>
+                  <li>Set 'object[property]' to a single [blockRef] not contained in an [array].</li>
+                  <li>Will use index 0 when given an array of [blockRef].</li>
+                  <li>Leave 'object' empty to access base variables.</li>
+                </ul>
+              </li>
+              <li>
+                toggle(object[obj][optional],property[str])
+                <ul>
+                  <li>Toggles 'object[property]'.</li>
+                  <li>‘object[property]’ must be of type [bool], otherwise, it will give a NON_BOOL_IN_TOGGLE error.</li>
+                  <li>Leave 'object' empty to access base variables.</li>
+                </ul>
+              </li>
+              <li>
+                isColliding(varName[str],objectA[obj],objectB[obj])
+                <ul>
+                  <li>Sets 'varName' as true if 'objectA' and 'objectB' are colliding.</li>
+                  <li>False if otherwise.</li>
+                  <li>If given an array of [blockRef], it will select index 0.</li>
+                  <li>objectA and objectB must be either [block], [blockRef], or the player, otherwise, it’ll give an INVALID_OBJECT_IN_IS_COLLIDING error.</li>
+                </ul>
+              </li>
+              <li>
+                math(varName[str],funcName[str],...arguments[num])
+                <ul>
+                  <li>Sets ‘varName’ to the result of calling Math[funcName](...arguments).</li>
+                  <li>Or the value of Math[funcName] if it is a constant.</li>
+                  <li>For more information on the Math object in JS, see <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math">here</a>.</li>
+                  <li>If given an invalid ‘funcName’, it will give a INVALID_FUNCTION/CONSTANT_IN_MATH error.</li>
+                </ul>
+              </li>
+            </ul>
+            <h2>Gameplay Commands</h2>
+            <ul>
+              <li>
+                moveBlock(blocks[blockRef],x[num],y[num],t[num,xv[num][optional],yv[num][optional])
+                <ul>
+                  <li>Move 'blocks' a distance of ‘x’ and ‘y’ units, in 't' seconds, with an initial velocity of 'xv' and 'yv' units/s.</li>
+                  <li>Leave xv/yv blank for constant speed.</li>
+                </ul>
+              </li>
+              <li>
+                moveBlockTo(blocks[blockRef],x[num],y[num],d[num],t[num],v[num][optional])
+                <ul>
+                  <li>Move the top left corner of 'blocks' towards the coordinates (x,y) a distance of 'd' units, in 't' seconds, with an initial velocity of 'v' units/s towards the target.</li>
+                  <li>Leave d blank to move directly to (x,y).</li>
+                  <li>Leave v blank for constant speed.</li>
+                </ul>
+              </li>
+              <li>
+                rotateBlock(blocks[blockRef],x[num],y[num],dθ[num],t[num],ω[num][optional])
+                <ul>
+                  <li>Rotate 'blocks' about coordinates (x,y) ‘dθ’ degrees clockwise (negative for counter-clockwise), in 't' seconds, with an initial angular velocity of 'ω' degrees/s.</li>
+                  <li>Leave ω blank for constant angular speed.</li>
+                </ul>
+              </li>
+              <li>
+                scaleBlock(blocks[blockRef],factor[num],x[num],y[num],t[num],v[num][optional])
+                <ul>
+                  <li>Scale 'blocks' by a factor of 'factor' with the focus at coordinates (x,y), in 't' seconds, with an initial scaling rate of 'v' block size/s.</li>
+                  <li>Leave v blank for constant rate.</li>
+                </ul>
+              </li>
+              <li>
+                addBlock(blocks[block], var[str][optional])
+                <ul>
+                  <li>Add 'blocks' to the level.</li>
+                  <li>If 'var' is filled, then set base variable 'var' to added blocks.</li>
+                </ul>
+              </li>
+              <li>
+                removeBlock(blocks[blockRef])
+                <ul>
+                  <li>Removes 'blocks' from the level.</li>
+                </ul>
+              </li>
+              <li>
+                killPlayer()
+                <ul>
+                  <li>Kills the player.</li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+          <div v-else-if="docTab=='expressions'">
+            Within all commands, you are allowed to use expressions in their parameters. Expressions allow one to access variables, do basic arithmetics, and a variety of other things.
+            <h2>Variable Types</h2>
+            Each variable has a specific type, and each command also requires specific types as input. Note that you are not allowed to change a variable’s type.
+            <br><br>
+            Below is a list of all types.
+            <ul>
+              <li>[num]: Numbers.</li>
+              <li>[bool]: Boolean, as in true or false.</li>
+              <li>[str]: String, like letters and stuff.  Note that when used as a variable/property name, numbers are also allowed.</li>
+              <li>[array]: Array, a list of variables.</li>
+              <li>[obj]: Object, a collection of variables identified by a key.</li>
+              <li>[block]: Block, a template of a block that does not exist in the level. Can also be an array of [block]. Note: When selecting [block] via the block selector, it give an array of [block].</li>
+              <li>[blockRef]: Block Reference, an existing block. Can also be an array of [blockRef]. Note: When selecting [blockRef] via the block selector, it give an array of [blockRef].</li>
+            </ul>
+            <h3>String Literals</h3>
+            One can write a string into an expression by enclosing a series of symbols with matching quotes, single (‘) or double (“).
+            <h2>Special Variables</h2>
+            All events are given a set of special variable to read and/or manipulate. Some event types can also give additional special variable.
+            <br><br>
+            Note that all special variables (but not all their properties) are read-only.
+            <h3>General Special Variables</h3>
+            Note that some properties of certain variables may be omitted due to lack of possible use.
+            <ul>
+              <li>
+                player[obj]: The player object.
+                <ul>
+                  <li>x[num]: The player’s x position.</li>
+                  <li>y[num]: The player’s y position.</li>
+                  <li>xv[num]: The player’s x velocity.</li>
+                  <li>yv[num]: The player’s y velocity.</li>
+                  <li>xa[num]: The player’s x acceleration.</li>
+                  <li>ya[num]: The player’s y acceleration.</li>
+                  <li>size[num]: The player’s size</li>
+                  <li>isDead[bool][readOnly]: Whether the player’s dead or not.</li>
+                  <li>g[num]: The player’s gravitational acceleration multiplier.</li>
+                  <li>xg[bool]: Whether the player’s gravity is horizontal or not.</li>
+                  <li>maxJump[num]: The player’s maximum jump amount.</li>
+                  <li>currentJump[num]: The player’s current jump amount.</li>
+                  <li>canWallJump[bool][readOnly]: Whether the player is able to wall-jump.</li>
+                  <li>
+                    wallJumpDir[num][readOnly]: The direction of the wall the player can wall-jump off of.
+                    <ul>
+                      <li>0 for left, 1 for right, 2, for above, 3 for below.</li>
+                    </ul>
+                  </li>
+                  <li>maxDash[num]: The player’s maximum dash amount.</li>
+                  <li>currentDash[num]: The player’s current dash amount.</li>
+                  <li>moveSpeed[num]: The player’s move speed multiplier.</li>
+                  <li>friction[bool]: Whether the player’s affected by friction or not.</li>
+                  <li>gameSpeed[num]: The game speed multiplier.</li>
+                  <li>
+                    lastCollided[array][readOnly]: A list of objects that the player has last collided with.
+                    <ul>
+                      <li>lastCollided will only list non-solid blocks, as the player immediately un-collides with any solid blocks.</li>
+                    </ul>
+                  </li>
+                  <li>isPlayer[bool][readOnly]: Is true.</li>
+                  <li>currentRoom[str]: The room the player resides in.</li>
+                  <li>
+                    switchLocal[obj]: Status of all local switches.
+                    <ul>
+                      <li>Is an object of the form: {roomName: array, …}.</li>
+                      <li>The switch states for each room are accessed via switchLocal[roomName][id].</li>
+                      <li>Properties are added to the array when the player first toggles the corresponding switch.</li>
+                    </ul>
+                  <li>
+                    switchGlobal[array]: Status of all global switches.
+                    <ul>
+                      <li>The switch states are accessed via switchGlobal[id].</li>
+                      <li>Properties are added to the array when the player first toggles the corresponding switch.</li>
+                    </ul>
+                  </li>
+                  <li>coins[num]: Number of coins the player has.</li>
+                  <li>jumpOn[bool]: State of jump blocks.</li>
+                </ul>
+              </li>
+              <li>ran[bool]: Whether the event has ran at least once.</li>
+              <li>
+                source[blockRef]/[str]: What the event is contained in.
+                <ul>
+                  <li>In global scope, the source is undefined.</li>
+                  <li>In room scope, the source is a [str] of of the room name.</li>
+                  <li>In block scope, the source is a [blockRef] of the containing block.</li>
+                </ul>
+              </li>
+            </ul>
+            <h3>Special Variables Exclusive to Certain Event Types</h3>
+            <ul>
+              <li>
+                key[str]: The key used to trigger the event.
+                <ul>
+                  <li>Exclusive to the onKeyDown and onKeyUp event type.</li>
+                  <li>
+                    Is the JS code of the key used.
+                    <ul>
+                      <li>Not to be confused with keyCode.</li>
+                    </ul>
+                  </li>
+                  <li>For a list of all key’s code, check out this <a href="https://www.toptal.com/developers/keycode">site</a>.</li>
+                </ul>
+              </li>
+              <li>
+                cause[obj]/[blockRef]: The object that triggered the event.
+                <ul>
+                  <li>Exclusive to onTouch and its directional variants.</li>
+                  <li>It can either be the player, or a dynamic block.</li>
+                </ul>
+              </li>
+            </ul>
+            For block properties, they are as seen in the property edit menu in the level editor and vary with block type. This documentation will not be listing them all out, as they can be seen easily within the editor itself.
+            <h2>Operators</h2>
+            All operators are binary (as in, taking in two values) except for “~” and “!”, which are unary and only take one value (like so: ‘~numValue’, ‘!boolValue’).
+            <br><br>
+            Only some operators take objects and arrays as inputs, and all others do not. They are indicated with [YesObj].
+            <br><br>
+            Below is a list of all valid operators in japascript, in order of priority.
+            <ul>
+              <li>
+                “~”: Negative operator [Unary]
+                <ul>
+                  <li>Not to be confused with “-”, which is the subtraction operator.</li>
+                </ul>
+              </li>
+              <li>“!”: Boolean NOT operator [Unary][YesObj]</li>
+              <li>"%": Modulo operator</li>
+              <li>"*": Multiplication operator</li>
+              <li>"/": Division operator</li>
+              <li>"+": Addition operator</li>
+              <li>
+                "-": Subtraction operator
+                <ul>
+                  <li>This cannot be used as an unary negative operator. You must use “~” as the unary negative operator.</li>
+                </ul>  
+              </li>
+              <li>">=": Greater than or equal operator</li>
+              <li>"<=": Less than or equal operator</li>
+              <li>">": Greater than operator</li>
+              <li>"<": Less than operator</li>
+              <li>"==": Equality operator [YesObj]</li>
+              <li>"!=": Inequality operator [YesObj]</li>
+              <li>"&&": Boolean AND operator [YesObj]</li>
+              <li>"||": Boolean OR operator [YesObj]</li>
+            </ul>
+            The order of operators can be overridden with parenthesis “()”. Things within parenthesis will be evaluated first, no matter what.
+            <h2>Accessing Properties</h2>
+            To access properties of an object or array, you can use dot notation or square bracket notation.
+            <br><br>
+            To use dot notation, write the name of object/array, then write a dot and the property name, like so: object.property.
+            <br><br>
+            To use square bracket notation, write the name of object/array, then write the property name in square brackets, like so: object[property].
+            <br><br>
+            Square brackets also acts like parenthesis, so it allows one to use an expression in place of a property name.
+          </div>
+          <div v-else-if="docTab=='errors'">
+            All errors occur in runtime, as in, they’ll only occur as the script is running. During gameplay, if any error occurs, then it will halt the event and have it displayed in the in-game console, in this format:
+            <br><br>
+            ERROR_TYPE
+            at scope source(if applicable) eventType line #
+            <br><br>
+            Below is a list of all error types in japascript.
+            <ul>
+              <li>INVALID_[inputType]_INPUT: Occurs when a command’s input does not match with the required input type.</li>
+              <li>
+                NONEXISTENT_BLOCK_REF: Occurs when a [blockRef] references a block that does not exist
+                <ul>
+                  <li>This usually means that the original reference block has been deleted.</li>
+                </ul>
+              </li>
+              <li>UNMATCHED_BRACKETS: Occurs when parenthesis “()” does not correctly match.</li>
+              <li>UNMATCHED_SQUARE_BRACKETS: Occurs when square brackets “[]” does not correctly match.</li>
+              <li>INVALID_[operation]_SYNTAX: Occurs when an operation does not have a valid right-hand side and/or left-hand side</li>
+              <li>INVALID_[operation]_ARGUMENT: Occurs when an operator that does not take objects or arrays is given an object or array.</li>
+              <li>INVALID_STRING: Occurs when the expression contains quotes of any type in the beginning and end, but the quotes do not match.</li>
+              <li>UNDEFINED_VARIABLE/PROPERTY_[" + varName + "]: Occurs when you attempt to access a variable/property that does not exist</li>
+              <li>INVALID_VARIABLE/PROPERTY_[" + varName + "]: Occurs when you attempt to input an inherited property of an object/array into a command.</li>
+              <li>CANNOT_INPUT_READ_ONLY_PLAYER/BLOCK_PROPERTY_[propertyName]: Occurs when you attempt to input a read-only property of the player/a block into a command as a [obj] or [array].</li>
+              <li>CANNOT_SET_SPECIAL_VARIABLE_[propertyName]: Occurs when you attempt to alter a special variable.</li>
+              <li>CANNOT_SET_READ_ONLY_PLAYER/BLOCK_PROPERTY_[propertyName]: Occurs when you attempt to alter a read-only property of the player/a block.</li>
+              <li>CANNOT_SET_INVALID_VARIABLE_[propertyName]: Occurs when you attempt to alter an inherited property of an object/array.</li>
+              <li>CANNOT_ADD_PROPERTY_TO_OBJECT: Occurs when you attempt to add a property to an object/array.</li>
+              <li>INVALID_ASSIGNMENT_TYPE: Occurs when you attempt to change a variable’s type.</li>
+              <li>NON_BOOL_IN_TOGGLE: Occurs when a non [bool] in inputted in toggle().</li>
+              <li>UNMATCHED_END_COMMAND: Occurs when there exists an end() command that does not match with a control command.</li>
+              <li>INVALID_ELSE_COMMAND: Occurs when an else() command is not preceded by a if() command.</li>
+              <li>INVALID_ELSE_IF_COMMAND: Occurs when an elseIf() command is not preceded by a if() command.</li>
+              <li>INVALID_STEP_FOR_FOR: Occurs when a for() command has a ‘step’ of 0.</li>
+              <li>INVALID_OBJECT_IN_IS_COLLIDING:  Occurs when isColliding() is given an invalid object (non-player and non-block).</li>
+              <li>
+                MAXIMUM_COMMAND_PER_SESSION_REACHED: Occurs when commands executed within a single session exceeds 1000.
+                <ul>
+                  <li>This typically indicates an infinite loop.</li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+          <div v-if="docTab=='appendix'">
+            <h2>Block Types</h2>
+            Each block type has an id associated with it. A block’s ‘type’ property will contain an id instead of the name of the block type.
+            <br><br>
+            Below is a list of all block types currently in just a platformer 2, in order of id:
+            <ol start="0">
+              <li>Solid Block</li>
+              <li>Death Block</li>
+              <li>Check Point</li>
+              <li>Bounce Block</li>
+              <li>Pushable Block</li>
+              <li>Semi-Unpushable Block</li>
+              <li>Ice Block</li>
+              <li>Water Block</li>
+              <li>Conveyor Block</li>
+              <li>Gravity Field</li>
+              <li>Speed Field</li>
+              <li>Text Field</li>
+              <li>Force Field</li>
+              <li>Jump Field</li>
+              <li>Jump Restore Field</li>
+              <li>Wall-Jump Block</li>
+              <li>Solid Panel</li>
+              <li>Death Panel</li>
+              <li>Bounce Panel</li>
+              <li>Wall-Jump Panel</li>
+              <li>Ice Panel</li>
+              <li>Conveyor Panel</li>
+              <li>Teleporter</li>
+              <li>Boundary Warp</li>
+              <li>Size Field</li>
+              <li>Switch</li>
+              <li>Switch Block</li>
+              <li>Jump Block</li>
+              <li>Unstable Block</li>
+              <li>Coin</li>
+              <li>Coin Block</li>
+              <li>Unpushable Block</li>
+              <li>Dash Field</li>
+              <li>Dash Restore Field</li>
+              <li>Event Stop Field</li>
+            </ol>
+          </div>
         </div>
       </div>
-      <button style="float: right" onclick="confirmEventEdit();toggleEventEditor()">Confirm</button><br>
-      <div class="eventOption" v-if="optionsOpen">
-        <button v-on:click="if (typeSelected) editor.editEvent[typeSelected][0]._multiRun = !editor.editEvent[typeSelected][0]._multiRun">multiRun: {{editor.editEvent[typeSelected]?.[0]?._multiRun ?? 'N/A'}}</button>
-        <div v-if="editor.editEvent[typeSelected]?.[0]?._multiRun">Delay:<input style="width:50px" v-model="editor.editEvent[typeSelected][0]._multiRunDelay"></input>s</div>
-        <div v-if="editor.eventScope === 'block'">
-          <button v-on:click="if (typeSelected) editor.editEvent[typeSelected][0]._playerTrigger = !editor.editEvent[typeSelected][0]._playerTrigger">playerTrigger: {{editor.editEvent[typeSelected]?.[0]?._playerTrigger ?? 'N/A'}}</button><br>
-          <button v-on:click="if (typeSelected) editor.editEvent[typeSelected][0]._blockTrigger = !editor.editEvent[typeSelected][0]._blockTrigger">blockTrigger: {{editor.editEvent[typeSelected]?.[0]?._blockTrigger ?? 'N/A'}}</button>
-        </div>
+      <div id="moreInfo"><div>
+        "just a level editor 2"<br />
+        Made by <a href="https://thetastypi.github.io/">TheTastyPi</a>
+        <br /><br>
+        <a href="../index.html">Main Menu</a><br>
+        <a href="https://discord.gg/zVpdcuaXYF">Discord Server</a><br>
+        <button onclick="openInfo()">Close</button>
       </div>
-      <div class="eventDoc" v-if="docOpen">
-        <h1>japascript Documentation</h1>
-        <button v-on:click="docTab='intro'" v-bind:style="{background:docTab==='intro'?'lightgreen':''}">Introduction</button>
-        <button v-on:click="docTab='eventTypes'" v-bind:style="{background:docTab==='eventTypes'?'lightgreen':''}">Event Types</button>
-        <button v-on:click="docTab='commands'" v-bind:style="{background:docTab==='commands'?'lightgreen':''}">Commands</button>
-        <button v-on:click="docTab='expressions'" v-bind:style="{background:docTab==='expressions'?'lightgreen':''}">Expressions</button>
-        <button v-on:click="docTab='errors'" v-bind:style="{background:docTab==='errors'?'lightgreen':''}">Errors</button>
-        <button v-on:click="docTab='appendix'" v-bind:style="{background:docTab==='appendix'?'lightgreen':''}">Appendix</button>
-        <div v-if="docTab=='intro'">
-          Welcome to japascript (funny name, I know), where all kinds of wacky stuff can be done!
-          <br><br>
-          You start off by choosing an event type from the left, then clicking the commands from the right. This will place them in the center, where they’ll eventually be ran in sequential order. You are able to select where you want to place these commands by clicking on the lines, the command will be inserted at the line selected. You can then edit the parameters to these commands, making them do what you want. Within each parameter, you are allowed to use ‘expressions’, which can do a lot of things you can’t normally do.
-          <br><br>
-          For more information, continue reading this documentation.            
-          <br><br>
-          To see the same documentation on Google Docs, see <a href="https://docs.google.com/document/d/1lJRI417NnFa6ykXE7SNQWw081tly2xj5KWnryhyksOE/edit?usp=sharing">here</a>.
-        </div>
-        <div v-else-if="docTab=='eventTypes'">
-          Event types are separated by ‘scope’, the range in which the event can be triggered. There are three types of scopes: global (can be triggered anywhere), room (can be triggered within a room), and block (can be triggered while touching a block). Each has different event types, with global and room sharing many event types.
-          <h2>Global/Room Event Types</h2>
-          <ul>
-            <li>
-              onTick
-              <ul>
-                <li>Runs each frame the game is played.</li>
-                <li>If multi-run is not true, then it will only run once, akin to onStart/onEnter.</li>
-                <li>Please avoid excessive use of this event type as to avoid performance issues.</li>
-              </ul>
-            </li>
-            <li>
-              onStart/onEnter
-              <ul>
-                <li>Exclusive for global/room scope respectively.</li>
-                <li>Runs upon starting the level/entering a room.</li>
-              </ul>
-            </li>
-            <li>
-              onJump
-              <ul>
-                <li>Runs whenever the player jumps.</li>
-                <li>Wall-jumps count.</li>
-              </ul>
-            </li>
-            <li>
-              onDash
-              <ul>
-                <li>Runs whenever the player starts a dash.</li>
-              </ul>
-            </li>
-            <li>
-              onKeyDown
-              <ul>
-                <li>Runs whenever a key is pressed</li>
-                <li>Gives a special variable ‘key’. See the Special Variable list for more details.</li>
-              </ul>
-            </li>
-            <li>
-              onKeyUp
-              <ul>
-                <li>Runs whenever a key is released</li>
-                <li>Gives a special variable ‘key’. See the Special Variable list for more details.</li>
-              </ul>  
-            </li>
-          </ul>
-          <h2>Block Event Types</h2>
-          <ul>
-            <li>
-              onTouch
-              <ul>
-                <li>Runs whenever something (player or dynamic blocks) is touching the block.</li>
-                <li>Gives a special variable cause. See the Special Variable list for more details.</li>
-              </ul>
-            </li>
-            <li>
-              onTouchLeft/Right/Top/Bottom
-              <ul>
-                <li>Run whenever something (player or dynamic blocks) is touching the left/right/top/bottom side of the block.</li>
-                <li>Will only work with solid blocks.</li>
-                <li>Gives a special variable cause. See the Special Variable list for more details.</li>
-              </ul>    
-            </li>
-          </ul>
-          <h2>Event Options</h2>
-          For each event, there are some options that can influence how they function. Some options are exclusive to events of block scope.
-          <h3>General Options</h3>
-          <ul>
-            <li>multiRun: Allows the event to be ran multiple times.</li>
-            <li>
-              multiRunDelay: The delay between when an event is allowed to run again, in seconds.
-              <ul>
-                <li>This option is only available if multiRun is true.</li>
-              </ul>
-            </li>
-          </ul>
-          <h3>Block Scope Exclusive Options</h3>
-          <ul>
-            <li>playerTrigger: If true, allows the player to trigger this event.</li>
-            <li>blockTrigger: If true, allows dynamic blocks to trigger this event.</li>
-          </ul>
-        </div>
-        <div v-else-if="docTab=='commands'">
-          Commands are split into three types: control, variable, and gameplay. Control commands control the flow of commands, variable commands affect the variables in the event, and gameplay commands affect the level and the player.
-          <br><br>
-          Each parameter has a variable type after it in square brackets. This is the required variable for this parameter. You are not allowed to input a value that is not the specified type, otherwise, it will give an error.
-          <br><br>
-          Note that a “...” before the parameter name indicates that the parameter can have an indefinite amount of inputs. Additional inputs can be added/removed using the buttons labeled “+” and “-”.
-          <h2>Control Commands</h2>
-          <ul>
-            <li>
-              wait(time[num])
-              <ul>
-                <li>Halt the script for ‘time’ seconds.</li>
-              </ul>
-            </li>
-            <li>
-              if(condition[bool])
-              <ul>
-                <li>If condition is true, then run following commands, otherwise, skip.</li>
-              </ul>
-            </li>
-            <li>
-              elseIf(condition[bool])
-              <ul>
-                <li>Used in conjunction with if() to create an extra condition.</li>
-                <li>If previous conditions have all been false, and the current condition is true, then run following commands, otherwise, skip.</li>
-                <li>Will give a INVALID_ELSE_IF_COMMAND error if it is not preceded by a if() command.</li>
-                <li>Can technically be placed after an else(), but it is not advised, as it will be treated as if the else() was given a true statement, making elseIf() always skip follow commands.</li>
-              </ul>
-            </li>
-            <li>
-              else()
-              <ul>
-                <li>Used in conjunction with if() to create a negative condition.</li>
-                <li>If all previous conditions are false, then run following commands, otherwise, skip.</li>
-                <li>Will give a INVALID_ELSE_COMMAND error if it is not preceded by a if() command.</li>
-              </ul>
-            </li>
-            <li>
-              end()
-              <ul>
-                <li>
-                  Terminates the latest control command.
-                  <ul>
-                    <li>if, while, for, forEach</li>
-                  </ul>
-                </li>
-                <li>An example of proper usage of if(), elseIf(), and else() follows.</li><br>
-                if(condition1)<br>
-                [commands]<br>
-                elseIf(condition2)<br>
-                [commands]<br>
-                elseIf(condition3)<br>
-                [commands]<br>
-                else()<br>
-                [commands]<br>
-                end()<br><br>
-                <li>If the command is not successfully matched with a control command, then it’ll give a UNMATCHED_END_COMMAND error.</li>
-              </ul>
-            </li>
-            <li>
-              while(condition[bool])
-              <ul>
-                <li>Repeatedly run following commands while the condition is true.</li>
-                <li>Infinite loops are allowed as long as there exists a pause (via a wait()) in the loop.</li>
-                <li>Otherwise, excessive commands ran in a single session (maximum 1000) will result in a MAXIMUM_COMMAND_PER_SESSION_REACHED error.</li>
-              </ul>
-            </li>
-            <li>
-              for(varName[str], start[num], end[num], step[num])
-              <ul>
-                <li>Repeatedly run following commands, setting base variable ‘varName’ to ‘start’ initially, and add ‘step’ to varName until it is equal or greater (or lesser, when step is negative) than ‘end’.</li>
-                <li>If ‘step’ is 0, then it will give an INVALID_STEP_FOR_FOR error.</li>
-              </ul>
-            </li>
-            <li>
-              forEach(array[array], itemName[str], indexName[str][optional])
-              <ul>
-                <li>Repeatedly run following commands for each item of ‘array’, setting base variable 'itemName' to each item.</li>
-                <li>If 'indexName' is filled, then the index of each item will be stored in base variable ‘indexName’.</li>
-              </ul>
-            </li>
-          </ul>
-          <h2>Variable Commands</h2>
-          <ul>
-            <li>
-              set(object[obj][optional],property[str],value[any])
-              <ul>
-                <li>Sets ‘object[property]’ to ‘value’.</li>
-                <li>Leave 'object' empty to access base variables.</li>
-                <li>If you attempt to alter a special variable (which are all read-only), then it’ll give a CANNOT_SET_READ_ONLY_VARIABLE_[propertyName] error.</li>
-                <li>If you attempt to alter a read-only property of the player/a block, then it’ll give a CANNOT_SET_READ_ONLY_PLAYER/BLOCK_PROPERTY_[propertyName] error.</li>
-                <li>If you attempt to alter an inherited property of an object/array (ie. “constructor”), then you’ll get a CANNOT_SET_INVALID_VARIABLE_[propertyName] error.</li>
-                <li>If you attempt to add a property to an object or array, then you will get a CANNOT_ADD_PROPERTY_TO_OBJECT error.</li>
-                <li>If you attempt to change a variable’s type, you will get an INVALID_ASSIGNMENT_TYPE error.</li>
-                <li>All these error conditions apply to other instances of assignment.</li>
-              </ul>
-            </li>
-            <li>
-              setSingleBlock(object[obj][optional],property[str],block[blockRef])
-              <ul>
-                <li>Set 'object[property]' to a single [blockRef] not contained in an [array].</li>
-                <li>Will use index 0 when given an array of [blockRef].</li>
-                <li>Leave 'object' empty to access base variables.</li>
-              </ul>
-            </li>
-            <li>
-              toggle(object[obj][optional],property[str])
-              <ul>
-                <li>Toggles 'object[property]'.</li>
-                <li>‘object[property]’ must be of type [bool], otherwise, it will give a NON_BOOL_IN_TOGGLE error.</li>
-                <li>Leave 'object' empty to access base variables.</li>
-              </ul>
-            </li>
-            <li>
-              isColliding(varName[str],objectA[obj],objectB[obj])
-              <ul>
-                <li>Sets 'varName' as true if 'objectA' and 'objectB' are colliding.</li>
-                <li>False if otherwise.</li>
-                <li>If given an array of [blockRef], it will select index 0.</li>
-                <li>objectA and objectB must be either [block], [blockRef], or the player, otherwise, it’ll give an INVALID_OBJECT_IN_IS_COLLIDING error.</li>
-              </ul>
-            </li>
-            <li>
-              math(varName[str],funcName[str],...arguments[num])
-              <ul>
-                <li>Sets ‘varName’ to the result of calling Math[funcName](...arguments).</li>
-                <li>Or the value of Math[funcName] if it is a constant.</li>
-                <li>For more information on the Math object in JS, see <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math">here</a>.</li>
-                <li>If given an invalid ‘funcName’, it will give a INVALID_FUNCTION/CONSTANT_IN_MATH error.</li>
-              </ul>
-            </li>
-          </ul>
-          <h2>Gameplay Commands</h2>
-          <ul>
-            <li>
-              moveBlock(blocks[blockRef],x[num],y[num],t[num,xv[num][optional],yv[num][optional])
-              <ul>
-                <li>Move 'blocks' a distance of ‘x’ and ‘y’ units, in 't' seconds, with an initial velocity of 'xv' and 'yv' units/s.</li>
-                <li>Leave xv/yv blank for constant speed.</li>
-              </ul>
-            </li>
-            <li>
-              moveBlockTo(blocks[blockRef],x[num],y[num],d[num],t[num],v[num][optional])
-              <ul>
-                <li>Move the top left corner of 'blocks' towards the coordinates (x,y) a distance of 'd' units, in 't' seconds, with an initial velocity of 'v' units/s towards the target.</li>
-                <li>Leave d blank to move directly to (x,y).</li>
-                <li>Leave v blank for constant speed.</li>
-              </ul>
-            </li>
-            <li>
-              rotateBlock(blocks[blockRef],x[num],y[num],dθ[num],t[num],ω[num][optional])
-              <ul>
-                <li>Rotate 'blocks' about coordinates (x,y) ‘dθ’ degrees clockwise (negative for counter-clockwise), in 't' seconds, with an initial angular velocity of 'ω' degrees/s.</li>
-                <li>Leave ω blank for constant angular speed.</li>
-              </ul>
-            </li>
-            <li>
-              scaleBlock(blocks[blockRef],factor[num],x[num],y[num],t[num],v[num][optional])
-              <ul>
-                <li>Scale 'blocks' by a factor of 'factor' with the focus at coordinates (x,y), in 't' seconds, with an initial scaling rate of 'v' block size/s.</li>
-                <li>Leave v blank for constant rate.</li>
-              </ul>
-            </li>
-            <li>
-              addBlock(blocks[block], var[str][optional])
-              <ul>
-                <li>Add 'blocks' to the level.</li>
-                <li>If 'var' is filled, then set base variable 'var' to added blocks.</li>
-              </ul>
-            </li>
-            <li>
-              removeBlock(blocks[blockRef])
-              <ul>
-                <li>Removes 'blocks' from the level.</li>
-              </ul>
-            </li>
-            <li>
-              killPlayer()
-              <ul>
-                <li>Kills the player.</li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-        <div v-else-if="docTab=='expressions'">
-          Within all commands, you are allowed to use expressions in their parameters. Expressions allow one to access variables, do basic arithmetics, and a variety of other things.
-          <h2>Variable Types</h2>
-          Each variable has a specific type, and each command also requires specific types as input. Note that you are not allowed to change a variable’s type.
-          <br><br>
-          Below is a list of all types.
-          <ul>
-            <li>[num]: Numbers.</li>
-            <li>[bool]: Boolean, as in true or false.</li>
-            <li>[str]: String, like letters and stuff.  Note that when used as a variable/property name, numbers are also allowed.</li>
-            <li>[array]: Array, a list of variables.</li>
-            <li>[obj]: Object, a collection of variables identified by a key.</li>
-            <li>[block]: Block, a template of a block that does not exist in the level. Can also be an array of [block]. Note: When selecting [block] via the block selector, it give an array of [block].</li>
-            <li>[blockRef]: Block Reference, an existing block. Can also be an array of [blockRef]. Note: When selecting [blockRef] via the block selector, it give an array of [blockRef].</li>
-          </ul>
-          <h3>String Literals</h3>
-          One can write a string into an expression by enclosing a series of symbols with matching quotes, single (‘) or double (“).
-          <h2>Special Variables</h2>
-          All events are given a set of special variable to read and/or manipulate. Some event types can also give additional special variable.
-          <br><br>
-          Note that all special variables (but not all their properties) are read-only.
-          <h3>General Special Variables</h3>
-          Note that some properties of certain variables may be omitted due to lack of possible use.
-          <ul>
-            <li>
-              player[obj]: The player object.
-              <ul>
-                <li>x[num]: The player’s x position.</li>
-                <li>y[num]: The player’s y position.</li>
-                <li>xv[num]: The player’s x velocity.</li>
-                <li>yv[num]: The player’s y velocity.</li>
-                <li>xa[num]: The player’s x acceleration.</li>
-                <li>ya[num]: The player’s y acceleration.</li>
-                <li>size[num]: The player’s size</li>
-                <li>isDead[bool][readOnly]: Whether the player’s dead or not.</li>
-                <li>g[num]: The player’s gravitational acceleration multiplier.</li>
-                <li>xg[bool]: Whether the player’s gravity is horizontal or not.</li>
-                <li>maxJump[num]: The player’s maximum jump amount.</li>
-                <li>currentJump[num]: The player’s current jump amount.</li>
-                <li>canWallJump[bool][readOnly]: Whether the player is able to wall-jump.</li>
-                <li>
-                  wallJumpDir[num][readOnly]: The direction of the wall the player can wall-jump off of.
-                  <ul>
-                    <li>0 for left, 1 for right, 2, for above, 3 for below.</li>
-                  </ul>
-                </li>
-                <li>maxDash[num]: The player’s maximum dash amount.</li>
-                <li>currentDash[num]: The player’s current dash amount.</li>
-                <li>moveSpeed[num]: The player’s move speed multiplier.</li>
-                <li>friction[bool]: Whether the player’s affected by friction or not.</li>
-                <li>gameSpeed[num]: The game speed multiplier.</li>
-                <li>
-                  lastCollided[array][readOnly]: A list of objects that the player has last collided with.
-                  <ul>
-                    <li>lastCollided will only list non-solid blocks, as the player immediately un-collides with any solid blocks.</li>
-                  </ul>
-                </li>
-                <li>isPlayer[bool][readOnly]: Is true.</li>
-                <li>currentRoom[str]: The room the player resides in.</li>
-                <li>
-                  switchLocal[obj]: Status of all local switches.
-                  <ul>
-                    <li>Is an object of the form: {roomName: array, …}.</li>
-                    <li>The switch states for each room are accessed via switchLocal[roomName][id].</li>
-                    <li>Properties are added to the array when the player first toggles the corresponding switch.</li>
-                  </ul>
-                <li>
-                  switchGlobal[array]: Status of all global switches.
-                  <ul>
-                    <li>The switch states are accessed via switchGlobal[id].</li>
-                    <li>Properties are added to the array when the player first toggles the corresponding switch.</li>
-                  </ul>
-                </li>
-                <li>coins[num]: Number of coins the player has.</li>
-                <li>jumpOn[bool]: State of jump blocks.</li>
-              </ul>
-            </li>
-            <li>ran[bool]: Whether the event has ran at least once.</li>
-            <li>
-              source[blockRef]/[str]: What the event is contained in.
-              <ul>
-                <li>In global scope, the source is undefined.</li>
-                <li>In room scope, the source is a [str] of of the room name.</li>
-                <li>In block scope, the source is a [blockRef] of the containing block.</li>
-              </ul>
-            </li>
-          </ul>
-          <h3>Special Variables Exclusive to Certain Event Types</h3>
-          <ul>
-            <li>
-              key[str]: The key used to trigger the event.
-              <ul>
-                <li>Exclusive to the onKeyDown and onKeyUp event type.</li>
-                <li>
-                  Is the JS code of the key used.
-                  <ul>
-                    <li>Not to be confused with keyCode.</li>
-                  </ul>
-                </li>
-                <li>For a list of all key’s code, check out this <a href="https://www.toptal.com/developers/keycode">site</a>.</li>
-              </ul>
-            </li>
-            <li>
-              cause[obj]/[blockRef]: The object that triggered the event.
-              <ul>
-                <li>Exclusive to onTouch and its directional variants.</li>
-                <li>It can either be the player, or a dynamic block.</li>
-              </ul>
-            </li>
-          </ul>
-          For block properties, they are as seen in the property edit menu in the level editor and vary with block type. This documentation will not be listing them all out, as they can be seen easily within the editor itself.
-          <h2>Operators</h2>
-          All operators are binary (as in, taking in two values) except for “~” and “!”, which are unary and only take one value (like so: ‘~numValue’, ‘!boolValue’).
-          <br><br>
-          Only some operators take objects and arrays as inputs, and all others do not. They are indicated with [YesObj].
-          <br><br>
-          Below is a list of all valid operators in japascript, in order of priority.
-          <ul>
-            <li>
-              “~”: Negative operator [Unary]
-              <ul>
-                <li>Not to be confused with “-”, which is the subtraction operator.</li>
-              </ul>
-            </li>
-            <li>“!”: Boolean NOT operator [Unary][YesObj]</li>
-            <li>"%": Modulo operator</li>
-            <li>"*": Multiplication operator</li>
-            <li>"/": Division operator</li>
-            <li>"+": Addition operator</li>
-            <li>
-              "-": Subtraction operator
-              <ul>
-                <li>This cannot be used as an unary negative operator. You must use “~” as the unary negative operator.</li>
-              </ul>  
-            </li>
-            <li>">=": Greater than or equal operator</li>
-            <li>"<=": Less than or equal operator</li>
-            <li>">": Greater than operator</li>
-            <li>"<": Less than operator</li>
-            <li>"==": Equality operator [YesObj]</li>
-            <li>"!=": Inequality operator [YesObj]</li>
-            <li>"&&": Boolean AND operator [YesObj]</li>
-            <li>"||": Boolean OR operator [YesObj]</li>
-          </ul>
-          The order of operators can be overridden with parenthesis “()”. Things within parenthesis will be evaluated first, no matter what.
-          <h2>Accessing Properties</h2>
-          To access properties of an object or array, you can use dot notation or square bracket notation.
-          <br><br>
-          To use dot notation, write the name of object/array, then write a dot and the property name, like so: object.property.
-          <br><br>
-          To use square bracket notation, write the name of object/array, then write the property name in square brackets, like so: object[property].
-          <br><br>
-          Square brackets also acts like parenthesis, so it allows one to use an expression in place of a property name.
-        </div>
-        <div v-else-if="docTab=='errors'">
-          All errors occur in runtime, as in, they’ll only occur as the script is running. During gameplay, if any error occurs, then it will halt the event and have it displayed in the in-game console, in this format:
-          <br><br>
-          ERROR_TYPE
-          at scope source(if applicable) eventType line #
-          <br><br>
-          Below is a list of all error types in japascript.
-          <ul>
-            <li>INVALID_[inputType]_INPUT: Occurs when a command’s input does not match with the required input type.</li>
-            <li>
-              NONEXISTENT_BLOCK_REF: Occurs when a [blockRef] references a block that does not exist
-              <ul>
-                <li>This usually means that the original reference block has been deleted.</li>
-              </ul>
-            </li>
-            <li>UNMATCHED_BRACKETS: Occurs when parenthesis “()” does not correctly match.</li>
-            <li>UNMATCHED_SQUARE_BRACKETS: Occurs when square brackets “[]” does not correctly match.</li>
-            <li>INVALID_[operation]_SYNTAX: Occurs when an operation does not have a valid right-hand side and/or left-hand side</li>
-            <li>INVALID_[operation]_ARGUMENT: Occurs when an operator that does not take objects or arrays is given an object or array.</li>
-            <li>INVALID_STRING: Occurs when the expression contains quotes of any type in the beginning and end, but the quotes do not match.</li>
-            <li>UNDEFINED_VARIABLE/PROPERTY_[" + varName + "]: Occurs when you attempt to access a variable/property that does not exist</li>
-            <li>INVALID_VARIABLE/PROPERTY_[" + varName + "]: Occurs when you attempt to input an inherited property of an object/array into a command.</li>
-            <li>CANNOT_INPUT_READ_ONLY_PLAYER/BLOCK_PROPERTY_[propertyName]: Occurs when you attempt to input a read-only property of the player/a block into a command as a [obj] or [array].</li>
-            <li>CANNOT_SET_SPECIAL_VARIABLE_[propertyName]: Occurs when you attempt to alter a special variable.</li>
-            <li>CANNOT_SET_READ_ONLY_PLAYER/BLOCK_PROPERTY_[propertyName]: Occurs when you attempt to alter a read-only property of the player/a block.</li>
-            <li>CANNOT_SET_INVALID_VARIABLE_[propertyName]: Occurs when you attempt to alter an inherited property of an object/array.</li>
-            <li>CANNOT_ADD_PROPERTY_TO_OBJECT: Occurs when you attempt to add a property to an object/array.</li>
-            <li>INVALID_ASSIGNMENT_TYPE: Occurs when you attempt to change a variable’s type.</li>
-            <li>NON_BOOL_IN_TOGGLE: Occurs when a non [bool] in inputted in toggle().</li>
-            <li>UNMATCHED_END_COMMAND: Occurs when there exists an end() command that does not match with a control command.</li>
-            <li>INVALID_ELSE_COMMAND: Occurs when an else() command is not preceded by a if() command.</li>
-            <li>INVALID_ELSE_IF_COMMAND: Occurs when an elseIf() command is not preceded by a if() command.</li>
-            <li>INVALID_STEP_FOR_FOR: Occurs when a for() command has a ‘step’ of 0.</li>
-            <li>INVALID_OBJECT_IN_IS_COLLIDING:  Occurs when isColliding() is given an invalid object (non-player and non-block).</li>
-            <li>
-              MAXIMUM_COMMAND_PER_SESSION_REACHED: Occurs when commands executed within a single session exceeds 1000.
-              <ul>
-                <li>This typically indicates an infinite loop.</li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-        <div v-if="docTab=='appendix'">
-          <h2>Block Types</h2>
-          Each block type has an id associated with it. A block’s ‘type’ property will contain an id instead of the name of the block type.
-          <br><br>
-          Below is a list of all block types currently in just a platformer 2, in order of id:
-          <ol start="0">
-            <li>Solid Block</li>
-            <li>Death Block</li>
-            <li>Check Point</li>
-            <li>Bounce Block</li>
-            <li>Pushable Block</li>
-            <li>Semi-Unpushable Block</li>
-            <li>Ice Block</li>
-            <li>Water Block</li>
-            <li>Conveyor Block</li>
-            <li>Gravity Field</li>
-            <li>Speed Field</li>
-            <li>Text Field</li>
-            <li>Force Field</li>
-            <li>Jump Field</li>
-            <li>Jump Restore Field</li>
-            <li>Wall-Jump Block</li>
-            <li>Solid Panel</li>
-            <li>Death Panel</li>
-            <li>Bounce Panel</li>
-            <li>Wall-Jump Panel</li>
-            <li>Ice Panel</li>
-            <li>Conveyor Panel</li>
-            <li>Teleporter</li>
-            <li>Boundary Warp</li>
-            <li>Size Field</li>
-            <li>Switch</li>
-            <li>Switch Block</li>
-            <li>Jump Block</li>
-            <li>Unstable Block</li>
-            <li>Coin</li>
-            <li>Coin Block</li>
-            <li>Unpushable Block</li>
-            <li>Dash Field</li>
-            <li>Dash Restore Field</li>
-            <li>Event Stop Field</li>
-          </ol>
-        </div>
       </div>
+      <div
+        id="tooltip"
+        style="
+          position: absolute;
+          background: #00000088;
+          color: #ffffff;
+          display: none;
+          white-space: pre-wrap;
+          pointer-events: none;
+        "
+      ></div>
+      <textarea
+        style="
+          opacity: 0.01;
+          height: 0;
+          position: absolute;
+          z-index: -1;
+          display: none;
+        "
+        id="exportArea"
+      >export text</textarea>
     </div>
-    <div
-      id="tooltip"
-      style="
-        position: absolute;
-        background: #00000088;
-        color: #ffffff;
-        display: none;
-        white-space: pre-wrap;
-        pointer-events: none;
-      "
-    ></div>
-    <textarea
-      style="
-        opacity: 0.01;
-        height: 0;
-        position: absolute;
-        z-index: -1;
-        display: none;
-      "
-      id="exportArea"
-    >export text</textarea>
   </body>
+  <script src="../utility.js"></script>
+  <script src="../option.js"></script>
   <script src="../lz-string.min.js"></script>
   <script src="../pixi-legacy.min.js"></script>
   <script src="../vue.min.js"></script>
-  <script src="../utility.js"></script>
   <script src="../base.js"></script>
   <script src="../block.js"></script>
   <script src="../blockFunc.js"></script>

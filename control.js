@@ -3,8 +3,9 @@ const control = {
   right: false,
   up: false,
   down: false,
-  shift: false,
-  dash: false
+  jump: false,
+  dash: false,
+  interact: false
 };
 document.addEventListener("keydown", function (event) {
   let key = event.code;
@@ -12,36 +13,17 @@ document.addEventListener("keydown", function (event) {
   runEvent(roomEvents[player.currentRoom].onKeyDown, player.currentRoom, {
     key: key
   });
-  switch (key) {
-    case "ArrowLeft":
-    case "KeyA":
-      control.left = true;
-      break;
-    case "ArrowRight":
-    case "KeyD":
-      control.right = true;
-      break;
-    case "ArrowUp":
-    case "KeyW":
-      control.up = true;
-      break;
-    case "ArrowDown":
-    case "KeyS":
-      control.down = true;
-      break;
-    case "ShiftLeft":
-    case "ShiftRight":
-      control.shift = true;
-      break;
-    case "KeyR":
-      respawn(event.shiftKey && editor !== undefined);
-      break;
-    case "KeyQ":
-    case "KeyL":
-      control.dash = true;
-      break;
-    default:
-  }
+  let c = options.controls;
+  if (c.Left.includes(key)) control.left = true;
+  if (c.Right.includes(key)) control.right = true;
+  if (c.Up.includes(key)) control.up = true;
+  if (c.Down.includes(key)) control.down = true;
+  if (player.xg) {
+    if (c["Jump(Alt-Grav)"].includes(key)) control.jump = true;
+  } else if (c.Jump.includes(key)) control.jump = true;
+  if (c.Dash.includes(key)) control.dash = true;
+  if (c.Interact.includes(key)) control.interact = true;
+  if (c.Respawn.includes(key)) respawn(event.shiftKey && editor !== undefined);
 });
 document.addEventListener("keyup", function (event) {
   let key = event.code;
@@ -49,36 +31,23 @@ document.addEventListener("keyup", function (event) {
   runEvent(roomEvents[player.currentRoom].onKeyUp, player.currentRoom, {
     key: key
   });
-  switch (key) {
-    case "ArrowLeft":
-    case "KeyA":
-      control.left = false;
-      if (player.xg) canJump = true;
-      break;
-    case "ArrowRight":
-    case "KeyD":
-      control.right = false;
-      if (player.xg) canJump = true;
-      break;
-    case "ArrowUp":
-    case "KeyW":
-      control.up = false;
-      if (!player.xg) canJump = true;
-      break;
-    case "ArrowDown":
-    case "KeyS":
-      control.down = false;
-      if (!player.xg) canJump = true;
-      break;
-    case "ShiftLeft":
-    case "ShiftRight":
-      control.shift = false;
-      canSave = true;
-      break;
-    case "KeyQ":
-    case "KeyL":
-      control.dash = false;
-      break;
-    default:
+  let c = options.controls;
+  if (c.Left.includes(key)) control.left = false;
+  if (c.Right.includes(key)) control.right = false;
+  if (c.Up.includes(key)) control.up = false;
+  if (c.Down.includes(key)) control.down = false;
+  if (player.xg) {
+    if (c["Jump(Alt-Grav)"].includes(key)) {
+      control.jump = false;
+      canJump = true;
+    }
+  } else if (c.Jump.includes(key)) {
+    control.jump = false;
+    canJump = true;
+  }
+  if (c.Dash.includes(key)) control.dash = false;
+  if (c.Interact.includes(key)) {
+    control.interact = false;
+    canInteract = true;
   }
 });

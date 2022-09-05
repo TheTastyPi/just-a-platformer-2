@@ -34,7 +34,7 @@ var editor = {
     JSON.parse(localStorage.getItem("just-an-editor-save-2"))?.[1] ?? [],
   saves: JSON.parse(localStorage.getItem("just-an-editor-save-2"))?.[0] ?? {},
   currentSave: undefined,
-  autoSave: true,
+  autoSave: options.autoSave,
   showTooltips: true,
   invincible: false,
   showMenus: true,
@@ -2345,3 +2345,4 @@ function init() {
   window.requestAnimationFrame(nextFrame);
 }
 init();
+if (options.theme === "default") unhide();

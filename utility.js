@@ -1,3 +1,4 @@
+const id = (x) => document.getElementById(x);
 function arraysEqual(a, b, isBlock = true) {
   if (typeof a !== "object" || typeof b !== "object") return a === b;
   if (a === b) return true;
@@ -510,4 +511,13 @@ function toRoom(name, instant = true) {
   drawLevel(true);
   adjustLevelSize();
   if (instant) adjustScreen(true);
+}
+function openInfo() {
+  if (id("moreInfo").style.bottom == "0%") {
+    id("moreInfo").style.bottom = "100%";
+    id("moreInfo").style.opacity = 0;
+  } else {
+    id("moreInfo").style.bottom = "0%";
+    id("moreInfo").style.opacity = 1;
+  }
 }

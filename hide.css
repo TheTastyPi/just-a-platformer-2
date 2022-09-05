@@ -1,0 +1,11 @@
+#everything {
+  display: none;
+}
+body {
+  background: #333333;
+}
+#loading {
+  display: block;
+  color: white;
+  font-size: 50px;
+}

@@ -1,3 +1,74 @@
-just a platformer 2 WORK IN PROGRESS<br /><br />
-Main Game (It's not here yet)<br />
-<a href="editor/index.html">Level Editor</a>
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>just a platformer 2</title>
+    <link rel="icon" type="image/png" href="../pics/just-a-platformer-2.png" />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="options.css" />
+    <link id="hide.css" rel="stylesheet" href="hide.css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta
+      name="description"
+      content="'just a platformer 2', the second difficult, minimalistic platformer created by TheTastyPi."
+    />
+    <meta name="author" content="TheTastyPi" />
+  </head>
+  <body id="optionsPage">
+    <div id="loading" class="centered">Loading...</div>
+    <div id="everything">
+      just a platformer 2<br /><br />
+      Main Game (WORK IN PROGRESS)<br />
+      <a href="editor/index.html">Level Editor</a><br><br>
+      <span id="options">
+        <button v-on:click="optionsOpen = !optionsOpen">Options</button>
+        <div v-if="optionsOpen">
+          <h2>General</h2>
+          Theme:
+          <input type="radio" value="default" v-model="options.theme" v-on:change="updateTheme()"/>
+          Default
+          <input type="radio" value="dark" v-model="options.theme" v-on:change="updateTheme()" />
+          Dark
+          <br>
+          Custom Page BG Color: <input type="checkbox" v-model="options.useCustomPageBG"></input>
+          <input v-if="options.useCustomPageBG" type="color" v-model="options.customPageBG"></input>
+          <br>
+          Custom Game BG Color: <input type="checkbox" v-model="options.useCustomGameBG"></input>
+          <input v-if="options.useCustomGameBG" type="color" v-model="options.customGameBG"></input>
+          <br><br>
+          Control:
+          <input type="radio" value="0" v-model="options.controlPreset" v-on:change="updateControl()"/>
+          Type A
+          <input type="radio" value="1" v-model="options.controlPreset" v-on:change="updateControl()" />
+          Type B
+          <input type="radio" value="custom" v-model="options.controlPreset" />
+          Custom<br><br>
+          <div style="display:inline-block">
+            <div v-for="(keys,controlType) in options.controls">
+              {{controlType}}:
+            </div>
+          </div>
+          <div style="display:inline-block">
+            <div v-for="(keys,controlType) in options.controls">
+              <span v-for="(key, index) in keys">
+                {{key}}<button v-if="options.controlPreset === 'custom'" class="smolButton" v-on:click="options.controls[controlType].splice(index,1)">x</button>
+              </span>
+              <button v-if="options.controlPreset === 'custom'" class="smolButton" v-on:click="addControl = controlType" v-on:keydown="if (addControl) {pushControl(controlType,event.code); addControl = false}">{{addControl===controlType?"Press Key":"+"}}</button>
+            </div>
+          </div>
+          <h2>Editor</h2>
+          Auto-Save on Default: <input type="checkbox" v-model="options.autoSave"></input>
+          <br><br>
+          <button onclick="saveOptions()">Save Changes</button>
+        </div>
+      </span>
+    </div>
+  </body>
+  <script src="utility.js"></script>
+  <script src="option.js"></script>
+  <script src="vue.min.js"></script>
+  <script src="optionMenu.js"></script>
+</html>

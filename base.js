@@ -1,4 +1,3 @@
-const id = (x) => document.getElementById(x);
 var defaultPlayer = {
   x: 0,
   y: 0,
@@ -103,6 +102,7 @@ display.stage.addChild(levelMask);
 levelLayer.mask = levelMask;
 var canJump = true;
 var canWJ = true;
+var canInteract = true;
 var accelx = true;
 var accely = true;
 var lastFrame = 0;
@@ -114,7 +114,6 @@ var spawnDelay = 333;
 var deathTimer = spawnDelay;
 var saveState = deepCopy(player);
 var startState = deepCopy(player);
-var canSave = true;
 var dt = 0;
 var coyoteTime = 1000 / 20;
 var coyoteTimer = 1000 / 20;
@@ -344,28 +343,28 @@ function doPhysics(obj, t, isPlayer) {
         dir = 3;
       } else {
         if (isLeft && isTop) {
-          if (Math.abs(tx1 - ty1) < CThreshold && tx1<2*CThreshold) return;
+          if (Math.abs(tx1 - ty1) < CThreshold && tx1 < 2 * CThreshold) return;
           if (tx1 < ty1) {
             dir = 0;
           } else {
             dir = 2;
           }
         } else if (isRight && isTop) {
-          if (Math.abs(tx2 - ty1) < CThreshold && tx2<2*CThreshold) return;
+          if (Math.abs(tx2 - ty1) < CThreshold && tx2 < 2 * CThreshold) return;
           if (tx2 < ty1) {
             dir = 1;
           } else {
             dir = 2;
           }
         } else if (isLeft && isBottom) {
-          if (Math.abs(tx1 - ty2) < CThreshold && tx1<2*CThreshold) return;
+          if (Math.abs(tx1 - ty2) < CThreshold && tx1 < 2 * CThreshold) return;
           if (tx1 < ty2) {
             dir = 0;
           } else {
             dir = 3;
           }
         } else if (isRight && isBottom) {
-          if (Math.abs(tx2 - ty2) < CThreshold && tx2<2*CThreshold) return;
+          if (Math.abs(tx2 - ty2) < CThreshold && tx2 < 2 * CThreshold) return;
           if (tx2 < ty2) {
             dir = 1;
           } else {
@@ -791,23 +790,20 @@ function doPhysics(obj, t, isPlayer) {
     // jumping
     if (isPlayer && dashTimer === 0) {
       let jumpEvent = function () {
-        canJump = false;
         player.jumpOn = !player.jumpOn;
         runEvent(globalEvents.onJump);
         runEvent(roomEvents[player.currentRoom].onJump, player.currentRoom);
         updateAll(27);
         forAllBlock(updateBlockState, 27);
       };
-      let vert = control.up || control.down;
-      let hori = control.left || control.right;
-      if (tempObj.canWallJump && canWJ) {
+      if (tempObj.canWallJump && canWJ && control.jump) {
         if (tempObj.xg) {
           obj.xv = Math[obj.g < 0 ? "max" : "min"](obj.xv, tempObj.g * 100);
         } else
           obj.yv = Math[obj.g < 0 ? "max" : "min"](obj.yv, tempObj.g * 100);
         switch (tempObj.wallJumpDir) {
           case 0:
-            if (vert && control.right && obj.xv === 0) {
+            if (control.right && obj.xv === 0) {
               obj.yv = Math.sign(tempObj.g) * -375;
               obj.xv = obj.moveSpeed * 400;
               canWJ = false;
@@ -815,7 +811,7 @@ function doPhysics(obj, t, isPlayer) {
             }
             break;
           case 1:
-            if (vert && control.left && obj.xv === 0) {
+            if (control.left && obj.xv === 0) {
               obj.yv = Math.sign(tempObj.g) * -375;
               obj.xv = -obj.moveSpeed * 400;
               canWJ = false;
@@ -823,7 +819,7 @@ function doPhysics(obj, t, isPlayer) {
             }
             break;
           case 2:
-            if (hori && control.down && obj.yv === 0) {
+            if (control.down && obj.yv === 0) {
               obj.xv = Math.sign(tempObj.g) * -375;
               obj.yv = obj.moveSpeed * 400;
               canWJ = false;
@@ -831,7 +827,7 @@ function doPhysics(obj, t, isPlayer) {
             }
             break;
           case 3:
-            if (hori && control.up && obj.yv === 0) {
+            if (control.up && obj.yv === 0) {
               obj.xv = Math.sign(tempObj.g) * -375;
               obj.yv = -obj.moveSpeed * 400;
               canWJ = false;
@@ -840,20 +836,15 @@ function doPhysics(obj, t, isPlayer) {
             break;
           default:
         }
-      } else if (obj.currentJump > 0 && canJump) {
+      } else if (obj.currentJump > 0 && control.jump && canJump) {
         if (tempObj.xg) {
-          if (hori) {
-            obj.xv = Math.sign(tempObj.g) * -375;
-            obj.currentJump--;
-            jumpEvent();
-          }
+          obj.xv = Math.sign(tempObj.g) * -375;
         } else {
-          if (vert) {
-            obj.yv = Math.sign(tempObj.g) * -375;
-            obj.currentJump--;
-            jumpEvent();
-          }
+          obj.yv = Math.sign(tempObj.g) * -375;
         }
+        canJump = false;
+        obj.currentJump--;
+        jumpEvent();
       }
     }
     // change size
