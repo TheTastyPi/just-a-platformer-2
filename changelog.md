@@ -604,3 +604,7 @@
 - Added a loading screen
 - Added a more info button in the miscellaneous section
   - Allows you to go to the main page from the editor
+
+### 9 Sep. 2022
+
+- Fixed a past version compatibility issue
