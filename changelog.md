@@ -608,3 +608,10 @@
 ### 9 Sep. 2022
 
 - Fixed a past version compatibility issue
+
+### 10 Sep. 2022
+
+- Added the 'zLayer' property to all block
+  - If non-empty, overrides the zLayer set by eventPriority
+- Fixed a bug where you can set a property to the wrong type
+  - Dunno why this wasn't fixed earlier

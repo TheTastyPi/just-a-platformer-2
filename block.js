@@ -11,6 +11,7 @@ class Block {
     this.collideBlock = true;
     this.giveJump = giveJump;
     this.eventPriority = eventPriority;
+    this.zLayer = '';
     this.invisible = false;
     this.opacity = 1;
     this.friction = true;

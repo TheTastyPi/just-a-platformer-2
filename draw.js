@@ -83,14 +83,14 @@ function updateBlock(block, updateTexture = false) {
   if (block.sprite) {
     block.sprite.renderable = !block.invisible;
     block.sprite.alpha = block.opacity;
-    block.sprite.zIndex = block.eventPriority;
+    block.sprite.zIndex = block.zLayer ? block.zLayer : block.eventPriority;
     if (updateTexture) block.sprite.texture = createTexture(block);
     blockData[block.type].update(block);
   }
   if (block.dupSprite) {
     block.dupSprite.renderable = !block.invisible;
     block.dupSprite.alpha = block.opacity;
-    block.dupSprite.zIndex = block.eventPriority;
+    block.dupSprite.zIndex = block.zLayer ? block.zLayer : block.eventPriority;
     if (updateTexture) block.dupSprite.texture = createTexture(block);
     blockData[block.type].update(block, block.dupSprite);
   }

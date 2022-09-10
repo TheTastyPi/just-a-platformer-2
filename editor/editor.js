@@ -76,6 +76,7 @@ const propData = {
   collideBlock: ["bool", "cB"],
   giveJump: ["bool", "j"],
   eventPriority: ["int", "ep", () => -Infinity, () => Infinity],
+  zLayer: ["int", "z", () => -Infinity, () => Infinity],
   invisible: ["bool", "v"],
   opacity: ["num", "o", () => 0, () => 1],
   friction: ["bool", "fr"],
@@ -195,6 +196,7 @@ var blockEdit = new Vue({
       "collideBlock",
       "giveJump",
       "eventPriority",
+      "zLayer",
       "invisible",
       "opacity",
       "friction",
@@ -226,7 +228,9 @@ var blockEdit = new Vue({
     blocks: blockList,
     desc: {
       eventPriority:
-        "Determines the priority of touch events.\nHigher priority overrides lower priority.\nAlso determines z-index.\nNote: The player's z-index is -1.",
+        "Determines the priority of touch events.\nHigher priority overrides lower priority.",
+      zLayer:
+        "Determines whether a block is displayed over another.\nIf left empty, defaults to eventPriority.\nThe player has a zLayer of -1",
       floorLeniency:
         "Allows objects to instantly step onto a block.\nThe number determines the height you can step from.",
       alwaysActive:
@@ -833,28 +837,31 @@ function confirmPropEdit(block) {
           newBlock[i] = blockData[block.type].defaultBlock[i];
         continue;
       }
-      if (parseFloat(editBlock[i]) == editBlock[i]) {
-        let limIndex = 2;
-        let propLimit = propData[i];
-        if (
-          propLimit[limIndex] === undefined &&
-          blockData[block.type].props[i] !== undefined
-        ) {
-          propLimit = blockData[block.type].props[i];
-          limIndex = 0;
-        }
-        let newNum = parseFloat(editBlock[i]);
-        if (propData[i][0] === "int") newNum = Math.round(newNum);
-        if (propLimit[limIndex] !== undefined) {
-          newNum = Math.min(
-            Math.max(parseFloat(editBlock[i]), propLimit[limIndex](block)),
-            propLimit[limIndex + 1](block)
-          );
-        }
-        if (newNum !== parseFloat(editBlock[i]))
-          editBlock[i] = newNum.toString();
-        newBlock[i] = newNum;
-        if (i === "size") newBlock.targetSize = newNum;
+      let propType = propData[i][0];
+      if (["num","int"].includes(propType)) {
+        if (parseFloat(editBlock[i]) == editBlock[i]) {
+          let limIndex = 2;
+          let propLimit = propData[i];
+          if (
+            propLimit[limIndex] === undefined &&
+            blockData[block.type].props[i] !== undefined
+          ) {
+            propLimit = blockData[block.type].props[i];
+            limIndex = 0;
+          }
+          let newNum = parseFloat(editBlock[i]);
+          if (propType === "int") newNum = Math.round(newNum);
+          if (propLimit[limIndex] !== undefined) {
+            newNum = Math.min(
+              Math.max(parseFloat(editBlock[i]), propLimit[limIndex](block)),
+              propLimit[limIndex + 1](block)
+            );
+          }
+          if (newNum !== parseFloat(editBlock[i]))
+            editBlock[i] = newNum.toString();
+          newBlock[i] = newNum;
+          if (i === "size") newBlock.targetSize = newNum;
+        } else if (i === "zLayer" && editBlock[i] === '') newBlock[i] = editBlock[i];
       } else newBlock[i] = editBlock[i];
     }
   }
