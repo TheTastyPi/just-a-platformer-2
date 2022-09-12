@@ -1833,6 +1833,7 @@ function load(name) {
   if (save) {
     let saveData;
     let noRooms = false;
+    if (save[2] !== undefined) editor.roomOrder = save[2];
     try {
       saveData = str2lvls(save[0], save[4] !== undefined);
       levels = saveData[0];
@@ -1850,14 +1851,12 @@ function load(name) {
       for (let i in saveData[2]) saveData[2][i].currentRoom = name;
       noRooms = true;
     }
-    if (noRooms) {
-      editor.roomOrder = Object.keys(levels);
-    } else editor.roomOrder = save[2];
     animatedObjs = saveData[2];
     startState = str2pState(save[1]);
     if (noRooms) {
       startState.currentRoom = name;
       player.currentRoom = name;
+      editor.roomOrder = Object.keys(levels);
     }
     if (!editor.roomOrder.includes(startState.currentRoom)) {
       startState.currentRoom = editor.roomOrder[0];
