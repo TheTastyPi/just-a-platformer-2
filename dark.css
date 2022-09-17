@@ -26,10 +26,6 @@ body {
 #commandList > div > div {
   background: #00000088;
 }
-.blockSelect,
-.blockEdit {
-  background: #ffffff88;
-}
 .playDisp,
 .infoDisp,
 .helpMenu,
@@ -38,12 +34,24 @@ body {
 .eventDoc {
   background: #444444bb;
 }
+.blockSelect,
+.blockEdit {
+  background: #bbbbbb88;
+}
 button,
 input,
 .key,
-.tabButton {
+.tabButton,
+.selectGroupButton {
   background: #333333;
   color: white;
+}
+input,
+button {
+  border-color: white;
+}
+.optionButton {
+  border-color: black;
 }
 .buttonOn {
   background-color: #008800;

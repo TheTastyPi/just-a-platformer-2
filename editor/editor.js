@@ -179,7 +179,8 @@ var blockSelect = new Vue({
   el: "#blockSelect",
   data: {
     blocks: blockList,
-    selectType: 0
+    selectType: 0,
+    selectGroup: "Basic"
   }
 });
 var blockEdit = new Vue({
@@ -838,7 +839,7 @@ function confirmPropEdit(block) {
         continue;
       }
       let propType = propData[i][0];
-      if (["num","int"].includes(propType)) {
+      if (["num", "int"].includes(propType)) {
         if (parseFloat(editBlock[i]) == editBlock[i]) {
           let limIndex = 2;
           let propLimit = propData[i];
@@ -861,7 +862,8 @@ function confirmPropEdit(block) {
             editBlock[i] = newNum.toString();
           newBlock[i] = newNum;
           if (i === "size") newBlock.targetSize = newNum;
-        } else if (i === "zLayer" && editBlock[i] === '') newBlock[i] = editBlock[i];
+        } else if (i === "zLayer" && editBlock[i] === "")
+          newBlock[i] = editBlock[i];
       } else newBlock[i] = editBlock[i];
     }
   }
@@ -2316,13 +2318,7 @@ function chooseFromLevel(type, chooseObj, chooseKey, inEvent = false) {
   }
   blurAll();
 }
-function init() {
-  setInterval(function () {
-    if (editor.autoSave) save();
-  }, 5000);
-  startState.x = 215;
-  startState.y = 280;
-  startState.currentRoom = "default";
+function drawBlockSelect() {
   for (let i in blockData) {
     let btn = new PIXI.Application({
       width: 50,
@@ -2337,6 +2333,15 @@ function init() {
     blockData[i].update(blockData[i].defaultBlock, s, btn);
     btn.stage.addChild(s);
   }
+}
+function init() {
+  setInterval(function () {
+    if (editor.autoSave) save();
+  }, 5000);
+  startState.x = 215;
+  startState.y = 280;
+  startState.currentRoom = "default";
+  drawBlockSelect();
   for (let i in propData) propAliasReverse[propData[i][1]] = i;
   for (let i in eventDataAlias) eventAliasReverse[eventDataAlias[i]] = i;
   levels = str2lvls(levels, false)[0];

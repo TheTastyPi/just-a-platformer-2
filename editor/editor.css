@@ -12,32 +12,37 @@ body::after {
   background: #ffffff88;
   user-select: none;
 }
+.selectGroupButtonCont {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  justify-content: center;
+}
+.selectGroupButton {
+  display: block;
+  width: 100%;
+  background: white;
+}
 .blockSelect {
   position: absolute;
   width: 100%;
   height: 200px;
   bottom: 0;
   display: flex;
-  overflow-x: scroll;
   text-align: center;
-  background: #00000088;
-}
-.blockSectLabel {
-  width: 100%;
+  background: #44444488;
 }
 .blockSect {
   height: 100%;
-  margin-right: 5px;
   background: #ffffff88;
-}
-.blockSelectGroup {
   display: flex;
-  height: 90%;
   align-items: center;
+  flex-grow: 1;
+  justify-content: space-evenly;
+  /*overflow-x: scroll;*/
 }
 .blockSelectLabel {
   margin-right: 5px;
-  word-spacing: 1000px;
   min-width: 100px;
 }
 .blockSelected {
@@ -50,7 +55,7 @@ body::after {
   height: 200px;
   bottom: 0;
   text-align: center;
-  background: #00000088;
+  background: #44444488;
 }
 .blockEditMenu {
   height: 100%;
@@ -96,6 +101,15 @@ body::after {
   width: 50px;
   height: 25px;
   background: white;
+  padding: 0;
+}
+input,
+button {
+  border: solid 1px black;
+}
+.tabButton,
+.optionButton {
+  border-width: 2px;
 }
 .buttonOn {
   background-color: #88ff88;

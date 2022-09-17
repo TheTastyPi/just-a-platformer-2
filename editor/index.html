@@ -24,20 +24,20 @@
       <canvas id="display" style="position: absolute;"></canvas>
       <div id="textBlockText" class="textBlockText"></div>
       <div id="blockSelect" class="blockSelect">
-        <div v-for="(ids,groupName) in blocks" class="blockSect">
-          <div class="blockSectLabel">{{groupName}}</div>
-          <div class="blockSelectGroup">
-            <div v-for="id in ids" class="blockSelectLabel">
-              <canvas
-                v-bind:id="'blockSelect'+id"
-                width="50"
-                height="50"
-                v-on:click="changeBuildSelect(blockData[id].defaultBlock)"
-                v-bind:class="{blockSelected:selectType==id}"
-              ></canvas
-              ><br />
-              {{blockData[id].name}}
-            </div>
+        <div class="selectGroupButtonCont">
+          <button v-for="(ids,groupName) in blocks" v-on:click="selectGroup = groupName" v-bind:class="{buttonOn:selectGroup === groupName}" class="selectGroupButton">{{groupName}}</button>
+        </div>
+        <div v-for="(ids, groupName) in blockList" class="blockSect" v-show="selectGroup === groupName">
+          <div v-for="id in ids" class="blockSelectLabel">
+            <canvas
+              v-bind:id="'blockSelect'+id"
+              width="50"
+              height="50"
+              v-on:click="changeBuildSelect(blockData[id].defaultBlock)"
+              v-bind:class="{blockSelected:selectType==id}"
+            ></canvas
+            ><br />
+            {{blockData[id].name}}
           </div>
         </div>
       </div>

@@ -591,7 +591,7 @@
 
 - Fixed a bug where an object can clip into a block's corner in very precise circumstances.
 
-### 5 Sep. 2022
+## 5 Sep. 2022
 
 - Added an options menu in the main page of jap2, which has options for:
   - Dark theme
@@ -605,7 +605,7 @@
 - Added a more info button in the miscellaneous section
   - Allows you to go to the main page from the editor
 
-### 9 Sep. 2022
+#### 9 Sep. 2022
 
 - Fixed a past version compatibility issue
 
@@ -618,4 +618,11 @@
 
 ### 12 Sep. 2022
 
-- Fixed a bug where the bugfix from two versions ago broke the the game
+- Fixed a bug where the bugfix from two versions ago broke the game
+
+### 17 Sep. 2022
+
+- Added tabs to the block selection
+  - Added an option to toggle the use of tabs
+- Made a few changes to the looks of the UI
+  - Fixed a some inconsistencies with appearances across browsers
