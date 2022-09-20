@@ -6,7 +6,8 @@ body {
   background: #888888;
 }
 #optionsPage a,
-#moreInfo a {
+#moreInfo a,
+.eventDoc a {
   color: lightblue;
 }
 .optionButton {

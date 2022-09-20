@@ -623,6 +623,9 @@
 ### 17 Sep. 2022
 
 - Added tabs to the block selection
-  - Added an option to toggle the use of tabs
 - Made a few changes to the looks of the UI
-  - Fixed a some inconsistencies with appearances across browsers
+  - Fixed some inconsistencies with appearances across browsers
+
+#### 20 Sep. 2022
+
+- Fixed some issues with dark mode in the console and links in the japascript documentation

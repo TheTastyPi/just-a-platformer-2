@@ -279,7 +279,7 @@ function handleEvents() {
     }
     if (editor && err) {
       let errText = createErrText(data, err);
-      consoleLog(errText, "#FF0000");
+      consoleLog(errText, "err");
     }
     if (!pause) {
       data._lineNum++;
@@ -414,7 +414,7 @@ function handleActions() {
     } else {
       if (editor) {
         let errText = createErrText(action[0], err);
-        consoleLog(errText, "#FF0000");
+        consoleLog(errText, "err");
       }
       output = "END";
     }
@@ -425,5 +425,27 @@ function handleActions() {
   }
 }
 function consoleLog(text, color) {
+  if (color === "log") {
+    switch (options.theme) {
+      case "default":
+        color = "#FFFF00";
+        break;
+      case "dark":
+        color = "#888800";
+        break;
+      default:
+    }
+  }
+  if (color === "err") {
+    switch (options.theme) {
+      case "default":
+        color = "#FF0000";
+        break;
+      case "dark":
+        color = "#880000";
+        break;
+      default:
+    }
+  }
   editor.console.push([text, color]);
 }
