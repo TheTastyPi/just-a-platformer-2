@@ -629,3 +629,4 @@
 #### 20 Sep. 2022
 
 - Fixed some issues with dark mode in the console and links in the japascript documentation
+- Updated documentation with log() and err()
