@@ -179,6 +179,21 @@
           v-on:mousemove="showTooltips('Flip selected blocks vertically')"
           v-on:mouseleave="hideTooltips"
         ></button>
+        <!--
+        <div>View Layer</div>
+        Viewing:
+        <select
+          v-model = "editor.currentLayer"
+        >
+          <option value="All">
+            All
+          </options>
+          <option v-for="layer in editor.viewLayers" v-bind:value="layer">
+            {{layer}}
+          </options>
+        </select><br>
+        <input style="width:90px" v-model="editor.viewLayerAdd"></input> <button v-onclick="addViewLayer(editor.viewLayerAdd)">Add Layer</button>
+        -->
         <div>Level Size</div>
         {{width+"x"+height}}<br>
         {{editor.invertExpand?'Retract':'Expand'}} level by <input v-model="editor.expandAmt" onchange="editor.expandAmt = Math.round(editor.expandAmt)" v-on:keydown.stop style="width:100px"></input><br>

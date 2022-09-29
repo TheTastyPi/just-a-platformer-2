@@ -630,3 +630,8 @@
 
 - Fixed some issues with dark mode in the console and links in the japascript documentation
 - Updated documentation with log() and err()
+
+### 29 Sep. 2022
+
+- Fixed a bug where you can't open the main menu while in dark mode (how has no one found this)
+- Fixed a bug where the tab icon displayed in the main menu is incorrect

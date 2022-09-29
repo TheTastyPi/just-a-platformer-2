@@ -52,7 +52,11 @@ var editor = {
   editEvent: undefined,
   eventSelect: [0, 0],
   eventClipboard: [],
-  console: []
+  console: [],
+  viewLayers: [],
+  viewLayerItems: {},
+  viewLayerAdd: "",
+  currentLayer: "All"
 };
 const propData = {
   // general
@@ -2318,6 +2322,11 @@ function chooseFromLevel(type, chooseObj, chooseKey, inEvent = false) {
   }
   blurAll();
 }
+function addViewLayer(name) {
+  if (editor.viewLayers.includes(name)) return;
+  editor.viewLayers.push(name);
+  editor.viewLayerItems[name] = [];
+}
 function drawBlockSelect() {
   for (let i in blockData) {
     let btn = new PIXI.Application({
@@ -2335,6 +2344,8 @@ function drawBlockSelect() {
   }
 }
 function init() {
+  updateTheme();
+  updateCustomBG();
   setInterval(function () {
     if (editor.autoSave) save();
   }, 5000);
