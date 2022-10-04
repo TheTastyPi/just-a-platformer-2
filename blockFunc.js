@@ -4,7 +4,7 @@ function addBlock(block, log = true) {
   block.removed = undefined;
   block.isRootBlock = true;
   updateBlockState(block);
-  if ((!editor || editor.playMode) && log) {
+  if ((page === "game" || editor.playMode) && log) {
     let diff = [undefined, block];
     diffSave.push(diff);
   }
@@ -21,7 +21,7 @@ function removeBlock(block, log = true) {
     gridSpace[i].index--;
   }
   gridSpace.splice(block.index, 1);
-  if ((!editor || editor.playMode) && log) {
+  if ((page === "game" || editor.playMode) && log) {
     let index = diffSave.findIndex((x) => x[1] === block);
     let diff = diffSave[index];
     if (index !== -1) {
@@ -44,7 +44,8 @@ function removeBlock(block, log = true) {
   removeSprite(block);
 }
 function moveBlock(block, dx, dy, draw = true, log = true) {
-  if (log && (!editor || editor.playMode) && block !== player) logChange(block);
+  if (log && (page === "game" || editor.playMode) && block !== player)
+    logChange(block);
   let gridSpace = getGridSpace(block);
   let sprite = block.sprite;
   block.x += dx;
@@ -75,7 +76,8 @@ function moveBlock(block, dx, dy, draw = true, log = true) {
 function moveBlockRoom(block, room, log = true) {
   block = getGridBlock(block);
   if (block.currentRoom === room) return;
-  if (log && (!editor || editor.playMode) && block !== player) logChange(block);
+  if (log && (page === "game" || editor.playMode) && block !== player)
+    logChange(block);
   removeSprite(block);
   let gridSpace = getGridSpace(block);
   for (let i = parseInt(block.index) + 1; i < gridSpace.length; i++) {
@@ -87,7 +89,8 @@ function moveBlockRoom(block, room, log = true) {
   addSprite(block);
 }
 function scaleBlock(block, factor, focusX, focusY, draw = true, log = true) {
-  if (log && (!editor || editor.playMode) && block !== player) logChange(block);
+  if (log && (page === "game" || editor.playMode) && block !== player)
+    logChange(block);
   block.size = Math.max(Math.min(block.size * factor, maxBlockSize), 6.25);
   if (focusX !== undefined) {
     let dx = focusX - block.x;

@@ -23,7 +23,7 @@ document.addEventListener("keydown", function (event) {
   } else if (c.Jump.includes(key)) control.jump = true;
   if (c.Dash.includes(key)) control.dash = true;
   if (c.Interact.includes(key)) control.interact = true;
-  if (c.Respawn.includes(key)) respawn(event.shiftKey && editor !== undefined);
+  if (c.Respawn.includes(key)) respawn(event.shiftKey && page === "editor");
 });
 document.addEventListener("keyup", function (event) {
   let key = event.code;

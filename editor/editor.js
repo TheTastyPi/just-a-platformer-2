@@ -54,7 +54,6 @@ var editor = {
   eventClipboard: [],
   console: [],
   viewLayers: [],
-  viewLayerItems: {},
   viewLayerAdd: "",
   currentLayer: "All"
 };
@@ -86,6 +85,7 @@ const propData = {
   friction: ["bool", "fr"],
   dynamic: ["bool", "dy"],
   events: ["events", "e"],
+  viewLayer: ["viewLayer", "vL"],
   // solid only
   floorLeniency: ["num", "fl", () => 0, () => maxBlockSize],
   // dynamic props
@@ -204,6 +204,7 @@ var blockEdit = new Vue({
       "zLayer",
       "invisible",
       "opacity",
+      "viewLayer",
       "friction",
       "dynamic",
       "events"
@@ -226,9 +227,11 @@ var blockEdit = new Vue({
       int: "text",
       str: "textarea",
       bool: "checkbox",
-      blockType: "select",
+      blockType: "blockType",
       color: "color",
-      hidden: "none"
+      hidden: "none",
+      viewLayer: "viewLayer",
+      events: "events"
     },
     blocks: blockList,
     desc: {
@@ -539,6 +542,7 @@ id("display").addEventListener("mousedown", function (event) {
         } else {
           updateBuildLocation(xPos, yPos);
           editor.buildSelect.currentRoom = player.currentRoom;
+          editor.buildSelect.viewLayer = editor.currentLayer;
           addAction("addBlock", [
             deepCopy(addBlock(deepCopy(editor.buildSelect)))
           ]);
@@ -673,7 +677,7 @@ document.addEventListener("mouseup", function (event) {
         !(event.ctrlKey || event.metaKey) &&
         editor.selectStart !== undefined
       ) {
-        let prev = editor.editSelect[0];
+        let prev = editor.editSelect.length === 1 ? editor.editSelect[0] : undefined;
         if (!event.shiftKey && !editor.chooseType) deselect();
         let choosing = editor.chooseType;
         let singleChoose =
@@ -906,10 +910,8 @@ function addToEditBlock(block) {
     }
   }
 }
-function select(selectRect, single = false, prev, build = false) {
-  let first;
-  let found = prev === undefined;
-  let cycled = false;
+function getSelected(selectRect) {
+  let selected = [];
   for (
     let x = gridUnit(selectRect.x) - maxBlockSize / 50;
     x <= gridUnit(selectRect.x + selectRect.width);
@@ -924,82 +926,69 @@ function select(selectRect, single = false, prev, build = false) {
       if (gridSpace === undefined) continue;
       for (let i in gridSpace) {
         let block = gridSpace[i];
-        if (
-          isColliding(selectRect, block) &&
-          (!editor.editSelect.includes(block) || build || editor.chooseType)
-        ) {
-          if (single) {
-            if (editor.chooseType) {
-              editor.chooseFor[0] = block;
-              if (editor.chooseType === "block") {
-                editor.chooseFor[0] = deepCopy(editor.chooseFor[0]);
-                editor.chooseFor[0].isRootBlock = false;
-              }
-              editor.chooseType = undefined;
-              return;
-            }
-            first ??= block;
-            if (prev === block) {
-              found = true;
-              continue;
-            }
-            if (!found) continue;
-          } else {
-            if (editor.chooseType) {
-              let b = block;
-              if (editor.chooseType === "block") {
-                b = deepCopy(b);
-                b.isRootBlock = false;
-              }
-              editor.chooseFor.push(b);
-              continue;
-            }
-          }
-          if (single || editor.editBlock === undefined) {
-            editor.editBlock = deepCopy(block);
-            for (let i in blockData[block.type].props) {
-              if (propData[i] !== undefined) editor.editBlockProp.push(i);
-            }
-          } else {
-            addToEditBlock(block);
-          }
-          if (single) {
-            if (build) {
-              changeBuildSelect(block);
-            } else {
-              if (block.link) {
-                for (let j in block.link) {
-                  addToEditBlock(block.link[j]);
-                  editor.editSelect.push(block.link[j]);
-                }
-              } else editor.editSelect = [block];
-            }
-            cycled = true;
-            break;
-          } else {
-            if (block.link) {
-              for (let j in block.link) {
-                addToEditBlock(block.link[j]);
-                editor.editSelect.push(block.link[j]);
-              }
-            } else editor.editSelect.push(block);
-          }
+        if (isColliding(selectRect, block) && ["All",block.viewLayer].includes(editor.currentLayer)) {
+          selected.push(block);
         }
       }
-      if (single && cycled) break;
     }
-    if (single && cycled) break;
   }
-  if (single && !cycled && first !== undefined) {
-    editor.editBlock = deepCopy(first);
-    for (let i in blockData[first.type].props) {
+  return selected;
+}
+function select(selectRect, single = false, prev, build = false) {
+  let selected = getSelected(selectRect);
+  if (selected.length === 0) return;
+  selected.reverse();
+  selected.sort((a,b)=>{
+    let valA = a.zLayer ? a.zLayer : a.eventPriority;
+    let valB = b.zLayer ? b.zLayer : b.eventPriority;
+    return valB-valA;
+  });
+  let selectedNew = selected.filter(x=>!editor.editSelect.includes(x));
+  if (editor.chooseType) {
+    if (single) {
+      editor.chooseFor[0] = selected[0];
+      if (editor.chooseType === "block") {
+        editor.chooseFor[0] = deepCopy(editor.chooseFor[0]);
+        editor.chooseFor[0].isRootBlock = false;
+      }
+    } else {
+      editor.chooseFor = selected;
+      if (editor.chooseType === "block") {
+        editor.chooseFor = deepCopy(editor.chooseFor);
+        editor.chooseFor = editor.chooseFor.map(x=>{x.isRootBlock = false});
+      }
+    }
+    editor.chooseType = undefined;
+    return;
+  }
+  if (build) {
+    changeBuildSelect(selected[0]);
+    return;
+  }
+  if (editor.editBlock === undefined) {
+    editor.editBlock = deepCopy(selected[0]);
+    for (let i in blockData[selected[0].type].props) {
       if (propData[i] !== undefined) editor.editBlockProp.push(i);
     }
-    if (first.link) {
-      editor.editSelect = [...first.link];
-    } else editor.editSelect = [first];
   }
-  if (editor.chooseType) editor.chooseType = undefined;
+  let nextBlock;
+  if (single && prev) {
+    let index = selected.findIndex(x=>x===prev) + 1;
+    if (index === selected.length) index = 0;
+    nextBlock = selected[index];
+  }
+  for (let i in selectedNew) {
+    let block = nextBlock ?? selected[i];
+    addToEditBlock(block);
+    editor.editSelect.push(block);
+    if (block.link) {
+      for (let j in block.link) {
+        addToEditBlock(block.link[j]);
+        editor.editSelect.push(block.link[j]);
+      }
+    }
+    if (single) break;
+  }
   updateSelectDisp();
 }
 function deselect() {
@@ -1101,6 +1090,7 @@ function paste(x, y) {
   for (let i in editor.clipboard) {
     let block = deepCopy(editor.clipboard[i]);
     block.currentRoom = player.currentRoom;
+    block.viewLayer = editor.currentLayer;
     addBlock(block);
     moveBlock(block, x, y);
     editor.editSelect.push(block);
@@ -2323,9 +2313,19 @@ function chooseFromLevel(type, chooseObj, chooseKey, inEvent = false) {
   blurAll();
 }
 function addViewLayer(name) {
-  if (editor.viewLayers.includes(name)) return;
+  if (editor.viewLayers.includes(name) || ["All",""].includes(name)) return;
   editor.viewLayers.push(name);
-  editor.viewLayerItems[name] = [];
+}
+function removeViewLayer(name) {
+  if (!editor.viewLayers.includes(name)) return;
+  editor.viewLayers.splice(editor.viewLayers.findIndex(x=>x===name),1);
+  forAllBlock(b=>{
+    if (b.viewLayer === name) b.viewLayer = '';
+  });
+  if (editor.currentLayer === name) {
+    editor.currentLayer = "All";
+    drawLevel();
+  }
 }
 function drawBlockSelect() {
   for (let i in blockData) {
@@ -2344,8 +2344,6 @@ function drawBlockSelect() {
   }
 }
 function init() {
-  updateTheme();
-  updateCustomBG();
   setInterval(function () {
     if (editor.autoSave) save();
   }, 5000);

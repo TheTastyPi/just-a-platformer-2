@@ -59,8 +59,7 @@ function updateTheme() {
   if (options.theme !== "default") {
     let link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href =
-      (typeof editor === "undefined" ? "" : "../") + options.theme + ".css";
+    link.href = (page === "menu" ? "" : "../") + options.theme + ".css";
     link.id = options.theme + "Theme";
     link.onload = unhide;
     document.head.appendChild(link);
@@ -73,7 +72,5 @@ function updateCustomBG() {
   if (id("background") && options.useCustomGameBG)
     id("background").style.background = options.customGameBG;
 }
-if (typeof editor === "undefined") {
-  updateTheme();
-  updateCustomBG();
-}
+updateTheme();
+updateCustomBG();

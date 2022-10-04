@@ -635,3 +635,13 @@
 
 - Fixed a bug where you can't open the main menu while in dark mode (how has no one found this)
 - Fixed a bug where the tab icon displayed in the main menu is incorrect
+
+## 4 Oct. 2022
+
+- Added view layers
+  - Allows you to view and select certain parts of the level seperately
+  - Added the 'viewLayer' property to all blocks
+- Heavily refactored the edit selection system
+- When selecting a single block, you now always select the front-most block first
+- Fixed selection dropdowns' dark mode visual
+- Fixed a bug where dynamic wall-jump blocks/panels didn't work

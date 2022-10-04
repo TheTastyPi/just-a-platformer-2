@@ -202,7 +202,7 @@ function nextFrame(timeStamp) {
     dt = 0;
   }
   canWJ = true;
-  if (editor) editor.currentRoom = player.currentRoom;
+  if (page === "editor") editor.currentRoom = player.currentRoom;
   window.requestAnimationFrame(nextFrame);
 }
 function doPhysics(obj, t, isPlayer) {
@@ -803,7 +803,7 @@ function doPhysics(obj, t, isPlayer) {
           obj.yv = Math[obj.g < 0 ? "max" : "min"](obj.yv, tempObj.g * 100);
         switch (tempObj.wallJumpDir) {
           case 0:
-            if (control.right && obj.xv === 0) {
+            if (control.right) {
               obj.yv = Math.sign(tempObj.g) * -375;
               obj.xv = obj.moveSpeed * 400;
               canWJ = false;
@@ -811,7 +811,7 @@ function doPhysics(obj, t, isPlayer) {
             }
             break;
           case 1:
-            if (control.left && obj.xv === 0) {
+            if (control.left) {
               obj.yv = Math.sign(tempObj.g) * -375;
               obj.xv = -obj.moveSpeed * 400;
               canWJ = false;
@@ -819,7 +819,7 @@ function doPhysics(obj, t, isPlayer) {
             }
             break;
           case 2:
-            if (control.down && obj.yv === 0) {
+            if (control.down) {
               obj.xv = Math.sign(tempObj.g) * -375;
               obj.yv = obj.moveSpeed * 400;
               canWJ = false;
@@ -827,7 +827,7 @@ function doPhysics(obj, t, isPlayer) {
             }
             break;
           case 3:
-            if (control.up && obj.yv === 0) {
+            if (control.up) {
               obj.xv = Math.sign(tempObj.g) * -375;
               obj.yv = -obj.moveSpeed * 400;
               canWJ = false;

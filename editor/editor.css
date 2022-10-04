@@ -4,7 +4,7 @@ body::after {
   height: 0;
   overflow: hidden;
   z-index: -1;
-  content: url(pics/plus.png) url(pics/minus.png);
+  content: url(../pics/plus.png) url(../pics/minus.png);
 }
 .textBlockText {
   position: absolute;

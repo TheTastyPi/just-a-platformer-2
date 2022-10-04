@@ -83,6 +83,12 @@ function updateBlock(block, updateTexture = false) {
   if (block.sprite) {
     block.sprite.renderable = !block.invisible;
     block.sprite.alpha = block.opacity;
+    if (
+      page === "editor" &&
+      editor.currentLayer !== "All" &&
+      block.viewLayer !== editor.currentLayer
+    )
+      block.sprite.alpha = 0.1;
     block.sprite.zIndex = block.zLayer ? block.zLayer : block.eventPriority;
     if (updateTexture) block.sprite.texture = createTexture(block);
     blockData[block.type].update(block);
@@ -90,6 +96,12 @@ function updateBlock(block, updateTexture = false) {
   if (block.dupSprite) {
     block.dupSprite.renderable = !block.invisible;
     block.dupSprite.alpha = block.opacity;
+    if (
+      page === "editor" &&
+      editor.currentLayer !== "All" &&
+      block.viewLayer !== editor.currentLayer
+    )
+      block.dupSprite.alpha = 0.1;
     block.dupSprite.zIndex = block.zLayer ? block.zLayer : block.eventPriority;
     if (updateTexture) block.dupSprite.texture = createTexture(block);
     blockData[block.type].update(block, block.dupSprite);

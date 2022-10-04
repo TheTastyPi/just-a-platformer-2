@@ -48,13 +48,17 @@
               <span style="width:50%" v-bind:style="{textDecoration:desc[prop]?'underline':''}"
               v-on:mousemove="if (desc[prop]) showTooltips(desc[prop])"
               v-on:mouseleave="hideTooltips">{{prop}}</span>
-              <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll">
+              <select v-if="inputType[propData[prop][0]] == 'blockType'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll">
                 <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
                   <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
                 </optgroup>
               </select>
+              <select v-else-if="inputType[propData[prop][0]] == 'viewLayer'" v-model = "editor.editBlock[prop]" style="width:50%">
+                <option value="">None</options>
+                <option v-for="layer in editor.viewLayers" v-bind:value="layer">{{layer}}</options>
+              </select>
               <textarea v-else-if="inputType[propData[prop][0]] == 'textarea'"style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></textarea>
-              <button v-else-if="propData[prop][0] == 'events'" onclick="toggleEventEditor('block',editor.editBlock.events)" style="width:50%">Toggle event editor</button>
+              <button v-else-if="inputType[propData[prop][0]] == 'events'" onclick="toggleEventEditor('block',editor.editBlock.events)" style="width:50%">Toggle event editor</button>
               <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></input>
             </div>
             <div v-for="prop in solidProps" class="blockProp" v-if="editor.editBlock.isSolid">
@@ -105,9 +109,9 @@
           <span class="centered noEditText">Select blocks to edit</span>
         </div>
       </div>
-      <div id="editOptions" class="editOptions">
+      <div id="editOptions" class="editOptions" v-on:keydown.stop>
         <div>Building</div>
-        Size:<input v-model="editor.buildSelect.size" onchange="updateBuildDisp()" v-on:keydown.stop style="width:100px"></input>px<br>
+        Size:<input v-model="editor.buildSelect.size" onchange="updateBuildDisp()" style="width:100px"></input>px<br>
         <div>Grid & Snapping</div>
         <button
           v-bind:class="{buttonOn:grid.visible}"
@@ -117,7 +121,7 @@
           v-on:mousemove="showTooltips('Toggle grid display')"
           v-on:mouseleave="hideTooltips"
         ></button><br>
-        Size:<input v-model="editor.gridSize" onchange="updateGrid()" v-on:keydown.stop style="width:100px"></input>px<br>
+        Size:<input v-model="editor.gridSize" onchange="updateGrid()" style="width:100px"></input>px<br>
         <button
           v-bind:class="{buttonOn:editor.snapOverride}"
           class="optionButton"
@@ -179,11 +183,11 @@
           v-on:mousemove="showTooltips('Flip selected blocks vertically')"
           v-on:mouseleave="hideTooltips"
         ></button>
-        <!--
         <div>View Layer</div>
         Viewing:
         <select
           v-model = "editor.currentLayer"
+          v-on:change = "drawLevel()"
         >
           <option value="All">
             All
@@ -192,11 +196,12 @@
             {{layer}}
           </options>
         </select><br>
-        <input style="width:90px" v-model="editor.viewLayerAdd"></input> <button v-onclick="addViewLayer(editor.viewLayerAdd)">Add Layer</button>
-        -->
+        <input style="width:100px" v-model="editor.viewLayerAdd"></input>
+        <button v-on:click="addViewLayer(editor.viewLayerAdd)">Add Layer</button>
+        <button v-on:click="removeViewLayer(editor.currentLayer)">Remove Current Layer</button>
         <div>Level Size</div>
         {{width+"x"+height}}<br>
-        {{editor.invertExpand?'Retract':'Expand'}} level by <input v-model="editor.expandAmt" onchange="editor.expandAmt = Math.round(editor.expandAmt)" v-on:keydown.stop style="width:100px"></input><br>
+        {{editor.invertExpand?'Retract':'Expand'}} level by <input v-model="editor.expandAmt" onchange="editor.expandAmt = Math.round(editor.expandAmt)" style="width:100px"></input><br>
         <button
           class="optionButton"
           onclick="changeLevelSize('up',editor.expandAmt*(editor.invertExpand?-1:1))"
@@ -1142,6 +1147,7 @@
       >export text</textarea>
     </div>
   </body>
+  <script>const page = 'editor';</script>
   <script src="../utility.js"></script>
   <script src="../option.js"></script>
   <script src="../lz-string.min.js"></script>
