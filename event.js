@@ -13,6 +13,7 @@ function runEvent(event, source, extraContext = {}) {
     let copy = deepCopy(event, true);
     copy[0] = { ...event[0] };
     copy[0].player = player;
+    copy[0].global = eventGlobalObject;
     copy[0]._controls = [];
     copy[0]._loops = [];
     for (let i in extraContext) copy[0][i] = extraContext[i];

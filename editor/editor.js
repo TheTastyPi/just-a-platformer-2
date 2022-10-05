@@ -2081,6 +2081,7 @@ function togglePlayMode() {
     clearErr();
     runEvent(globalEvents.onStart);
   } else {
+    eventGlobalObject = {};
     player.eventQueue = [];
     player.actionQueue = [];
     saveState.eventQueue = [];

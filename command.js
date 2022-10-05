@@ -90,7 +90,7 @@ new CommandType(
       return "CANNOT_SET_SPECIAL_VARIABLE_[" + prop + "]";
     }
     let initVal = obj[prop];
-    if (typeof obj === "object" && obj !== vars && initVal === undefined) {
+    if (typeof obj === "object" && ![vars,vars.global].includes(obj) && initVal === undefined) {
       return "CANNOT_ADD_PROPERTY_TO_OBJECT";
     }
     if (typeof initVal !== typeof val && initVal !== undefined) {

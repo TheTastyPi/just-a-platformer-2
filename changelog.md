@@ -648,5 +648,6 @@
 
 ### 5 Oct. 2022
 
-- Fixed a bug where some block property can't be edited property
+- Added a base object to events: 'global'. Its properties are shared between every event.
+- Fixed a bug where some block property can't be edited properly
 - Fixed button styling in light theme on Safari

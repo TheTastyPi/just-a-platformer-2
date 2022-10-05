@@ -956,8 +956,14 @@
                 source[blockRef]/[str]: What the event is contained in.
                 <ul>
                   <li>In global scope, the source is undefined.</li>
-                  <li>In room scope, the source is a [str] of of the room name.</li>
+                  <li>In room scope, the source is a [str] of the room name.</li>
                   <li>In block scope, the source is a [blockRef] of the containing block.</li>
+                </ul>
+              </li>
+              <li>
+                global[obj]: An object shared between every event.
+                <ul>
+                  <li>Does not give a CANNOT_ADD_PROPERTY_TO_OBJECT error when adding properties.</li>
                 </ul>
               </li>
             </ul>
