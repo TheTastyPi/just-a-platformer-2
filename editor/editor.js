@@ -965,11 +965,13 @@ function select(selectRect, single = false, prev, build = false) {
     changeBuildSelect(selected[0]);
     return;
   }
+  let baseBlock = false;
   if (editor.editBlock === undefined) {
     editor.editBlock = deepCopy(selected[0]);
     for (let i in blockData[selected[0].type].props) {
       if (propData[i] !== undefined) editor.editBlockProp.push(i);
     }
+    baseBlock = selected[0];
   }
   let nextBlock;
   if (single && prev) {
@@ -979,7 +981,7 @@ function select(selectRect, single = false, prev, build = false) {
   }
   for (let i in selectedNew) {
     let block = nextBlock ?? selected[i];
-    addToEditBlock(block);
+    if (block !== baseBlock) addToEditBlock(block);
     editor.editSelect.push(block);
     if (block.link) {
       for (let j in block.link) {

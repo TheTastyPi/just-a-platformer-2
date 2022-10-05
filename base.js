@@ -45,12 +45,14 @@ const conveyorBlocks = [8, 21];
 const oneWayBlocks = [16, 17, 18, 19, 20, 21];
 const switchBlocks = [25, 26];
 const hasSubBlock = [26, 27, 30];
+//var eventGlobalObject = {};
 const defaultEventData = {
   ran: false,
   source: undefined,
   cause: undefined,
   player: undefined,
   key: undefined,
+  //global: eventGlobalObject,
   _scope: undefined,
   _controls: undefined,
   _loops: undefined,

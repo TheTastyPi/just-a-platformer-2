@@ -639,9 +639,14 @@
 ## 4 Oct. 2022
 
 - Added view layers
-  - Allows you to view and select certain parts of the level seperately
+  - Allows you to view and select certain parts of the level separately
   - Added the 'viewLayer' property to all blocks
 - Heavily refactored the edit selection system
 - When selecting a single block, you now always select the front-most block first
 - Fixed selection dropdowns' dark mode visual
 - Fixed a bug where dynamic wall-jump blocks/panels didn't work
+
+### 5 Oct. 2022
+
+- Fixed a bug where some block property can't be edited property
+- Fixed button styling in light theme on Safari

@@ -106,6 +106,7 @@ body::after {
 input,
 button {
   border: solid 1px black;
+  background: white;
 }
 .tabButton,
 .optionButton {
