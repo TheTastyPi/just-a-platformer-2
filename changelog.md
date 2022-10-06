@@ -651,3 +651,7 @@
 - Added a base object to events: 'global'. Its properties are shared between every event.
 - Fixed a bug where some block property can't be edited properly
 - Fixed button styling in light theme on Safari
+
+### 6 Oct. 2022
+
+- View layers are now saved with the level

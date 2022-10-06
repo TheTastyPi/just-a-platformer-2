@@ -1820,7 +1820,8 @@ function save() {
         )
       ),
       LZString.compressToEncodedURIComponent(JSON.stringify(roomEventsComp)),
-      LZString.compressToEncodedURIComponent(JSON.stringify(globalEventsComp))
+      LZString.compressToEncodedURIComponent(JSON.stringify(globalEventsComp)),
+     [...editor.viewLayers],
     ];
   }
   storeSave();
@@ -1902,6 +1903,9 @@ function load(name) {
         }
       }
     }
+    if (save[6]) {
+      editor.viewLayers = save[6];
+    } else editor.viewLayers = [];
     assignIndex();
     togglePlayMode();
     dynamicObjs = saveData[1];
