@@ -655,3 +655,12 @@
 ### 6 Oct. 2022
 
 - View layers are now saved with the level
+
+## 13 Oct. 2022
+
+- Added custom block presets
+  - MMB to select a block to place from the level, then add it as a custom preset in the 'Custom' tab of the block selection menu
+  - Added the 'preset' property to all blocks.
+    - Allows you to edit blocks to a preset.
+  - Presets are saved alongside levels, and they aid in compressing blocks based on their 'preset' property.
+- Split the code for the editor into separate files (finally)

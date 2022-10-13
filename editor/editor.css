@@ -39,7 +39,7 @@ body::after {
   align-items: center;
   flex-grow: 1;
   justify-content: space-evenly;
-  /*overflow-x: scroll;*/
+  overflow-x: scroll;
 }
 .blockSelectLabel {
   margin-right: 5px;

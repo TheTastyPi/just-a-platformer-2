@@ -26,6 +26,7 @@
       <div id="blockSelect" class="blockSelect">
         <div class="selectGroupButtonCont">
           <button v-for="(ids,groupName) in blocks" v-on:click="selectGroup = groupName" v-bind:class="{buttonOn:selectGroup === groupName}" class="selectGroupButton">{{groupName}}</button>
+          <button v-on:click="selectGroup = 'custom'" v-bind:class="{buttonOn:selectGroup === 'custom'}" class="selectGroupButton">Custom</button>
         </div>
         <div v-for="(ids, groupName) in blockList" class="blockSect" v-show="selectGroup === groupName">
           <div v-for="id in ids" class="blockSelectLabel">
@@ -38,6 +39,28 @@
             ></canvas
             ><br />
             {{blockData[id].name}}
+          </div>
+        </div>
+        <div class="blockSect" v-show="selectGroup === 'custom'">
+          <div v-for="(name, num) in editor.presetNames" class="blockSelectLabel">
+            <canvas
+              v-bind:id="'customSelect'+num"
+              width="50"
+              height="50"
+              v-on:click="changeBuildSelect(editor.presets[name], 'c'+num)"
+              v-bind:class="{blockSelected:selectType=='c'+num}"
+            ></canvas
+            ><br />
+            {{name}}
+          </div>
+          <div class="blockSelectLabel">
+            <button class="optionButton" style="background-image: url('../pics/plus.png');" onclick="addPreset()"
+            v-on:mousemove="showTooltips('Add Current Selection as Preset')"
+            v-on:mouseleave="hideTooltips"></button>
+            <button class="optionButton" style="background-image: url('../pics/minus.png');"
+            v-on:click="if (selectType[0] === 'c') removePreset(selectType.slice(1))"
+            v-on:mousemove="showTooltips('Remove Currently Selected Preset')"
+            v-on:mouseleave="hideTooltips"></button>
           </div>
         </div>
       </div>
@@ -56,6 +79,10 @@
               <select v-else-if="inputType[propData[prop][0]] == 'viewLayer'" v-model = "editor.editBlock[prop]" style="width:50%">
                 <option value="">None</options>
                 <option v-for="layer in editor.viewLayers" v-bind:value="layer">{{layer}}</options>
+              </select>
+              <select v-else-if="inputType[propData[prop][0]] == 'preset'" v-model = "editor.editBlock[prop]" style="width:50%">
+                <option value="">None</options>
+                <option v-for="name in editor.presetNames" v-bind:value="name">{{name}}</options>
               </select>
               <textarea v-else-if="inputType[propData[prop][0]] == 'textarea'"style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></textarea>
               <button v-else-if="inputType[propData[prop][0]] == 'events'" onclick="toggleEventEditor('block',editor.editBlock.events)" style="width:50%">Toggle event editor</button>
@@ -1167,5 +1194,13 @@
   <script src="../draw.js"></script>
   <script src="../event.js"></script>
   <script src="../respawn.js"></script>
+  <script src="editControls.js"></script>
+  <script src="build.js"></script>
+  <script src="select.js"></script>
+  <script src="editEvents.js"></script>
+  <script src="gridSnap.js"></script>
+  <script src="actions.js"></script>
+  <script src="saving.js"></script>
+  <script src="rooms.js"></script>
   <script src="editor.js"></script>
 </html>

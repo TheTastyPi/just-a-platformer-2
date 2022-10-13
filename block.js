@@ -23,6 +23,7 @@ class Block {
     this.isRootBlock = true;
     this.moving = false;
     this.viewLayer = "";
+    this.preset = "";
     // solid only
     this.floorLeniency = 0;
     // dynamic props
