@@ -449,6 +449,9 @@ function init() {
   for (let i in eventDataAlias) eventAliasReverse[eventDataAlias[i]] = i;
   levels = { default: str2lvls(levels, false)[0][0] };
   player.currentRoom = "default";
+  forAllBlock((b) => {
+    b.currentRoom = "default";
+  });
   assignIndex();
   drawLevel(true);
   adjustLevelSize();

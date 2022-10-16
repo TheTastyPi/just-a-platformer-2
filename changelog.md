@@ -664,3 +664,7 @@
     - Allows you to edit blocks to a preset.
   - Presets are saved alongside levels, and they aid in compressing blocks based on their 'preset' property.
 - Split the code for the editor into separate files (finally)
+
+#### 16 Oct. 2022
+
+- Fixed a bug where the default room had improper block data
