@@ -15,12 +15,10 @@ function drawPlayer() {
   playerDisp.width = player.size;
   playerDisp.height = player.size;
   if (player.dupSprite !== null) {
-    player.dupSprite.tint = PIXI.utils.rgb2hex([1 - ratio, 0, ratio]);
-    if (editor?.invincible)
-      player.dupSprite.tint = PIXI.utils.rgb2hex([1, 0, 1]);
-    player.dupSprite.alpha = player.isDead ? 0.5 : 1;
-    player.dupSprite.width = player.size;
-    player.dupSprite.height = player.size;
+    player.dupSprite.tint = playerDisp.tint;
+    player.dupSprite.alpha = playerDisp.alpha;
+    player.dupSprite.width = playerDisp.width;
+    player.dupSprite.height = playerDisp.height;
   }
 }
 function drawLevel(clear = false) {
@@ -29,6 +27,7 @@ function drawLevel(clear = false) {
     levelLayer.removeChildren();
     levelLayer.addChild(playerDisp);
     forAllVisible((x) => (x.dupSprite = null));
+    player.dupSprite = null;
   }
   for (let x = 0; x <= level.length - 1; x++) {
     for (let y = 0; y <= level[0].length - 1; y++) {
@@ -44,68 +43,8 @@ function drawLevel(clear = false) {
       }
     }
   }
-  forAllVisible((block) => {
-    if (block.roomLink[1]?.currentRoom === player.currentRoom) {
-      if (block.dupSprite === null) {
-        let s;
-        s = createSprite(block);
-        blockData[block.type].update(block, s);
-        levelLayer.addChild(s);
-        block.dupSprite = s;
-      }
-      let newlvl = levels[block.roomLink[1].currentRoom];
-      let dx = block.roomLink[1].x - block.roomLink[0].x;
-      let dy = block.roomLink[1].y - block.roomLink[0].y;
-      switch (block.roomLink[2]) {
-        case "left":
-          block.dupSprite.x = block.x + newlvl.length * 50;
-          block.dupSprite.y = block.y + dy;
-          break;
-        case "right":
-          block.dupSprite.x = block.x - level.length * 50;
-          block.dupSprite.y = block.y + dy;
-          break;
-        case "top":
-          block.dupSprite.x = block.x + dx;
-          block.dupSprite.y = block.y + newlvl[0].length * 50;
-          break;
-        case "bottom":
-          block.dupSprite.x = block.x + dx;
-          block.dupSprite.y = block.y + level[0].length * 50;
-          break;
-        default:
-      }
-    }
-  });
+  forAllVisible(updateDupSprite);
   if (clear) adjustScreen();
-}
-function updateBlock(block, updateTexture = false) {
-  if (block.sprite) {
-    block.sprite.renderable = !block.invisible;
-    block.sprite.alpha = block.opacity;
-    if (
-      page === "editor" &&
-      editor.currentLayer !== "All" &&
-      block.viewLayer !== editor.currentLayer
-    )
-      block.sprite.alpha = 0.1;
-    block.sprite.zIndex = block.zLayer ? block.zLayer : block.eventPriority;
-    if (updateTexture) block.sprite.texture = createTexture(block);
-    blockData[block.type].update(block);
-  }
-  if (block.dupSprite) {
-    block.dupSprite.renderable = !block.invisible;
-    block.dupSprite.alpha = block.opacity;
-    if (
-      page === "editor" &&
-      editor.currentLayer !== "All" &&
-      block.viewLayer !== editor.currentLayer
-    )
-      block.dupSprite.alpha = 0.1;
-    block.dupSprite.zIndex = block.zLayer ? block.zLayer : block.eventPriority;
-    if (updateTexture) block.dupSprite.texture = createTexture(block);
-    blockData[block.type].update(block, block.dupSprite);
-  }
 }
 function forAllBlock(func, type) {
   for (let j in levels) {
@@ -322,6 +261,12 @@ function cullBlock(block) {
     block.y < (window.innerHeight - camy) / cams;
 }
 function createTexture(block, app) {
+  if (block.texture) {
+    if (app === display) {
+      return editor.textures[block.texture];
+    } else
+      return getTextureFromSource(editor.textureSources[block.texture], app);
+  }
   let t;
   let isDefault = true;
   for (let i in blockData[block.type].textureFactor) {
@@ -341,8 +286,8 @@ function updateTexture(block) {
     block.sprite.texture.destroy(true);
   block.sprite.texture = createTexture(block);
 }
-function createSprite(block) {
-  let t = createTexture(block);
+function createSprite(block, app = display) {
+  let t = createTexture(block, app);
   let s = new PIXI.Sprite(t);
   s.x = block.x;
   s.y = block.y;
@@ -359,21 +304,82 @@ function addSprite(block) {
     updateBlock(block);
   }
 }
-function removeSprite(block) {
-  let s = block.sprite;
+function addDupSprite(block) {
+  let s;
+  if (block === player) {
+    s = new PIXI.Sprite(blockData[0].defaultTexture);
+    s.zIndex = -1;
+  } else {
+    s = createSprite(block);
+  }
+  levelLayer.addChild(s);
+  block.dupSprite = s;
+}
+function removeSprite(s, block) {
   if (block.currentRoom === player.currentRoom) {
     for (let i in s.children) s.children[i].destroy();
+    let deleteTexture =
+      block !== player &&
+      s.texture !== blockData[block.type].defaultTexture &&
+      !block.texture;
     s.destroy({
-      texture: s.texture !== blockData[block.type].defaultTexture
+      texture: deleteTexture
     });
   }
-  if (block.dupSprite !== null) {
-    for (let i in block.dupSprite.children)
-      block.dupSprite.children[i].destroy();
-    block.dupSprite.destroy({
-      texture: block.dupSprite.texture !== blockData[block.type].defaultTexture
-    });
-  }
+}
+function removeAllSprite(block) {
+  removeSprite(block.sprite, block);
+  if (block.dupSprite) removeSprite(block.dupSprite, block);
+  block.sprite = undefined;
+  block.dupSprite = null;
+}
+function updateSprite(sprite, block, updateTexture = false, app = display) {
+  if (!sprite) return;
+  sprite.renderable = !block.invisible;
+  sprite.alpha = block.opacity;
+  if (
+    page === "editor" &&
+    editor.currentLayer !== "" &&
+    block.viewLayer !== editor.currentLayer
+  )
+    sprite.alpha = 0.1;
+  sprite.zIndex = block.zLayer ? block.zLayer : block.eventPriority;
+  sprite.tint = 0xffffff;
+  if (updateTexture) sprite.texture = createTexture(block, app);
+  if (!block.texture) blockData[block.type].update(block, sprite, app);
+}
+function updateDupSprite(block) {
+  if (
+    block.roomLink[0] === undefined ||
+    block.roomLink[1].currentRoom !== player.currentRoom
+  ) {
+    if (block.dupSprite) {
+      removeSprite(block.dupSprite, block);
+      block.dupSprite = null;
+    }
+    return;
+  } else if (!block.dupSprite) addDupSprite(block);
+  if (block === player) {
+    drawPlayer();
+  } else updateSprite(block.dupSprite, block, updateTexture);
+  let level = levels[player.currentRoom];
+  let newlvl = levels[block.roomLink[1].currentRoom];
+  let dx = block.roomLink[1].x - block.roomLink[0].x;
+  let dy = block.roomLink[1].y - block.roomLink[0].y;
+  let hori = false;
+  let neg = -1;
+  if (block.roomLink[2] === "left" || block.roomLink[2] === "right")
+    hori = true;
+  if (block.roomLink[2] === "left" || block.roomLink[2] === "top") neg = 1;
+  let lvlOffsetted = neg > 0 ? newlvl : level;
+  let xOff = hori ? neg * lvlOffsetted.length * 50 : dx;
+  let yOff = !hori ? neg * lvlOffsetted[0].length * 50 : dy;
+  block.dupSprite.x = block.x + xOff;
+  block.dupSprite.y = block.y + yOff;
+}
+function updateBlock(block, updateTexture = false) {
+  updateSprite(block.sprite, block, updateTexture);
+  updateDupSprite(block);
 }
 var convTex = createConveyorTexture();
 function createConveyorTexture(app = display) {

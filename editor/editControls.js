@@ -1,4 +1,3 @@
-
 document.addEventListener("keydown", function (event) {
   event.preventDefault();
   let key = event.code;
@@ -7,7 +6,6 @@ document.addEventListener("keydown", function (event) {
       editor.editMode = !editor.editMode;
       buildDisp.visible = !editor.editMode;
       selectDisp.visible = editor.editMode;
-      updateMenus();
       break;
     case "Backspace":
       if (editor.editMode) {
@@ -53,7 +51,9 @@ document.addEventListener("keydown", function (event) {
       if (editor.playMode) return;
       if (event.ctrlKey || event.metaKey) {
         if (["block", "ref"].includes(editor.chooseType)) {
-          if (editor.chooseFor.length !== 0) {
+          if (!Array.isArray(editor.chooseFor)) {
+            editor.clipboard = [{ ...deepCopy(editor.chooseFor), x: 0, y: 0 }];
+          } else if (editor.chooseFor.length !== 0) {
             let minx = editor.chooseFor.reduce(
               (min, b) => (b.x < min ? b.x : min),
               Infinity
@@ -63,10 +63,10 @@ document.addEventListener("keydown", function (event) {
               Infinity
             );
             editor.clipboard = editor.chooseFor.map((b) => {
-              return { ...b, x: b.x - minx, y: b.y - miny };
+              return { ...deepCopy(b), x: b.x - minx, y: b.y - miny };
             });
           } else editor.clipboard = [];
-          editor.chooseType = undefined;
+          stopChoose();
         } else if (editor.editEvent) {
           copyCommand();
         } else copy();
@@ -92,7 +92,6 @@ document.addEventListener("keydown", function (event) {
       break;
     case "KeyM":
       editor.showMenus = !editor.showMenus;
-      updateMenus();
       break;
     case "KeyH":
       if (id("helpMenu").style.display === "block") {
@@ -124,12 +123,16 @@ document.addEventListener("keydown", function (event) {
     case "Delete":
       if (editor.chooseType) {
         editor.chooseFor.splice(0);
-        editor.chooseType = undefined;
+        stopChoose();
         if (!editor.chooseInEvent) confirmEditAll();
       }
       break;
     case "Escape":
-      editor.chooseType = undefined;
+      if (editor.chooseType === "region") {
+        let name = editor.chooseSource[1];
+        if (!editor.textures[name]) delete editor.textureSources[name];
+      }
+      stopChoose();
       break;
     case "ArrowUp":
     case "ArrowDown":
@@ -203,11 +206,33 @@ id("display").addEventListener("mousedown", function (event) {
             loc[0] + player.size / 2,
             loc[1] + player.size / 2
           ]);
-          editor.chooseType = undefined;
+          stopChoose();
           if (!editor.chooseInEvent) confirmEditAll();
         }
       } else if (!(event.ctrlKey || event.metaKey)) {
-        if (editor.editMode) {
+        if (editor.chooseType === "region") {
+          updateBuildLocation(xPos, yPos);
+          let source = getSelected({
+            x: editor.buildSelect.x,
+            y: editor.buildSelect.y,
+            width: 50,
+            height: 50
+          });
+          if (source.some((b) => b.texture)) {
+            alert(
+              "Selection area contains a block with custom texture. Please try again or press [Esc] to cancel."
+            );
+            break;
+          }
+          source = deepCopy(source);
+          source.map((b) => {
+            b.x -= editor.buildSelect.x;
+            b.y -= editor.buildSelect.y;
+          });
+          editor.chooseFor.splice(0, Infinity, ...source);
+          stopChoose();
+          addTexture(editor.chooseSource[1]);
+        } else if (editor.editMode) {
           editor.selectStart = [event.clientX, event.clientY];
           selectBox.visible = true;
           selectBox.clear();
@@ -270,6 +295,7 @@ id("display").addEventListener("mousedown", function (event) {
   }
 });
 document.addEventListener("mousemove", function (event) {
+  if (editor.displayTooltip !== "") showTooltips(editor.displayTooltip);
   let xPos = (event.clientX - camx) / cams;
   let yPos = (event.clientY - camy) / cams;
   editor.mousePos = [event.clientX, event.clientY];
@@ -332,7 +358,8 @@ document.addEventListener("mousemove", function (event) {
       break;
     default:
   }
-  if (!editor.editMode) updateBuildLocation(xPos, yPos);
+  if (!editor.editMode || editor.chooseType === "region")
+    updateBuildLocation(xPos, yPos);
   if ((event.ctrlKey || event.metaKey) && !event.shiftKey)
     updateTpDisp(xPos, yPos);
 });
@@ -349,7 +376,8 @@ document.addEventListener("mouseup", function (event) {
         !(event.ctrlKey || event.metaKey) &&
         editor.selectStart !== undefined
       ) {
-        let prev = editor.editSelect.length === 1 ? editor.editSelect[0] : undefined;
+        let prev =
+          editor.editSelect.length === 1 ? editor.editSelect[0] : undefined;
         if (!event.shiftKey && !editor.chooseType) deselect();
         let choosing = editor.chooseType;
         let singleChoose =

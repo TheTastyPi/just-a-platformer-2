@@ -36,6 +36,7 @@ var editor = {
   currentSave: undefined,
   autoSave: options.autoSave,
   showTooltips: true,
+  displayTooltip: "",
   invincible: false,
   showMenus: true,
   playMode: false,
@@ -55,9 +56,13 @@ var editor = {
   console: [],
   viewLayers: [],
   viewLayerAdd: "",
-  currentLayer: "All",
+  currentLayer: "",
   presetNames: [],
-  presets: {}
+  presets: {},
+  textureNames: [],
+  textureSources: {},
+  textures: {},
+  regionSelectTemp: undefined
 };
 const propData = {
   // general
@@ -89,6 +94,7 @@ const propData = {
   events: ["events", "e"],
   viewLayer: ["viewLayer", "vL"],
   preset: ["preset", "pS"],
+  texture: ["texture", "tX"],
   // solid only
   floorLeniency: ["num", "fl", () => 0, () => maxBlockSize],
   // dynamic props
@@ -194,8 +200,11 @@ var blockEdit = new Vue({
   el: "#blockEdit",
   data: {
     editor: editor,
+    editTab: ["Property", "Custom Texture"],
+    tabSelected: "Property",
     editOrder: [
       "preset",
+      "texture",
       "type",
       "x",
       "y",
@@ -236,6 +245,7 @@ var blockEdit = new Vue({
       hidden: "none",
       viewLayer: "viewLayer",
       preset: "preset",
+      texture: "texture",
       events: "events"
     },
     blocks: blockList,
@@ -397,25 +407,6 @@ function togglePlayMode() {
     rollBack(true);
     selectLayer.visible = true;
     drawLevel();
-  }
-  updateMenus();
-}
-function updateMenus() {
-  if (editor.showMenus && !editor.playMode) {
-    id("editOptions").style.display = `block`;
-    id("saveMenu").style.display = `block`;
-    if (editor.editMode) {
-      id("blockEdit").style.display = "block";
-      id("blockSelect").style.display = "none";
-    } else {
-      id("blockSelect").style.display = "flex";
-      id("blockEdit").style.display = "none";
-    }
-  } else {
-    id("editOptions").style.display = "none";
-    id("saveMenu").style.display = "none";
-    id("blockSelect").style.display = "none";
-    id("blockEdit").style.display = "none";
   }
 }
 function addViewLayer(name) {

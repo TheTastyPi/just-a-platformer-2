@@ -489,30 +489,6 @@ function doPhysics(obj, t, isPlayer) {
     let lvlOffsetted = neg > 0 ? newlvl : level;
     let xOff = hori ? neg * lvlOffsetted.length * 50 : dx;
     let yOff = !hori ? neg * lvlOffsetted[0].length * 50 : dy;
-    if (obj.roomLink[1].currentRoom === player.currentRoom) {
-      if (obj.dupSprite === null) {
-        let s;
-        if (isPlayer) {
-          s = new PIXI.Sprite(blockData[0].defaultTexture);
-          s.zIndex = -1;
-        } else {
-          s = createSprite(obj);
-          blockData[obj.type].update(obj, s);
-        }
-        levelLayer.addChild(s);
-        obj.dupSprite = s;
-      }
-      obj.dupSprite.x = obj.x + xOff;
-      obj.dupSprite.y = obj.y + yOff;
-    } else if (obj.dupSprite !== null) {
-      for (let i in obj.dupSprite.children) obj.dupSprite.children[i].destroy();
-      obj.dupSprite.destroy({
-        texture: isPlayer
-          ? false
-          : obj.dupSprite.texture !== blockData[obj.type]?.defaultTexture
-      });
-      obj.dupSprite = null;
-    }
     for (
       let x = gridUnit(px1 + xOff) - maxBlockSize / 50;
       x <= gridUnit(px2 + xOff);
@@ -574,14 +550,6 @@ function doPhysics(obj, t, isPlayer) {
       camx -= xWarp;
       camy -= yWarp;
     }
-  } else if (obj.dupSprite !== null) {
-    for (let i in obj.dupSprite.children) obj.dupSprite.children[i].destroy();
-    obj.dupSprite.destroy({
-      texture: isPlayer
-        ? false
-        : obj.dupSprite.texture !== blockData[obj.type].defaultTexture
-    });
-    obj.dupSprite = null;
   }
   // crushed
   if (
@@ -798,45 +766,47 @@ function doPhysics(obj, t, isPlayer) {
         updateAll(27);
         forAllBlock(updateBlockState, 27);
       };
-      if (tempObj.canWallJump && canWJ && control.jump) {
+      if (tempObj.canWallJump && canWJ) {
         if (tempObj.xg) {
           obj.xv = Math[obj.g < 0 ? "max" : "min"](obj.xv, tempObj.g * 100);
         } else
           obj.yv = Math[obj.g < 0 ? "max" : "min"](obj.yv, tempObj.g * 100);
-        switch (tempObj.wallJumpDir) {
-          case 0:
-            if (control.right) {
-              obj.yv = Math.sign(tempObj.g) * -375;
-              obj.xv = obj.moveSpeed * 400;
-              canWJ = false;
-              jumpEvent();
-            }
-            break;
-          case 1:
-            if (control.left) {
-              obj.yv = Math.sign(tempObj.g) * -375;
-              obj.xv = -obj.moveSpeed * 400;
-              canWJ = false;
-              jumpEvent();
-            }
-            break;
-          case 2:
-            if (control.down) {
-              obj.xv = Math.sign(tempObj.g) * -375;
-              obj.yv = obj.moveSpeed * 400;
-              canWJ = false;
-              jumpEvent();
-            }
-            break;
-          case 3:
-            if (control.up) {
-              obj.xv = Math.sign(tempObj.g) * -375;
-              obj.yv = -obj.moveSpeed * 400;
-              canWJ = false;
-              jumpEvent();
-            }
-            break;
-          default:
+        if (control.jump) {
+          switch (tempObj.wallJumpDir) {
+            case 0:
+              if (control.right) {
+                obj.yv = Math.sign(tempObj.g) * -375;
+                obj.xv = obj.moveSpeed * 400;
+                canWJ = false;
+                jumpEvent();
+              }
+              break;
+            case 1:
+              if (control.left) {
+                obj.yv = Math.sign(tempObj.g) * -375;
+                obj.xv = -obj.moveSpeed * 400;
+                canWJ = false;
+                jumpEvent();
+              }
+              break;
+            case 2:
+              if (control.down) {
+                obj.xv = Math.sign(tempObj.g) * -375;
+                obj.yv = obj.moveSpeed * 400;
+                canWJ = false;
+                jumpEvent();
+              }
+              break;
+            case 3:
+              if (control.up) {
+                obj.xv = Math.sign(tempObj.g) * -375;
+                obj.yv = -obj.moveSpeed * 400;
+                canWJ = false;
+                jumpEvent();
+              }
+              break;
+            default:
+          }
         }
       } else if (obj.currentJump > 0 && control.jump && canJump) {
         if (tempObj.xg) {

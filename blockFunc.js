@@ -41,7 +41,7 @@ function removeBlock(block, log = true) {
   }
   block.removed = true;
   block.isDead = undefined;
-  removeSprite(block);
+  removeAllSprite(block);
 }
 function moveBlock(block, dx, dy, draw = true, log = true) {
   if (log && (page === "game" || editor.playMode) && block !== player)
@@ -50,6 +50,7 @@ function moveBlock(block, dx, dy, draw = true, log = true) {
   let sprite = block.sprite;
   block.x += dx;
   block.y += dy;
+  updateDupSprite(block);
   if (block === player) return;
   if (block.currentRoom === player.currentRoom && draw) {
     sprite.x = block.x;
@@ -78,7 +79,7 @@ function moveBlockRoom(block, room, log = true) {
   if (block.currentRoom === room) return;
   if (log && (page === "game" || editor.playMode) && block !== player)
     logChange(block);
-  removeSprite(block);
+  removeAllSprite(block);
   let gridSpace = getGridSpace(block);
   for (let i = parseInt(block.index) + 1; i < gridSpace.length; i++) {
     gridSpace[i].index--;

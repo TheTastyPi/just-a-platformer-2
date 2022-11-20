@@ -79,11 +79,15 @@ function rollBackBlock(block, start) {
   moveBlock(block, start.x - block.x, start.y - block.y, true, false);
   let updateTexture =
     block.type !== start.type ||
-    blockData[block.type].textureFactor.some((p) => block[p] !== start[p]);
+    block.texture !== start.texture ||
+    (!block.texture &&
+      blockData[block.type].textureFactor.some((p) => block[p] !== start[p]));
   Object.assign(block, {
     ...start,
     index: block.index,
-    events: block.events
+    events: block.events,
+    sprite: block.sprite,
+    dupSprite: block.dupSprite
   });
   shiftIndex(block, start.index);
   updateBlock(block, updateTexture);

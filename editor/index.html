@@ -23,9 +23,9 @@
       <div id="background"></div>
       <canvas id="display" style="position: absolute;"></canvas>
       <div id="textBlockText" class="textBlockText"></div>
-      <div id="blockSelect" class="blockSelect">
-        <div class="selectGroupButtonCont">
-          <button v-for="(ids,groupName) in blocks" v-on:click="selectGroup = groupName" v-bind:class="{buttonOn:selectGroup === groupName}" class="selectGroupButton">{{groupName}}</button>
+      <div id="blockSelect" class="blockSelect" v-show="editor.showMenus && !editor.playMode && !editor.editMode">
+        <div class="bottomTabButtonCont">
+          <button v-for="(ids,groupName) in blocks" v-on:click="selectGroup = groupName" v-bind:class="{buttonOn:selectGroup === groupName}" class="bottomTabButton">{{groupName}}</button>
           <button v-on:click="selectGroup = 'custom'" v-bind:class="{buttonOn:selectGroup === 'custom'}" class="selectGroupButton">Custom</button>
         </div>
         <div v-for="(ids, groupName) in blockList" class="blockSect" v-show="selectGroup === groupName">
@@ -43,100 +43,141 @@
         </div>
         <div class="blockSect" v-show="selectGroup === 'custom'">
           <div v-for="(name, num) in editor.presetNames" class="blockSelectLabel">
+            <button class="optionButton" style="background-image: url('../pics/deleteSave.png');"
+            v-on:click="removePreset(num)"
+            v-on:mousemove="showTooltips('Remove Preset')"
+            v-on:mouseleave="hideTooltips"></button>
+            <button class="optionButton" style="background-image: url('../pics/renameSave.png');"
+            v-on:click="renamePreset(num)"
+            v-on:mousemove="showTooltips('Rename Preset')"
+            v-on:mouseleave="hideTooltips"></button>
+            <button class="optionButton" style="background-image: url('../pics/replace.png');"
+            v-on:click="replacePreset(num)"
+            v-on:mousemove="showTooltips('Replace Preset with Current Build Block')"
+            v-on:mouseleave="hideTooltips"></button><br>
             <canvas
-              v-bind:id="'customSelect'+num"
-              width="50"
-              height="50"
-              v-on:click="changeBuildSelect(editor.presets[name], 'c'+num)"
-              v-bind:class="{blockSelected:selectType=='c'+num}"
+            v-bind:id="'customSelect'+num"
+            width="50"
+            height="50"
+            v-on:click="changeBuildSelect(editor.presets[name], 'c'+num)"
+            v-bind:class="{blockSelected:selectType=='c'+num}"
+            style="margin-top:10px"
             ></canvas
             ><br />
             {{name}}
           </div>
           <div class="blockSelectLabel">
-            <button class="optionButton" style="background-image: url('../pics/plus.png');" onclick="addPreset()"
-            v-on:mousemove="showTooltips('Add Current Selection as Preset')"
-            v-on:mouseleave="hideTooltips"></button>
-            <button class="optionButton" style="background-image: url('../pics/minus.png');"
-            v-on:click="if (selectType[0] === 'c') removePreset(selectType.slice(1))"
-            v-on:mousemove="showTooltips('Remove Currently Selected Preset')"
+            <button class="optionButton" style="background-image: url('../pics/addSave.png');" onclick="addPreset()"
+            v-on:mousemove="showTooltips('Add Current Build Block as Preset')"
             v-on:mouseleave="hideTooltips"></button>
           </div>
         </div>
       </div>
-      <div id="blockEdit" class="blockEdit">
-        <div id="blockEditMenu" class="blockEditMenu" v-if="editor.editBlock !== undefined" v-on:keydown.stop>
-          <div class="propContainer">
-            <div v-for="prop in editOrder" class="blockProp">
-              <span style="width:50%" v-bind:style="{textDecoration:desc[prop]?'underline':''}"
-              v-on:mousemove="if (desc[prop]) showTooltips(desc[prop])"
-              v-on:mouseleave="hideTooltips">{{prop}}</span>
-              <select v-if="inputType[propData[prop][0]] == 'blockType'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll">
-                <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
-                  <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
-                </optgroup>
-              </select>
-              <select v-else-if="inputType[propData[prop][0]] == 'viewLayer'" v-model = "editor.editBlock[prop]" style="width:50%">
-                <option value="">None</options>
-                <option v-for="layer in editor.viewLayers" v-bind:value="layer">{{layer}}</options>
-              </select>
-              <select v-else-if="inputType[propData[prop][0]] == 'preset'" v-model = "editor.editBlock[prop]" style="width:50%">
-                <option value="">None</options>
-                <option v-for="name in editor.presetNames" v-bind:value="name">{{name}}</options>
-              </select>
-              <textarea v-else-if="inputType[propData[prop][0]] == 'textarea'"style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></textarea>
-              <button v-else-if="inputType[propData[prop][0]] == 'events'" onclick="toggleEventEditor('block',editor.editBlock.events)" style="width:50%">Toggle event editor</button>
-              <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></input>
+      <div id="blockEdit" class="blockEdit" v-show="editor.showMenus && !editor.playMode && editor.editMode">
+        <div class="bottomTabButtonCont">
+          <button v-for="tabName in editTab" v-on:click="tabSelected = tabName" v-bind:class="{buttonOn:tabSelected === tabName}" class="bottomTabButton">{{tabName}}</button>
+        </div>
+        <div v-show="tabSelected === 'Property'" style="flex-grow:1">
+          <div id="blockEditMenu" class="blockEditMenu" v-if="editor.editBlock !== undefined" v-on:keydown.stop>
+            <div class="propContainer">
+              <div v-for="prop in editOrder" class="blockProp">
+                <span style="width:50%" v-bind:style="{textDecoration:desc[prop]?'underline':''}"
+                v-on:mousemove="if (desc[prop]) showTooltips(desc[prop])"
+                v-on:mouseleave="hideTooltips">{{prop}}</span>
+                <select v-if="inputType[propData[prop][0]] == 'blockType'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll">
+                  <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
+                    <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
+                  </optgroup>
+                </select>
+                <select v-else-if="inputType[propData[prop][0]] == 'viewLayer'" v-model = "editor.editBlock[prop]" style="width:50%">
+                  <option value="">None</options>
+                  <option v-for="layer in editor.viewLayers" v-bind:value="layer">{{layer}}</options>
+                </select>
+                <select v-else-if="inputType[propData[prop][0]] == 'preset'" v-model = "editor.editBlock[prop]" style="width:50%">
+                  <option value="">None</options>
+                  <option v-for="name in editor.presetNames" v-bind:value="name">{{name}}</options>
+                </select>
+                <select v-else-if="inputType[propData[prop][0]] == 'texture'" v-model = "editor.editBlock[prop]" style="width:50%">
+                  <option value="">None</options>
+                  <option v-for="name in editor.textureNames" v-bind:value="name">{{name}}</options>
+                </select>
+                <textarea v-else-if="inputType[propData[prop][0]] == 'textarea'"style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></textarea>
+                <button v-else-if="inputType[propData[prop][0]] == 'events'" onclick="toggleEventEditor('block',editor.editBlock.events)" style="width:50%">Toggle event editor</button>
+                <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></input>
+              </div>
+              <div v-for="prop in solidProps" class="blockProp" v-if="editor.editBlock.isSolid">
+                <span style="width:50%"v-bind:style="{textDecoration:desc[prop]?'underline':''}"
+                v-on:mousemove="if (desc[prop]) showTooltips(desc[prop])"
+                v-on:mouseleave="hideTooltips">{{prop}}</span>
+                <input style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></input>
+              </div>
+              <div v-for="prop in dynamicProps" class="blockProp" v-if="editor.editBlock.dynamic">
+                <span style="width:50%"v-bind:style="{textDecoration:desc[prop]?'underline':''}"
+                v-on:mousemove="if (desc[prop]) showTooltips(desc[prop])"
+                v-on:mouseleave="hideTooltips">{{prop}}</span>
+                <input style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></input>
+              </div>
+              <div v-if="Object.keys(editor.editBlockProp).length > 0 && inputType[propData[prop][0]] !== 'none'" v-for="prop in editor.editBlockProp" class="blockProp">
+                <span style="width:50%"v-bind:style="{textDecoration:desc[prop]?'underline':''}"
+                v-on:mousemove="if (desc[prop]) showTooltips(desc[prop])"
+                v-on:mouseleave="hideTooltips">{{prop}}</span>
+                <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll">
+                  <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
+                    <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
+                  </optgroup>
+                </select>
+                <textarea v-else-if="inputType[propData[prop][0]] == 'textarea'"style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></textarea>
+                <button v-else-if="propData[prop][0] == 'pos'"style="width:50%" v-on:click="chooseFromLevel('pos',editor.editBlock,prop)" v-on:keydown.enter="confirmEditAll">{{editor.editBlock[prop][0]===undefined?"Select position":editor.editBlock[prop]}}</button>
+                <button v-else-if="propData[prop][0] == 'block'"style="width:50%" v-on:click="chooseFromLevel('block',editor.editBlock,prop)" v-on:keydown.enter="confirmEditAll">{{!editor.editBlock[prop]?.isBlock?"Select block":(editor.editBlock[prop]==="MIXED"?"MIXED":blockData[editor.editBlock[prop].type].name)}}</button>
+                <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></input>
+              </div>
             </div>
-            <div v-for="prop in solidProps" class="blockProp" v-if="editor.editBlock.isSolid">
-              <span style="width:50%"v-bind:style="{textDecoration:desc[prop]?'underline':''}"
-              v-on:mousemove="if (desc[prop]) showTooltips(desc[prop])"
-              v-on:mouseleave="hideTooltips">{{prop}}</span>
-              <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll">
-                <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
-                  <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
-                </optgroup>
-              </select>
-              <textarea v-else-if="inputType[propData[prop][0]] == 'textarea'"style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></textarea>
-              <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></input>
-            </div>
-            <div v-for="prop in dynamicProps" class="blockProp" v-if="editor.editBlock.dynamic">
-              <span style="width:50%"v-bind:style="{textDecoration:desc[prop]?'underline':''}"
-              v-on:mousemove="if (desc[prop]) showTooltips(desc[prop])"
-              v-on:mouseleave="hideTooltips">{{prop}}</span>
-              <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll">
-                <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
-                  <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
-                </optgroup>
-              </select>
-              <textarea v-else-if="inputType[propData[prop][0]] == 'textarea'"style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></textarea>
-              <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></input>
-            </div>
-            <div v-if="Object.keys(editor.editBlockProp).length > 0 && inputType[propData[prop][0]] !== 'none'" v-for="prop in editor.editBlockProp" class="blockProp">
-              <span style="width:50%"v-bind:style="{textDecoration:desc[prop]?'underline':''}"
-              v-on:mousemove="if (desc[prop]) showTooltips(desc[prop])"
-              v-on:mouseleave="hideTooltips">{{prop}}</span>
-              <select v-if="inputType[propData[prop][0]] == 'select'" style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll">
-                <optgroup v-for="(block, sect) in blocks" v-bind:label="sect">
-                  <option v-for="id in block" v-bind:value="id">{{blockData[id].name}}</option>
-                </optgroup>
-              </select>
-              <textarea v-else-if="inputType[propData[prop][0]] == 'textarea'"style="width:50%" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></textarea>
-              <button v-else-if="propData[prop][0] == 'pos'"style="width:50%" v-on:click="chooseFromLevel('pos',editor.editBlock,prop)" v-on:keydown.enter="confirmEditAll">{{(editor.chooseType === "pos" && editor.chooseFor === editor.editBlock[prop])?"Ctrl LMB to select. Esc to cancel.":editor.editBlock[prop][0]===undefined?"Select position":editor.editBlock[prop]}}</button>
-              <button v-else-if="propData[prop][0] == 'block'"style="width:50%" v-on:click="chooseFromLevel('block',editor.editBlock,prop)" v-on:keydown.enter="confirmEditAll">{{(editor.chooseType === "block" && editor.chooseFor === editor.editBlock[prop])?"Select block. Delete to remove, Ctrl-C to copy, Esc to cancel.":!editor.editBlock[prop]?.isBlock?"Select block":(editor.editBlock[prop]==="MIXED"?"MIXED":blockData[editor.editBlock[prop].type].name)}}</button>
-              <input v-else style="width:50%" v-bind:type="inputType[propData[prop][0]]" v-model="editor.editBlock[prop]" v-on:keydown.enter="confirmEditAll"></input>
+            <div>
+              <button onclick="confirmEditAll()">Confirm</button>
+              <button onclick="reselect()">Reset</button>
             </div>
           </div>
-          <div>
-            <button onclick="confirmEditAll()">Confirm</button>
-            <button onclick="reselect()">Reset</button>
+          <div v-else>
+            <span class="centered noEditText">Select blocks to edit</span>
           </div>
         </div>
-        <div v-if="editor.editBlock === undefined">
-          <span class="centered noEditText">Select blocks to edit</span>
+        <div class="blockSect" v-show="tabSelected === 'Custom Texture'">
+          <div v-for="(name, num) in editor.textureNames" class="blockSelectLabel">
+            <button class="optionButton" style="background-image: url('../pics/deleteSave.png');"
+            v-on:click="removeTexture(num)"
+            v-on:mousemove="showTooltips('Remove Texture')"
+            v-on:mouseleave="hideTooltips"></button>
+            <button class="optionButton" style="background-image: url('../pics/renameSave.png');"
+            v-on:click="renameTexture(num)"
+            v-on:mousemove="showTooltips('Rename Texture')"
+            v-on:mouseleave="hideTooltips"></button><br>
+            <button class="optionButton" style="background-image: url('../pics/replace.png');"
+            v-on:click="replaceTexture(num)"
+            v-on:mousemove="showTooltips('Replace Texture')"
+            v-on:mouseleave="hideTooltips"></button>
+            <button class="optionButton" style="background-image: url('../pics/extractSource.png');"
+            v-on:click="copyTextureSource(num)"
+            v-on:mousemove="showTooltips('Extract Texture Source to Clipboard')"
+            v-on:mouseleave="hideTooltips"></button><br>
+            <canvas
+              v-bind:id="'customTexture'+num"
+              width="50"
+              height="50"
+              v-on:click="if(editor.editBlock) {editor.editBlock.texture = name; confirmEditAll()}"
+              v-on:mousemove="showTooltips('Set Texture')"
+              v-on:mouseleave="hideTooltips"
+            ></canvas
+            ><br />
+            {{name}}
+          </div>
+          <div class="blockSelectLabel">
+            <button class="optionButton" style="background-image: url('../pics/addSave.png');" onclick="sampleTexture()"
+            v-on:mousemove="showTooltips('Add Custom Texture')"
+            v-on:mouseleave="hideTooltips"></button>
+          </div>
         </div>
       </div>
-      <div id="editOptions" class="editOptions" v-on:keydown.stop>
+      <div id="editOptions" class="editOptions" v-on:keydown.stop v-if="editor.showMenus && !editor.playMode">
         <div>Building</div>
         Size:<input v-model="editor.buildSelect.size" onchange="updateBuildDisp()" style="width:100px"></input>px<br>
         <div>Grid & Snapping</div>
@@ -216,7 +257,7 @@
           v-model = "editor.currentLayer"
           v-on:change = "drawLevel()"
         >
-          <option value="All">
+          <option value="">
             All
           </options>
           <option v-for="layer in editor.viewLayers" v-bind:value="layer">
@@ -225,7 +266,7 @@
         </select><br>
         <input style="width:100px" v-model="editor.viewLayerAdd"></input>
         <button v-on:click="addViewLayer(editor.viewLayerAdd)">Add Layer</button>
-        <button v-on:click="removeViewLayer(editor.currentLayer)">Remove Current Layer</button>
+        <button v-on:click="removeViewLayer(editor.currentLayer)">Remove Selected Layer</button>
         <div>Level Size</div>
         {{width+"x"+height}}<br>
         {{editor.invertExpand?'Retract':'Expand'}} level by <input v-model="editor.expandAmt" onchange="editor.expandAmt = Math.round(editor.expandAmt)" style="width:100px"></input><br>
@@ -275,7 +316,7 @@
         <button
           v-bind:class="{buttonOn:editor.showMenus}"
           class="optionButton"
-          onclick="editor.showMenus = !editor.showMenus; updateMenus();"
+          onclick="editor.showMenus = !editor.showMenus"
           style="background-image: url(../pics/showMenus.png);"
           v-on:mousemove="showTooltips('Toggle menus (M)')"
           v-on:mouseleave="hideTooltips"
@@ -318,7 +359,7 @@
           v-on:mouseleave="hideTooltips"
         ></button>
       </div>
-      <div id="saveMenu" class="saveMenu">
+      <div id="saveMenu" class="saveMenu" v-if="editor.showMenus && !editor.playMode">
         <button 
           class="tabButton" 
           onclick="editor.rightTab = 'save'" 

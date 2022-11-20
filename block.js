@@ -24,6 +24,7 @@ class Block {
     this.moving = false;
     this.viewLayer = "";
     this.preset = "";
+    this.texture = "";
     // solid only
     this.floorLeniency = 0;
     // dynamic props

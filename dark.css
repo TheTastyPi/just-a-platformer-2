@@ -44,7 +44,7 @@ input,
 select,
 .key,
 .tabButton,
-.selectGroupButton {
+.bottomTabButton {
   background: #333333;
   color: white;
 }
@@ -59,7 +59,8 @@ select {
 .buttonOn {
   background-color: #008800;
 }
-.optionButton.buttonOn {
+.optionButton.buttonOn,
+.optionButton:active {
   background-color: #ff88ff;
 }
 .buttonOccupied {

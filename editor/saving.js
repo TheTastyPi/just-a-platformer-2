@@ -111,6 +111,10 @@ function compressBlock(block, usePreset) {
   }
 }
 function decompressBlock(block, room, root = true, usePreset) {
+  if (block.type !== undefined) {
+    block.t = block.type;
+    delete block.type;
+  }
   usePreset ??= block.pS !== undefined;
   let baseBlock;
   if (usePreset) {
@@ -159,6 +163,25 @@ function str2presets(str) {
     presets[editor.presetNames[i]] = comp[i];
   }
   return presets;
+}
+function textures2str() {
+  let comp = [];
+  for (let i in editor.textureNames) {
+    let source = editor.textureSources[editor.textureNames[i]];
+    source = deepCopy(source);
+    source.map((b) => compressBlock(b, false));
+    comp.push(source);
+  }
+  return LZString.compressToEncodedURIComponent(JSON.stringify(comp));
+}
+function str2textures(str) {
+  let comp = JSON.parse(LZString.decompressFromEncodedURIComponent(str));
+  let source = {};
+  for (let i in editor.textureNames) {
+    comp[i].map((b) => decompressBlock(b, undefined, undefined, false));
+    source[editor.textureNames[i]] = comp[i];
+  }
+  return source;
 }
 function lvl2str(lvl) {
   let w = lvl.length;
@@ -280,7 +303,9 @@ function save() {
       LZString.compressToEncodedURIComponent(JSON.stringify(globalEventsComp)),
       [...editor.viewLayers],
       presets2str(),
-      [...editor.presetNames]
+      [...editor.presetNames],
+      textures2str(),
+      [...editor.textureNames]
     ];
   }
   storeSave();
@@ -290,8 +315,19 @@ function load(name) {
   let save = editor.saves[name];
   if (save) {
     let saveData;
+    editor.textures = {};
+    if (save[9]) {
+      editor.textureNames = [...save[10]];
+      editor.textureSources = str2textures(save[9]);
+      for (let i in editor.textureSources) {
+        editor.textures[i] = getTextureFromSource(editor.textureSources[i]);
+      }
+    } else {
+      editor.textureNames = [];
+      editor.textureSources = {};
+    }
     if (save[7]) {
-      editor.presetNames = save[8];
+      editor.presetNames = [...save[8]];
       editor.presets = str2presets(save[7]);
     } else {
       editor.presetNames = [];
@@ -370,7 +406,7 @@ function load(name) {
       }
     }
     if (save[6]) {
-      editor.viewLayers = save[6];
+      editor.viewLayers = [...save[6]];
     } else editor.viewLayers = [];
     assignIndex();
     togglePlayMode();
@@ -389,6 +425,7 @@ function load(name) {
     deselect();
     editor.currentSave = name;
     updatePresetDisp();
+    updateTextureDisp();
   }
 }
 function exportSave(name) {

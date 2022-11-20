@@ -28,7 +28,7 @@ function getSelected(selectRect) {
         let block = gridSpace[i];
         if (
           isColliding(selectRect, block) &&
-          ["All", block.viewLayer].includes(editor.currentLayer)
+          ["", block.viewLayer].includes(editor.currentLayer)
         ) {
           selected.push(block);
         }
@@ -55,15 +55,15 @@ function select(selectRect, single = false, prev, build = false) {
         editor.chooseFor[0].isRootBlock = false;
       }
     } else {
-      editor.chooseFor = selected;
-      if (editor.chooseType === "block") {
-        editor.chooseFor = deepCopy(editor.chooseFor);
-        editor.chooseFor = editor.chooseFor.map((x) => {
-          x.isRootBlock = false;
-        });
+      for (let i in selected) {
+        editor.chooseFor[i] = selected[i];
+        if (editor.chooseType === "block") {
+          editor.chooseFor[i] = deepCopy(editor.chooseFor[i]);
+          editor.chooseFor[i].isRootBlock = false;
+        }
       }
     }
-    editor.chooseType = undefined;
+    stopChoose();
     return;
   }
   if (build) {
@@ -109,7 +109,7 @@ function deselect() {
   selectDisp.removeChildren();
   editor.editBlock = undefined;
   editor.editBlockProp = [];
-  editor.chooseType = undefined;
+  stopChoose();
   eventEditor.active = false;
 }
 function reselect() {
@@ -316,11 +316,43 @@ function chooseFromLevel(type, chooseObj, chooseKey, inEvent = false) {
   editor.chooseFor = chooseObj[chooseKey];
   editor.chooseSource = [chooseObj, chooseKey];
   editor.chooseInEvent = inEvent;
-  if (!editor.editMode) {
-    editor.editMode = true;
+  editor.editMode = true;
+  if (type === "region") {
+    buildDisp.visible = true;
+    selectDisp.visible = false;
+    editor.regionSelectTemp = editor.buildSelect.size;
+    editor.buildSelect.size = 50;
+  } else {
     buildDisp.visible = false;
     selectDisp.visible = true;
-    updateMenus();
   }
+  let guide;
+  switch (type) {
+    case "block":
+    case "ref":
+      guide =
+        "LMB to select block.\n[Delete] to remove current selection.\n[Ctrl]-[C] to copy current selection.\n[Esc] to cancel.";
+      break;
+    case "pos":
+      guide = "[Ctrl]-LMB to select position.\n[Esc] to cancel.";
+      break;
+    case "region":
+      guide =
+        "LMB to select region.\n[Esc] to cancel.\nYou're not allowed to select a block with custom texture.";
+      break;
+    default:
+  }
+  editor.displayTooltip = guide;
   blurAll();
+}
+function stopChoose() {
+  if (editor.chooseType === "region") {
+    buildDisp.visible = false;
+    selectDisp.visible = true;
+    editor.buildSelect.size = editor.regionSelectTemp;
+    editor.regionSelectTemp = undefined;
+  }
+  editor.chooseType = undefined;
+  editor.displayTooltip = "";
+  hideTooltips();
 }

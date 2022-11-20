@@ -668,3 +668,20 @@
 #### 16 Oct. 2022
 
 - Fixed a bug where the default room had improper block data
+
+## 20 Nov. 2022
+
+- Added custom textures
+  - You can now select a region of the level to create a custom texture out of and use it anywhere
+  - You can also edit these texture and all blocks using it will update accordingly
+- You can now rename and edit block presets
+  - After editing a preset, all blocks using the preset will update accordingly
+- Added tooltips for special selections (sub-block, block references, positions) containing control guides
+  - Consequently, removed the controls guide on the start selection button itself
+- Option buttons now flash green when pressed
+- Fixed a bug where sprite tints aren't updated upon editing block type
+- Fixed a problem with backward compatibility
+- Fixed a bug where block selection for commands just, didn't work
+- Fixed several visual bug with things crossing boundary warps
+- Fixed wall-sliding. Whoopsies!
+- Fixed some issues with saving view layers and presets
