@@ -685,3 +685,10 @@
 - Fixed several visual bug with things crossing boundary warps
 - Fixed wall-sliding. Whoopsies!
 - Fixed some issues with saving view layers and presets
+
+### 29 Nov. 2022
+
+- Added the 'ignorePriority' property to all blocks
+  - When true, eventPriority is ignored, instead having the default touch event always occurring, without overriding other touch events
+  - Boundary Warps now defaults to have ignorePriority true
+- Added the 'color' property to Water Blocks

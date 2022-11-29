@@ -225,6 +225,7 @@ function doPhysics(obj, t, isPlayer) {
   obj.ya = 0;
   let collided = [];
   let eventList = [[], [], [], [], []];
+  let ingoreEventList = [[], [], [], [], []];
   let topPriority = [0, 0, 0, 0, 0];
   let gdxv = 0;
   let gdyv = 0;
@@ -411,6 +412,10 @@ function doPhysics(obj, t, isPlayer) {
         }
       }
       if (block === player) return;
+      if (block.ignorePriority) {
+        ingoreEventList[dir].push([block, data.touchEvent[dir]]);
+        return;
+      }
       if (block.eventPriority > topPriority[dir]) {
         eventList[dir] = [];
         topPriority[dir] = block.eventPriority;
@@ -421,6 +426,10 @@ function doPhysics(obj, t, isPlayer) {
       if (block.type === 12 && block.addVel) {
         gdxv += block.newxv;
         gdyv += block.newyv;
+      }
+      if (block.ignorePriority) {
+        ingoreEventList[4].push([block, data.touchEvent[4]]);
+        return;
       }
       if (block.eventPriority > topPriority[4]) {
         eventList[4] = [];
@@ -628,6 +637,9 @@ function doPhysics(obj, t, isPlayer) {
           }
         );
     }
+    eventList.map((x, i) => {
+      x.splice(x.length, 0, ...ingoreEventList[i]);
+    });
     for (let i in eventList) {
       for (let j in eventList[i]) {
         let block = eventList[i][j][0];

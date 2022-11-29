@@ -86,6 +86,7 @@ const propData = {
   collideBlock: ["bool", "cB"],
   giveJump: ["bool", "j"],
   eventPriority: ["int", "ep", () => -Infinity, () => Infinity],
+  ignorePriority: ["bool", "iP"],
   zLayer: ["int", "z", () => -Infinity, () => Infinity],
   invisible: ["bool", "v"],
   opacity: ["num", "o", () => 0, () => 1],
@@ -214,6 +215,7 @@ var blockEdit = new Vue({
       "collideBlock",
       "giveJump",
       "eventPriority",
+      "ignorePriority",
       "zLayer",
       "invisible",
       "opacity",
@@ -251,7 +253,9 @@ var blockEdit = new Vue({
     blocks: blockList,
     desc: {
       eventPriority:
-        "Determines the priority of touch events.\nHigher priority overrides lower priority.",
+        "Determines the priority of default touch events.\nHigher priority overrides lower priority.",
+      ignorePriority:
+        "Overrides eventPriority, making default touch events always occur\nwithout overriding other events.",
       zLayer:
         "Determines whether a block is displayed over another.\nIf left empty, defaults to eventPriority.\nThe player has a zLayer of -1",
       floorLeniency:

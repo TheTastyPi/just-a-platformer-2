@@ -11,7 +11,8 @@ class Block {
     this.collideBlock = true;
     this.giveJump = giveJump;
     this.eventPriority = eventPriority;
-    this.zLayer = '';
+    this.ignorePriority = false;
+    this.zLayer = "";
     this.invisible = false;
     this.opacity = 1;
     this.friction = true;
@@ -82,8 +83,7 @@ new BlockType(
   },
   {
     color: []
-  },
-  ["color"]
+  }
 );
 new BlockType(
   "Death Block",
@@ -120,8 +120,7 @@ new BlockType(
   },
   {
     color: []
-  },
-  []
+  }
 );
 new BlockType(
   "Check Point",
@@ -169,8 +168,7 @@ new BlockType(
   },
   {
     color: []
-  },
-  []
+  }
 );
 new BlockType(
   "Bounce Block",
@@ -218,8 +216,7 @@ new BlockType(
   },
   {
     power: [() => 0, () => 2000]
-  },
-  []
+  }
 );
 new BlockType(
   "Pushable Block",
@@ -248,8 +245,7 @@ new BlockType(
   },
   {
     color: []
-  },
-  []
+  }
 );
 new BlockType(
   "Semi-Unpushable Block",
@@ -281,8 +277,7 @@ new BlockType(
   },
   {
     color: []
-  },
-  []
+  }
 );
 new BlockType(
   "Ice Block",
@@ -314,16 +309,19 @@ new BlockType(
   },
   {
     color: []
-  },
-  []
+  }
 );
 new BlockType(
   "Water Block",
-  { ...new Block(7, 0, 0, 50, false, true, 3), maxSpeed: 200 },
+  {
+    ...new Block(7, 0, 0, 50, false, true, 3),
+    maxSpeed: 200,
+    color: "#8888ff"
+  },
   (block, app = display) => {
     let g = new PIXI.Graphics();
     g.alpha = 0.5;
-    g.beginFill(0x8888ff);
+    g.beginFill(0xffffff);
     g.drawRect(0, 0, 50, 50);
     g.endFill();
     return app.renderer.generateTexture(g);
@@ -339,8 +337,10 @@ new BlockType(
       obj.yv = Math.min(Math.max(obj.yv, -block.maxSpeed), block.maxSpeed);
     }
   ],
-  () => {},
-  { maxSpeed: [() => 0, () => Infinity] }
+  (block, sprite = block.sprite) => {
+    sprite.tint = PIXI.utils.string2hex(block.color);
+  },
+  { maxSpeed: [() => 0, () => Infinity], color: [] }
 );
 new BlockType(
   "Conveyor Block",
@@ -409,8 +409,7 @@ new BlockType(
     rightSpeed: [() => -2000, () => 2000],
     topSpeed: [() => -2000, () => 2000],
     bottomSpeed: [() => -2000, () => 2000]
-  },
-  []
+  }
 );
 new BlockType(
   "Gravity Field",
@@ -1413,6 +1412,7 @@ new BlockType(
   "Boundary Warp",
   {
     ...new Block(23, 0, 0, 50, false, false, 3),
+    ignorePriority: true,
     newRoom: "",
     id: 0,
     targetId: 0,

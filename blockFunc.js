@@ -133,3 +133,29 @@ function flipBlock(block, pos, y = false, log = true) {
     log
   );
 }
+function getColliding(rect) {
+  let selected = [];
+  for (
+    let x = gridUnit(rect.x) - maxBlockSize / 50;
+    x <= gridUnit(rect.x + rect.width);
+    x++
+  ) {
+    for (
+      let y = gridUnit(rect.y) - maxBlockSize / 50;
+      y <= gridUnit(rect.y + rect.height);
+      y++
+    ) {
+      let gridSpace = levels[player.currentRoom][x]?.[y];
+      if (gridSpace === undefined) continue;
+      for (let i in gridSpace) {
+        let block = gridSpace[i];
+        if (
+          isColliding(rect, block)
+        ) {
+          selected.push(block);
+        }
+      }
+    }
+  }
+  return selected;
+}
