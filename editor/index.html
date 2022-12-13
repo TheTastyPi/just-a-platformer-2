@@ -26,7 +26,7 @@
       <div id="blockSelect" class="blockSelect" v-show="editor.showMenus && !editor.playMode && !editor.editMode">
         <div class="bottomTabButtonCont">
           <button v-for="(ids,groupName) in blocks" v-on:click="selectGroup = groupName" v-bind:class="{buttonOn:selectGroup === groupName}" class="bottomTabButton">{{groupName}}</button>
-          <button v-on:click="selectGroup = 'custom'" v-bind:class="{buttonOn:selectGroup === 'custom'}" class="selectGroupButton">Custom</button>
+          <button v-on:click="selectGroup = 'custom'" v-bind:class="{buttonOn:selectGroup === 'custom'}" class="bottomTabButton">Custom</button>
         </div>
         <div v-for="(ids, groupName) in blockList" class="blockSect" v-show="selectGroup === groupName">
           <div v-for="id in ids" class="blockSelectLabel">
