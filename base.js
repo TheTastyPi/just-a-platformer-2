@@ -626,7 +626,7 @@ function doPhysics(obj, t, isPlayer) {
       let block = collided[i];
       if (block === player) {
         runEvent(obj.events?.onTouch, obj, { cause: player });
-      } else {
+      } else if (obj !== player || !block.dynamic) {
         runEvent(block.events?.onTouch, block, { cause: obj });
       }
     }
@@ -636,17 +636,13 @@ function doPhysics(obj, t, isPlayer) {
           runEvent(
             obj.events?.["onTouch" + dirWord[i ^ 1]],
             obj,
-            {
-              cause: player
-            }
+            {cause: player}
           );
-        } else {
+        } else if (obj !== player || !dirBlock[i].dynamic) {
           runEvent(
             dirBlock[i].events?.["onTouch" + dirWord[i ^ 1]],
             dirBlock[i],
-            {
-              cause: obj
-            }
+            {cause: obj}
           );
         }
       }
