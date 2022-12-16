@@ -692,3 +692,10 @@
   - When true, eventPriority is ignored, instead having the default touch event always occurring, without overriding other touch events
   - Boundary Warps now defaults to have ignorePriority true
 - Added the 'color' property to Water Blocks
+
+#### 16 Dec. 2022
+
+- Fixed a few bugs related to events in dynamic blocks
+  - You now trigger onTouch event when pushing a dynamic block
+  - The game no longer crashes for some reason when you use the 'source' variable in events on a dynamic block
+    - I don't have a clue how I fixed this but it doesn't happen anymore

@@ -58,7 +58,7 @@ const defaultEventData = {
   _loops: undefined,
   _lineNum: 0,
   _multiRun: false,
-  _multiRunDelay: 0,
+  _multiRunDelay: 0.1,
   _delayTimer: 0,
   _playerTrigger: true,
   _blockTrigger: true
@@ -624,18 +624,32 @@ function doPhysics(obj, t, isPlayer) {
     );
     for (let i in collided) {
       let block = collided[i];
-      if (block === player) continue;
-      runEvent(block.events?.onTouch, block, { cause: obj });
+      if (block === player) {
+        runEvent(obj.events?.onTouch, obj, { cause: player });
+      } else {
+        runEvent(block.events?.onTouch, block, { cause: obj });
+      }
     }
     for (let i in dirBlock) {
-      if (dirBlock[i])
-        runEvent(
-          dirBlock[i].events?.["onTouch" + dirWord[i ^ 1]],
-          dirBlock[i],
-          {
-            cause: obj
-          }
-        );
+      if (dirBlock[i]) {
+        if (dirBlock[i] === player) {
+          runEvent(
+            obj.events?.["onTouch" + dirWord[i ^ 1]],
+            obj,
+            {
+              cause: player
+            }
+          );
+        } else {
+          runEvent(
+            dirBlock[i].events?.["onTouch" + dirWord[i ^ 1]],
+            dirBlock[i],
+            {
+              cause: obj
+            }
+          );
+        }
+      }
     }
     eventList.map((x, i) => {
       x.splice(x.length, 0, ...ingoreEventList[i]);
