@@ -122,6 +122,7 @@ var coyoteTimer = 1000 / 20;
 var dashDuration = 200;
 var dashTimer = 0;
 var dashSpeed = 500;
+var prevPlayer = null;
 var prevDynObjs = [];
 var prevTextDisp = [];
 var justDied = false;
@@ -161,7 +162,11 @@ function nextFrame(timeStamp) {
       handleActions();
       handleEvents();
       for (let i = 0; i < simReruns; i++) {
+        prevPlayer = deepCopy(player);
         prevDynObjs = deepCopy(dynamicObjs);
+        prevDynObjs.map((b, i) => {
+          b.dIndex = i;
+        });
         doPhysics(player, interval / 1000 / simReruns, true);
         if ((editor?.playMode ?? true) && !justDied) {
           for (let j in dynamicObjs) {
@@ -287,10 +292,9 @@ function doPhysics(obj, t, isPlayer) {
     let by2 = by1 + block.size;
     let dirBPos = [bx1, bx2, by1, by2];
     let data = blockData[block.type];
-    if (!block.friction) friction = false;
     if (colliding) collided.push(block);
     // solid block
-    if (block === player || block.isSolid) {
+    if (block.isPlayer || block.isSolid) {
       let tx1 = Math.abs(px1 - bx2);
       let tx2 = Math.abs(px2 - bx1);
       let ty1 = Math.abs(py1 - by2);
@@ -398,6 +402,8 @@ function doPhysics(obj, t, isPlayer) {
       }
       let axis = dir < 2 ? "x" : "y";
       let sign = dir % 2 ? 1 : -1;
+      if (!block.friction && obj.xg === dir < 2 && Math.sign(obj.g) === -sign)
+        friction = false;
       let border =
         dBlock?.[axis] + (dir % 2 ? 0 : dBlock?.size) + dirOffset[dir];
       if (colliding) {
@@ -411,7 +417,7 @@ function doPhysics(obj, t, isPlayer) {
           dirOffset[dir] = dir < 2 ? xOffset : yOffset;
         }
       }
-      if (block === player) return;
+      if (block.isPlayer) return;
       if (block.ignorePriority) {
         ingoreEventList[dir].push([block, data.touchEvent[dir]]);
         return;
@@ -423,6 +429,7 @@ function doPhysics(obj, t, isPlayer) {
       if (block.eventPriority === topPriority[dir])
         eventList[dir].push([block, data.touchEvent[dir]]);
     } else {
+      if (!block.friction) friction = false;
       if (block.type === 12 && block.addVel) {
         gdxv += block.newxv;
         gdyv += block.newyv;
@@ -471,9 +478,9 @@ function doPhysics(obj, t, isPlayer) {
     subObj.dynamic &&
     subObj.playerPushable &&
     subObj.collidePlayer &&
-    obj.currentRoom === player.currentRoom
+    obj.currentRoom === prevPlayer.currentRoom
   ) {
-    doCollision(player);
+    doCollision(prevPlayer);
   }
   if (isPlayer || subObj.blockPushable) {
     for (let i in prevDynObjs) {
@@ -543,9 +550,9 @@ function doPhysics(obj, t, isPlayer) {
       subObj.dynamic &&
       subObj.playerPushable &&
       subObj.collidePlayer &&
-      player.currentRoom === obj.roomLink[1].currentRoom
+      prevPlayer.currentRoom === obj.roomLink[1].currentRoom
     )
-      doCollision(player, -xOff, -yOff);
+      doCollision(prevPlayer, -xOff, -yOff);
     if (
       neg * (hori ? obj.x : obj.y) <
       neg *
@@ -596,7 +603,7 @@ function doPhysics(obj, t, isPlayer) {
     );
     for (let i in dirPush) {
       if (isNaN(dirPush[i])) dirPush[i] = 0;
-      if (dirBlock[i]?.dynamic || dirBlock[i] === player) dirPush[i] /= 2;
+      if (dirBlock[i]?.dynamic || dirBlock[i]?.isPlayer) dirPush[i] /= 2;
     }
     let horiPush = dirPush[0] + dirPush[1];
     let vertPush = dirPush[2] + dirPush[3];
@@ -624,26 +631,19 @@ function doPhysics(obj, t, isPlayer) {
     );
     for (let i in collided) {
       let block = collided[i];
-      if (block === player) {
-        runEvent(obj.events?.onTouch, obj, { cause: player });
-      } else if (obj !== player || !block.dynamic) {
+      if (block !== player) {
+        if (block.dynamic) block = dynamicObjs[block.dIndex];
         runEvent(block.events?.onTouch, block, { cause: obj });
       }
     }
     for (let i in dirBlock) {
-      if (dirBlock[i]) {
-        if (dirBlock[i] === player) {
-          runEvent(
-            obj.events?.["onTouch" + dirWord[i ^ 1]],
-            obj,
-            {cause: player}
-          );
-        } else if (obj !== player || !dirBlock[i].dynamic) {
-          runEvent(
-            dirBlock[i].events?.["onTouch" + dirWord[i ^ 1]],
-            dirBlock[i],
-            {cause: obj}
-          );
+      let block = dirBlock[i];
+      if (block) {
+        if (block !== player) {
+          if (block.dynamic) block = dynamicObjs[block.dIndex];
+          runEvent(block.events?.["onTouch" + dirWord[i ^ 1]], block, {
+            cause: obj
+          });
         }
       }
     }
@@ -871,7 +871,7 @@ function doPhysics(obj, t, isPlayer) {
           : 0;
       if (dv[i] !== 0 && dirBlock[i]?.g > 0 && dirBlock[i].xg) {
         if (
-          dirBlock[i ^ 1] === player &&
+          dirBlock[i ^ 1].isPlayer &&
           (hori ? control.up || control.down : control.left || control.right)
         ) {
           dv[i] = -dirBlock[i][hori ? "yv" : "xv"];
@@ -911,11 +911,13 @@ function doPhysics(obj, t, isPlayer) {
     }
     if (tempObj.xg || gdyv !== 0) {
       let fricAcc = -dyv * yFric * friction + gdyv;
-      if (!(dirBlock[2]?.yv > 0) && !(dirBlock[3]?.yv < 0)) obj.ya += fricAcc;
+      if (isPlayer || !(dirBlock[2]?.yv > 0 || dirBlock[3]?.yv < 0))
+        obj.ya += fricAcc;
     }
     if (!tempObj.xg || gdxv !== 0) {
       let fricAcc = -dxv * xFric * friction + gdxv;
-      if (!(dirBlock[0]?.xv > 0) && !(dirBlock[1]?.xv < 0)) obj.xa += fricAcc;
+      if (isPlayer || !(dirBlock[0]?.xv > 0 || dirBlock[1]?.xv < 0))
+        obj.xa += fricAcc;
     }
     // change velocity
     if (dashTimer === 0 || !isPlayer) {
@@ -953,7 +955,7 @@ function doPhysics(obj, t, isPlayer) {
         let sign = i % 2 ? 1 : -1;
         let func = i % 2 ? "min" : "max";
         if (dirBlock[i] && (hori ? accelx : accely)) {
-          if (dirBlock[i].dynamic || dirBlock[i] === player) {
+          if (dirBlock[i].dynamic || dirBlock[i]?.isPlayer) {
             obj[axis] = Math[func](
               obj[axis],
               (obj[axis] + dirBlock[i][axis]) / 2

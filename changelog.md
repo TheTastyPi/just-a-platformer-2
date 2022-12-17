@@ -699,3 +699,8 @@
   - You now trigger onTouch event when pushing a dynamic block
   - The game no longer crashes for some reason when you use the 'source' variable in events on a dynamic block
     - I don't have a clue how I fixed this but it doesn't happen anymore
+
+### 17 Dec. 2022
+
+- Made player/dynamic-block interaction reflect dynamic-block/dynamic-block interactions.
+  - As a result, this fixed several bugs related to triggering onTouch events in dynamic blocks
