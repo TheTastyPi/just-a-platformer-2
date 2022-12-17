@@ -20,6 +20,7 @@ function runEvent(event, source, extraContext = {}) {
     player.eventQueue.push(copy);
   }
   event[0].ran = true;
+  handleEvents();
 }
 function evalExp(exp, context, final = true, restrict = false) {
   // ()
