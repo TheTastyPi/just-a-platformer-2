@@ -317,7 +317,7 @@ function addDupSprite(block) {
 }
 function removeSprite(s, block) {
   if (block.currentRoom === player.currentRoom) {
-    for (let i in s.children) s.children[i].destroy();
+    s.removeChildren();
     let deleteTexture =
       block !== player &&
       s.texture !== blockData[block.type].defaultTexture &&

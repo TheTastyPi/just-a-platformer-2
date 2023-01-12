@@ -164,9 +164,6 @@ function nextFrame(timeStamp) {
       for (let i = 0; i < simReruns; i++) {
         prevPlayer = deepCopy(player);
         prevDynObjs = deepCopy(dynamicObjs);
-        prevDynObjs.map((b, i) => {
-          b.dIndex = i;
-        });
         doPhysics(player, interval / 1000 / simReruns, true);
         if ((editor?.playMode ?? true) && !justDied) {
           for (let j in dynamicObjs) {
@@ -632,7 +629,7 @@ function doPhysics(obj, t, isPlayer) {
     for (let i in collided) {
       let block = collided[i];
       if (block !== player) {
-        if (block.dynamic) block = dynamicObjs[block.dIndex];
+        if (block.dynamic) block = dynamicObjs[prevDynObjs.findIndex(b=>b===block)];
         runEvent(block.events?.onTouch, block, { cause: obj });
       }
     }
@@ -640,7 +637,7 @@ function doPhysics(obj, t, isPlayer) {
       let block = dirBlock[i];
       if (block) {
         if (block !== player) {
-          if (block.dynamic) block = dynamicObjs[block.dIndex];
+          if (block.dynamic) block = dynamicObjs[prevDynObjs.findIndex(b=>b===block)];
           runEvent(block.events?.["onTouch" + dirWord[i ^ 1]], block, {
             cause: obj
           });
@@ -885,8 +882,8 @@ function doPhysics(obj, t, isPlayer) {
       if (conveyorBlocks.includes(subObj.type)) {
         if (dirBlock[i]) {
           if (hori) {
-            gdyv -= dirBlock[i][dirWord[i].toLowerCase() + "Speed"];
-          } else gdxv -= dirBlock[i][dirWord[i].toLowerCase() + "Speed"];
+            gdyv -= subObj[dirWord[i].toLowerCase() + "Speed"];
+          } else gdxv -= subObj[dirWord[i].toLowerCase() + "Speed"];
         }
       }
     }

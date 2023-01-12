@@ -360,7 +360,9 @@ new BlockType(
   },
   [() => {}, () => {}, () => {}, () => {}, () => {}],
   (block, sprite = block.sprite, app) => {
-    if (sprite.children.length === 0) {
+    let targetNum = [block.leftSpeed,block.rightSpeed,block.topSpeed,block.bottomSpeed].filter(x=>x!==0).length+1;
+    if (sprite.children.length !== targetNum) {
+      sprite.removeChildren();
       let hori, vert;
       if (app !== display) {
         let bruh = createConveyorTexture(app);
@@ -1307,7 +1309,10 @@ new BlockType(
   },
   [() => {}, () => {}, () => {}, () => {}, () => {}],
   (block, sprite = block.sprite, app) => {
-    if (sprite.children.length === 0) {
+    let wallsActive = [block.leftWall,block.rightWall,block.topWall,block.bottomWall];
+    let targetNum = [block.leftSpeed,block.rightSpeed,block.topSpeed,block.bottomSpeed].filter((x,i)=>x!==0&&wallsActive[i]).length+1;
+    if (sprite.children.length !== targetNum) {
+      sprite.removeChildren();
       let hori, vert;
       if (app !== display) {
         let bruh = createConveyorTexture(app);

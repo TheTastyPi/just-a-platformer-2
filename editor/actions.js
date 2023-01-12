@@ -203,6 +203,8 @@ function changeLevelSize(dir, num, action = true) {
             if (b.dynamic) {
               dynamicObjs.splice(dynamicObjs.indexOf(b), 1);
             }
+            if (animatedObjs.includes(b))
+              animatedObjs.splice(animatedObjs.indexOf(b), 1);
           })
         )
       );
@@ -244,6 +246,8 @@ function changeLevelSize(dir, num, action = true) {
             if (b.dynamic) {
               dynamicObjs.splice(dynamicObjs.indexOf(b), 1);
             }
+            if (animatedObjs.includes(b))
+              animatedObjs.splice(animatedObjs.indexOf(b), 1);
           })
         )
       );
@@ -270,6 +274,8 @@ function changeLevelSize(dir, num, action = true) {
             if (b.dynamic) {
               dynamicObjs.splice(dynamicObjs.indexOf(b), 1);
             }
+            if (animatedObjs.includes(b))
+              animatedObjs.splice(animatedObjs.indexOf(b), 1);
           })
         )
       );
@@ -307,6 +313,8 @@ function changeLevelSize(dir, num, action = true) {
             if (b.dynamic) {
               dynamicObjs.splice(dynamicObjs.indexOf(b), 1);
             }
+            if (animatedObjs.includes(b))
+              animatedObjs.splice(animatedObjs.indexOf(b), 1);
           })
         )
       );

@@ -9,8 +9,7 @@ function addRoom() {
     x.map((y) =>
       y.map((b) => {
         b.currentRoom = name;
-        if (getSubBlock(b).dynamic) dynamicObjs.push(b);
-        if (animatedTypes.includes(getSubBlock(b).type)) animatedObjs.push(b);
+        updateBlockState(b);
       })
     )
   );

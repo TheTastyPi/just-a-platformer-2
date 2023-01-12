@@ -704,3 +704,10 @@
 
 - Made player/dynamic-block interaction reflect dynamic-block/dynamic-block interactions.
   - As a result, this fixed several bugs related to triggering onTouch events in dynamic blocks
+
+#### ?? Jan. 2023
+
+- Fixed a bug where touching a dynamic block as a sub-block crashes the game
+- Fixed a bug where dynamic conveyor blocks crashes the game upon contact with solid blocks.
+- Fixed a visual bug related to setting one of the directional speed properties of a conveyor block/panel to 0
+- Fixed a bug where animated blocks are not properly deleted when removed via reducing a room's size
