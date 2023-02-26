@@ -715,6 +715,6 @@
 ### 26 Feb. 2023
 
 - Added the gradient() command.
-  - It gradually changes a value from its inital value to a target value.
+  - It gradually changes a value from its initial value to a target value.
   - Accepts both numerical values and colors.
 - Fixed a bug where ice physics just didn't work.
