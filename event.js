@@ -402,8 +402,9 @@ function handleActions() {
       if (j === "0") continue;
       let inputType = commandData[action[0]._type].inputType[parseInt(j) - 1];
       if (
-        inputType === "blockRef" &&
-        action[j].some((x) => !x.isBlock || x.removed)
+        (inputType === "blockRef" &&
+        action[j].some((x) => !x.isBlock || x.removed)) ||
+        (inputType === "obj" && action[j].isBlock && action[j].removed)
       ) {
         err = "NONEXISTENT_BLOCK_REF";
       }

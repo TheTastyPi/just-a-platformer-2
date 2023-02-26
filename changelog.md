@@ -711,3 +711,10 @@
 - Fixed a bug where dynamic conveyor blocks crashes the game upon contact with solid blocks.
 - Fixed a visual bug related to setting one of the directional speed properties of a conveyor block/panel to 0
 - Fixed a bug where animated blocks are not properly deleted when removed via reducing a room's size
+
+### 26 Feb. 2023
+
+- Added the gradient() command.
+  - It gradually changes a value from its inital value to a target value.
+  - Accepts both numerical values and colors.
+- Fixed a bug where ice physics just didn't work.

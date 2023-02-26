@@ -544,3 +544,64 @@ new CommandType(
     consoleLog(text, "err");
   }
 );
+new CommandType(
+  "gradient",
+  ["obj","var","any","num", "!num"],
+  ["","","","",""],
+  "gradient(obj,prop,target, t, v0)\nGradually changes obj[prop] to target value in 't' second starting at 'v0' units per second.\nLeave v0 blank for constant rate.\nTarget value must the of the same type as initial value, and be either numerical, or a color.",
+  ({ args, vars, command }) => {
+    let [obj, prop, target, t, v0] = args;
+    if (typeof obj[prop] !== typeof target) {
+      return "MISMATCHED_TYPES_FOR_GRADIENT";
+    }
+    if (!(typeof obj[prop] === "number") && !(typeof obj[prop] === "string" && /^#[0-9A-F]{6}$/i.test(obj[prop]))) {
+      return "INVALID_TYPES_FOR_GRADIENT";
+    }
+    let initVal = obj[prop];
+    if (typeof target === "string") {
+      args[2] = PIXI.utils.hex2rgb(PIXI.utils.string2hex(target));
+      initVal = PIXI.utils.hex2rgb(PIXI.utils.string2hex(initVal))
+    }
+    args.push(initVal,0);
+    runAction(args, vars, command);
+  },
+  ({action, args}) => {
+    let [, obj, prop, target, t, v0, initVal, ct] = args;
+    let delt = interval / 1000;
+    if (ct + delt > t) delt = t - ct;
+    let isColor = typeof target === "object";
+    let dV, a, valFunc, dx, currentVal;
+    if (isColor) {
+      currentVal = PIXI.utils.hex2rgb(PIXI.utils.string2hex(obj[prop]));
+      dV = target.map((n,i)=>n-initVal[i]);
+      if (v0 === undefined) v0 = dV.map(n=>n/t);
+      a = dV.map((n,i)=>(2 * (n - v0[i] * t)) / t / t);
+      valFunc = (t) => a.map((n,i)=>(n / 2) * t ** 2 + v0[i] * t + initVal[i]);
+      dx = valFunc(ct + delt).map((n,i)=>n - currentVal[i]);
+    } else {
+      currentVal = obj[prop];
+      dV = target - initVal;
+      if (v0 === undefined) v0 = dV / t;
+      a = (2 * (dV - v0 * t)) / t / t;
+      valFunc = (t) => (a / 2) * t ** 2 + v0 * t + initVal;
+      dx = valFunc(ct + delt) - currentVal;
+    }
+    if (t === 0) dx = dV;
+    let newVal;
+    if (isColor) {
+      newVal = currentVal.map((n,i)=>n+dx[i]);
+      newVal = PIXI.utils.hex2string(PIXI.utils.rgb2hex(newVal));
+    } else {
+      newVal = obj[prop] + dx;
+    }
+    let err = commandData[2].eventFunc({
+      vars: action[0],
+      args: [obj, prop, newVal]
+    });
+    if (err) return err;
+    action[action.length - 1] += delt;
+    if (action[action.length - 1] >= t) {
+      return "END";
+    }
+  }
+)

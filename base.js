@@ -399,7 +399,7 @@ function doPhysics(obj, t, isPlayer) {
       }
       let axis = dir < 2 ? "x" : "y";
       let sign = dir % 2 ? 1 : -1;
-      if (!block.friction && obj.xg === dir < 2 && Math.sign(obj.g) === -sign)
+      if (!block.friction && obj.xg === dir < 2 && Math.sign(obj.g) === sign)
         friction = false;
       let border =
         dBlock?.[axis] + (dir % 2 ? 0 : dBlock?.size) + dirOffset[dir];

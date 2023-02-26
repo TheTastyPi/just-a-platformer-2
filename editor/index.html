@@ -872,6 +872,14 @@
                 </ul>
               </li>
               <li>
+                gradient(object[obj][optional],property[str],target[num OR str],t[num],v0[num])
+                <ul>
+                  <li>Gradually set ‘object[property]’ to ‘target’ over ‘t’ seconds starting at a rate of change of ‘v0’.</li>
+                  <li>If ‘object[property]’ and ‘target’ have different types, it will give a MISMATCHED_TYPES_FOR_GRADIENT error.</li>
+                  <li>If ‘target’ is not a number or a color string, it will result in an INVALID_TYPE_FOR_GRADIENT error.</li>
+                </ul>
+              </li>
+              <li>
                 isColliding(varName[str],objectA[obj],objectB[obj])
                 <ul>
                   <li>Sets 'varName' as true if 'objectA' and 'objectB' are colliding.</li>
@@ -1136,6 +1144,8 @@
               <li>INVALID_ELSE_IF_COMMAND: Occurs when an elseIf() command is not preceded by a if() command.</li>
               <li>INVALID_STEP_FOR_FOR: Occurs when a for() command has a ‘step’ of 0.</li>
               <li>INVALID_OBJECT_IN_IS_COLLIDING:  Occurs when isColliding() is given an invalid object (non-player and non-block).</li>
+              <li>MISMATCHED_TYPES_FOR_GRADIENT: Occurs when gradient() is given mismatched initial and target types.</li>
+              <li>INVALID_TYPE_FOR_GRADIENT: Occurs when gradient() is given an invalid target value.</li>
               <li>
                 MAXIMUM_COMMAND_PER_SESSION_REACHED: Occurs when commands executed within a single session exceeds 1000.
                 <ul>
