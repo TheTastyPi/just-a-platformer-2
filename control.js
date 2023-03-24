@@ -45,7 +45,10 @@ document.addEventListener("keyup", function (event) {
     control.jump = false;
     canJump = true;
   }
-  if (c.Dash.includes(key)) control.dash = false;
+  if (c.Dash.includes(key)) {
+    control.dash = false;
+    canDash = true;
+  }
   if (c.Interact.includes(key)) {
     control.interact = false;
     canInteract = true;

@@ -718,3 +718,7 @@
   - It gradually changes a value from its initial value to a target value.
   - Accepts both numerical values and colors.
 - Fixed a bug where ice physics just didn't work.
+
+### 24 Mar. 2023
+
+- Made it so that you cannot do multiple dashes with a single key hold.

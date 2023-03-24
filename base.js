@@ -104,6 +104,7 @@ display.stage.addChild(levelMask);
 levelLayer.mask = levelMask;
 var canJump = true;
 var canWJ = true;
+var canDash = true;
 var canInteract = true;
 var accelx = true;
 var accely = true;
@@ -629,7 +630,8 @@ function doPhysics(obj, t, isPlayer) {
     for (let i in collided) {
       let block = collided[i];
       if (block !== player) {
-        if (block.dynamic) block = dynamicObjs[prevDynObjs.findIndex(b=>b===block)];
+        if (block.dynamic)
+          block = dynamicObjs[prevDynObjs.findIndex((b) => b === block)];
         runEvent(block.events?.onTouch, block, { cause: obj });
       }
     }
@@ -637,7 +639,8 @@ function doPhysics(obj, t, isPlayer) {
       let block = dirBlock[i];
       if (block) {
         if (block !== player) {
-          if (block.dynamic) block = dynamicObjs[prevDynObjs.findIndex(b=>b===block)];
+          if (block.dynamic)
+            block = dynamicObjs[prevDynObjs.findIndex((b) => b === block)];
           runEvent(block.events?.["onTouch" + dirWord[i ^ 1]], block, {
             cause: obj
           });
@@ -753,13 +756,15 @@ function doPhysics(obj, t, isPlayer) {
       if (isPlayer) obj.currentJump = 1;
     }
     // dashing
-    if (isPlayer && control.dash && player.currentDash > 0 && dashTimer === 0) {
+    if (isPlayer && control.dash && player.currentDash > 0 && dashTimer === 0 && canDash) {
       if (control.left || control.right || control.up || control.down) {
         player.xv = 0;
         player.yv = 0;
-        dashTimer = dashDuration;
+        dashTimer = dashDuration - interval;
+        player.currentDash--;
         runEvent(globalEvents.onDash);
         runEvent(roomEvents[player.currentRoom].onDash, player.currentRoom);
+        canDash = false;
       }
       if (control.left) {
         player.xv = -dashSpeed;
@@ -770,10 +775,6 @@ function doPhysics(obj, t, isPlayer) {
         player.yv = -dashSpeed;
       } else if (control.down) {
         player.yv = dashSpeed;
-      }
-      if (dashTimer === dashDuration) {
-        player.currentDash--;
-        dashTimer -= interval;
       }
     }
     // jumping
