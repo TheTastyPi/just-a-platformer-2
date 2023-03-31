@@ -38,7 +38,6 @@ var dynamicObjs = [];
 var animatedObjs = [];
 var globalEvents = {};
 var roomEvents = { default: {} };
-var diffStart = [];
 var diffSave = [];
 const animatedTypes = [8, 21];
 const conveyorBlocks = [8, 21];
@@ -257,17 +256,15 @@ function doPhysics(obj, t, isPlayer) {
   }
   let doCollision = function (block, xOffset = 0, yOffset = 0) {
     let colliding = isColliding(obj, block, true, xOffset, yOffset);
-    if (
-      ![15, 19].includes(block?.type) ||
-      !isColliding(obj, block, true, xOffset, yOffset, true)
-    ) {
-      if (
-        !colliding ||
-        (block.x === obj.x && block.y === obj.y && block.index === obj.index) ||
-        (block.type === 28 && !block.active)
-      )
-        return;
+    if ([15, 19].includes(block?.type)) {
+      colliding = isColliding(obj, block, true, xOffset, yOffset, true);
     }
+    if (
+      !colliding ||
+      (block.x === obj.x && block.y === obj.y && block.index === obj.index) ||
+      (block.type === 28 && !block.active)
+    )
+      return;
     if (hasSubBlock.includes(block.type)) {
       let subBlock = getSubBlock(block);
       if (subBlock !== block) {
@@ -290,7 +287,7 @@ function doPhysics(obj, t, isPlayer) {
     let by2 = by1 + block.size;
     let dirBPos = [bx1, bx2, by1, by2];
     let data = blockData[block.type];
-    if (colliding) collided.push(block);
+    collided.push(block);
     // solid block
     if (block.isPlayer || block.isSolid) {
       let tx1 = Math.abs(px1 - bx2);
@@ -404,16 +401,14 @@ function doPhysics(obj, t, isPlayer) {
         friction = false;
       let border =
         dBlock?.[axis] + (dir % 2 ? 0 : dBlock?.size) + dirOffset[dir];
-      if (colliding) {
-        if (
-          dBlock === undefined ||
-          sign * border > sign * dirBPos[dir ^ 1] ||
-          (border === dirBPos[dir ^ 1] &&
-            block.eventPriority > dBlock.eventPriority)
-        ) {
-          dirBlock[dir] = block;
-          dirOffset[dir] = dir < 2 ? xOffset : yOffset;
-        }
+      if (
+        dBlock === undefined ||
+        sign * border > sign * dirBPos[dir ^ 1] ||
+        (border === dirBPos[dir ^ 1] &&
+          block.eventPriority > dBlock.eventPriority)
+      ) {
+        dirBlock[dir] = block;
+        dirOffset[dir] = dir < 2 ? xOffset : yOffset;
       }
       if (block.isPlayer) return;
       if (block.ignorePriority) {
@@ -756,7 +751,13 @@ function doPhysics(obj, t, isPlayer) {
       if (isPlayer) obj.currentJump = 1;
     }
     // dashing
-    if (isPlayer && control.dash && player.currentDash > 0 && dashTimer === 0 && canDash) {
+    if (
+      isPlayer &&
+      control.dash &&
+      player.currentDash > 0 &&
+      dashTimer === 0 &&
+      canDash
+    ) {
       if (control.left || control.right || control.up || control.down) {
         player.xv = 0;
         player.yv = 0;

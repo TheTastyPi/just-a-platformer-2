@@ -5,7 +5,7 @@ function addBlock(block, log = true) {
   block.isRootBlock = true;
   updateBlockState(block);
   if ((page === "game" || editor.playMode) && log) {
-    let diff = [undefined, block];
+    let diff = [undefined, undefined, block];
     diffSave.push(diff);
   }
   return block;
@@ -22,21 +22,21 @@ function removeBlock(block, log = true) {
   }
   gridSpace.splice(block.index, 1);
   if ((page === "game" || editor.playMode) && log) {
-    let index = diffSave.findIndex((x) => x[1] === block);
+    let index = diffSave.findIndex((x) => x[2] === block);
     let diff = diffSave[index];
-    if (index !== -1) {
-      if (!diff[0]) {
+    if (diff) {
+      if (!diff[0] && !diff[1]) {
         diffSave.splice(index, 1);
       } else {
-        Object.assign(diff[1], {
+        /*
+        Object.assign(diff[2], {
           ...diff[0],
           events: block.events
         });
         diff[0] = diff[1];
-        diff[1] = undefined;
+        */
+        diff[2] = undefined;
       }
-    } else {
-      diffSave.push([block, undefined]);
     }
   }
   block.removed = true;
@@ -149,9 +149,7 @@ function getColliding(rect) {
       if (gridSpace === undefined) continue;
       for (let i in gridSpace) {
         let block = gridSpace[i];
-        if (
-          isColliding(rect, block)
-        ) {
+        if (isColliding(rect, block)) {
           selected.push(block);
         }
       }

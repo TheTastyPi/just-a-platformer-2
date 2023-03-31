@@ -3,21 +3,9 @@ function setSpawn(start = false) {
   saveState.isDead = false;
   for (let i in diffSave) {
     let diff = diffSave[i];
-    if (diffStart.find((x) => x[1] === diff[0])) {
-      let index = diffStart.findIndex((x) => x[1] === diff[0]);
-      let start = diffStart[index];
-      if (!start[0]) {
-        diffStart.splice(index, 1);
-      } else {
-        Object.assign(diff[1], start[0]);
-        start[0] = diff[1];
-        start[1] = undefined;
-      }
-    } else if (!diffStart.find((x) => x[1] === diff[1])) {
-      diffStart.push(diff);
-    }
+    diff[1] = deepCopy(diff[2]);
+    if (start) diff[0] = deepCopy(diff[2]);
   }
-  diffSave = [];
   if (start) {
     startState = saveState;
     startState.isDead = false;
@@ -69,8 +57,8 @@ function shiftIndex(block, index) {
   }
 }
 function logChange(block) {
-  if (!diffSave.find((x) => x[1] === block)) {
-    diffSave.push([deepCopy(block), block]);
+  if (!diffSave.find((x) => x[2] === block)) {
+    diffSave.push([deepCopy(block), deepCopy(block), block]);
   }
 }
 function rollBackBlock(block, start) {
@@ -93,31 +81,27 @@ function rollBackBlock(block, start) {
   updateBlock(block, updateTexture);
   updateBlockState(block);
 }
-function rollBack(start, diffs) {
-  if (!diffs) {
-    rollBack(start, diffSave);
-    diffSave = [];
-    if (start) {
-      rollBack(start, diffStart);
-      diffStart = [];
-    }
-    return;
-  }
-  for (let i = diffs.length - 1; i > -1; i--) {
-    let diff = diffs[i];
-    let start = diff[0];
-    let end = diff[1];
-    if (start?.ran !== undefined) {
-      Object.assign(end, start);
-    } else if (!start) {
+function rollBack(start) {
+  for (let i = diffSave.length - 1; i > -1; i--) {
+    let diff = diffSave[i];
+    let init = diff[start ? 0 : 1];
+    let end = diff[2];
+    if (init === end) continue;
+    if (init?.ran !== undefined) {
+      Object.assign(end, init);
+    } else if (!init) {
       removeBlock(end, false);
+      diff[2] = undefined;
+      if (!diff[0] && !diff[1]) diffSave.splice(i, 1);
     } else if (!end) {
-      let index = start.index;
-      let block = addBlock(start, false);
+      let index = init.index;
+      let block = addBlock(deepCopy(init), false);
       shiftIndex(block, index);
+      diff[2] = block;
     } else {
       let block = getGridBlock(end);
-      rollBackBlock(block, start);
+      rollBackBlock(block, init);
     }
   }
+  if (start) diffSave = [];
 }

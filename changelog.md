@@ -722,3 +722,9 @@
 ### 24 Mar. 2023
 
 - Made it so that you cannot do multiple dashes with a single key hold.
+
+### 31 Mar. 2023
+
+- Fixed a bug where dynamic block-pushable Wall-Jump Block/Panel immediately dies
+- Fixed a bug where using a checkpoint after a dynamic block is destroyed crashes the game
+- Refactored rollback system
