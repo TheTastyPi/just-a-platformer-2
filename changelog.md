@@ -728,3 +728,7 @@
 - Fixed a bug where dynamic block-pushable Wall-Jump Block/Panel immediately dies
 - Fixed a bug where using a checkpoint after a dynamic block is destroyed crashes the game
 - Refactored rollback system
+
+### 6 Apr. 2023
+
+- Improved custom block preset display with large amount of presets
