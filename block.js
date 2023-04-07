@@ -875,6 +875,7 @@ new BlockType(
     () => {},
     () => {},
     (obj, block, tempObj, isPlayer) => {
+      if (page !== "game" && !editor.playMode) return;
       if (!isPlayer || block.timer > 0) return;
       logChange(block);
       obj.currentJump = Math.min(
@@ -1771,7 +1772,7 @@ new BlockType(
             block.currentRoom
           ][block.id];
         }
-        if (block.singleUse) {
+        if (block.singleUse && (page === "game" || editor.playMode)) {
           let gridBlock = getGridBlock(block);
           logChange(gridBlock);
           gridBlock.used = true;
@@ -1937,6 +1938,7 @@ new BlockType(
   ["blockA", "blockB", "invert", "hideDetails"]
 );
 function unstableBlock(obj, block) {
+  if (page !== "game" && !editor.playMode) return;
   block = getGridBlock(block);
   if (block.timer !== 0 || !block.active) return;
   logChange(block);
@@ -2041,14 +2043,16 @@ new BlockType(
     () => {},
     (obj, block, tempObj, isPlayer, isEntering) => {
       if (!block.used && isEntering) {
+        if (page !== "game" && !editor.playMode) return;
         let gridBlock = getGridBlock(block);
+        let subBlock = getSubBlock(gridBlock)
         if (block.setValue) {
           player.coins = block.value;
         } else {
           player.coins += block.value;
         }
         logChange(gridBlock);
-        gridBlock.used = true;
+        subBlock.used = true;
         updateBlock(gridBlock);
         updateAll(30);
         forAllBlock(updateBlockState, 30);
@@ -2258,6 +2262,7 @@ new BlockType(
     () => {},
     () => {},
     (obj, block, tempObj, isPlayer) => {
+      if (page !== "game" && !editor.playMode) return;
       if (!isPlayer || block.timer > 0) return;
       logChange(block);
       obj.currentDash = Math.min(

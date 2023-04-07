@@ -28,13 +28,6 @@ function removeBlock(block, log = true) {
       if (!diff[0] && !diff[1]) {
         diffSave.splice(index, 1);
       } else {
-        /*
-        Object.assign(diff[2], {
-          ...diff[0],
-          events: block.events
-        });
-        diff[0] = diff[1];
-        */
         diff[2] = undefined;
       }
     }
@@ -44,8 +37,7 @@ function removeBlock(block, log = true) {
   removeAllSprite(block);
 }
 function moveBlock(block, dx, dy, draw = true, log = true) {
-  if (log && (page === "game" || editor.playMode) && block !== player)
-    logChange(block);
+  if (log && block !== player) logChange(block);
   let gridSpace = getGridSpace(block);
   let sprite = block.sprite;
   block.x += dx;
@@ -77,8 +69,7 @@ function moveBlock(block, dx, dy, draw = true, log = true) {
 function moveBlockRoom(block, room, log = true) {
   block = getGridBlock(block);
   if (block.currentRoom === room) return;
-  if (log && (page === "game" || editor.playMode) && block !== player)
-    logChange(block);
+  if (log && block !== player) logChange(block);
   removeAllSprite(block);
   let gridSpace = getGridSpace(block);
   for (let i = parseInt(block.index) + 1; i < gridSpace.length; i++) {
@@ -90,8 +81,7 @@ function moveBlockRoom(block, room, log = true) {
   addSprite(block);
 }
 function scaleBlock(block, factor, focusX, focusY, draw = true, log = true) {
-  if (log && (page === "game" || editor.playMode) && block !== player)
-    logChange(block);
+  if (log && block !== player) logChange(block);
   block.size = Math.max(Math.min(block.size * factor, maxBlockSize), 6.25);
   if (focusX !== undefined) {
     let dx = focusX - block.x;

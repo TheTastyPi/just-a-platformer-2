@@ -57,8 +57,11 @@ function shiftIndex(block, index) {
   }
 }
 function logChange(block) {
-  if (!diffSave.find((x) => x[2] === block)) {
-    diffSave.push([deepCopy(block), deepCopy(block), block]);
+  if (
+    !diffSave.find((x) => x[2] === block) &&
+    (page === "game" || editor.playMode)
+  ) {
+    diffSave.push([deepCopy(block), undefined, block]);
   }
 }
 function rollBackBlock(block, start) {
@@ -84,7 +87,8 @@ function rollBackBlock(block, start) {
 function rollBack(start) {
   for (let i = diffSave.length - 1; i > -1; i--) {
     let diff = diffSave[i];
-    let init = diff[start ? 0 : 1];
+    let useStart = start || diff[1] === undefined;
+    let init = diff[useStart ? 0 : 1];
     let end = diff[2];
     if (init === end) continue;
     if (init?.ran !== undefined) {
@@ -102,6 +106,6 @@ function rollBack(start) {
       let block = getGridBlock(end);
       rollBackBlock(block, init);
     }
+    if (useStart) diffSave.splice(i, 1);
   }
-  if (start) diffSave = [];
 }

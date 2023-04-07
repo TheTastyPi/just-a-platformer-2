@@ -933,15 +933,15 @@ function doPhysics(obj, t, isPlayer) {
           (tempObj.g > 0 ? dirBlock[3]?.xv ?? 0 : 0);
       if (
         accely &&
-        Math.abs(dyv - gdxv) > Math.abs(obj.ya) &&
-        Math.sign(dyv - gdxv) === Math.sign(obj.ya)
+        Math.abs(dyv - gdyv) > Math.abs(obj.ya) &&
+        Math.sign(dyv - gdyv) === Math.sign(obj.ya)
       )
         obj.yv =
           obj.ya +
           (tempObj.g < 0 ? dirBlock[0]?.yv ?? 0 : 0) +
           (tempObj.g > 0 ? dirBlock[1]?.yv ?? 0 : 0);
       if (tempObj.xg) {
-        if (Math.abs(dyv - gdxv) < 0.1 && accely) obj.yv -= dyv - gdxv;
+        if (Math.abs(dyv - gdyv) < 0.1 && accely) obj.yv -= dyv - gdyv;
       } else {
         if (Math.abs(dxv - gdxv) < 0.1 && accelx) obj.xv -= dxv - gdxv;
       }

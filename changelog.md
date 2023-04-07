@@ -732,3 +732,13 @@
 ### 6 Apr. 2023
 
 - Improved custom block preset display with large amount of presets
+
+### ? Apr. 2023
+
+- Fixed some weird issues with addVel Force Fields
+- Fixed a bug where using \[Delete] to remove a sub-block doesn't work
+- Fixed some issues with respawning not resetting things properly
+- Fixed a bug where Coins as sub-block does not get collected property
+- Fixed a bug where the addedDash property of Dash Restore Fields didn't show up in the menu (I have no clue how this happened)
+- Fixed a bug where interacting with singleUse Switches, Unstable Blocks, Jump/Dash Restore Fields, and Coins can cause respawning to rollback edits made outside of play mode
+  - To fix this, the blocks mentioned above are now uninteractable outside of play mode

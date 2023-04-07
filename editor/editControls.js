@@ -122,7 +122,9 @@ document.addEventListener("keydown", function (event) {
       break;
     case "Delete":
       if (editor.chooseType) {
-        editor.chooseFor.splice(0);
+        if (Array.isArray(editor.chooseFor)) {
+          editor.chooseFor.splice(0);
+        } else editor.chooseSource[0][editor.chooseSource[1]] = {};
         stopChoose();
         if (!editor.chooseInEvent) confirmEditAll();
       }
