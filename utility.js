@@ -16,7 +16,7 @@ function arraysEqual(a, b, isBlock = true) {
 function deepCopy(
   inObject,
   inEvent = false,
-  override = [false, false, false],
+  override = [false, false],
   ...ignore
 ) {
   let outObject, value, key;
@@ -32,13 +32,14 @@ function deepCopy(
         "sprite",
         "dupSprite",
         "link",
+        "cause",
         "_controls",
         "_loops"
       ].includes(key) ||
+      (key === "source" && typeof value !== "string") ||
       ignore.includes(key) ||
       (((value?.isRootBlock && !value?.removed && !override[0]) ||
-        (value?.isPlayer && !override[1]) ||
-        (value?.ran !== undefined && !override[2])) &&
+        (value?.isPlayer && !override[1])) &&
         inEvent)
     ) {
       outObject[key] = value;

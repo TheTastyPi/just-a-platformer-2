@@ -17,7 +17,6 @@ class Block {
     this.opacity = 1;
     this.friction = true;
     this.dynamic = false;
-    this.interactive = false;
     this.link = null;
     this.events = {};
     this.isBlock = true;

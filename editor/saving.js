@@ -135,7 +135,9 @@ function decompressBlock(block, room, root = true, usePreset) {
     }
     if (
       propData[prop][0] === "block" &&
-      (block[prop]?.t !== undefined || block[prop].type !== undefined)
+      (block[prop]?.t !== undefined ||
+        block[prop].pS !== undefined ||
+        block[prop].type !== undefined)
     )
       decompressBlock(block[prop], room, false);
   }
@@ -186,13 +188,13 @@ function str2textures(str) {
 function lvl2str(lvl) {
   let w = lvl.length;
   let h = lvl[0].length;
-  lvl = deepCopy(lvl, false, [false, false, true]).flat().flat();
+  lvl = deepCopy(lvl).flat().flat();
   for (let i in lvl) compressBlock(lvl[i]);
   let str = JSON.stringify([lvl, w, h]);
   return str;
 }
 function lvls2str(lvls) {
-  lvls = deepCopy(lvls, false, [false, false, true]);
+  lvls = deepCopy(lvls);
   let newlvls = [];
   for (let i in editor.roomOrder)
     newlvls[i] = lvl2str(lvls[editor.roomOrder[i]]);
@@ -371,9 +373,13 @@ function load(name) {
         lvlsTemp[editor.roomOrder[i]] = levels[i];
       }
       levels = lvlsTemp;
-      forAllBlock((b, x, y, i, room) =>
-        decompressEvents(b.events, "block", room)
-      );
+      forAllBlock((b, x, y, i, room) => {
+        decompressEvents(b.events, "block", room);
+        for (let prop in b) {
+          if (propData[prop]?.[0] === "block")
+            decompressEvents(b[prop].events, "block", room);
+        }
+      });
       let roomEventsComp = JSON.parse(
         LZString.decompressFromEncodedURIComponent(save[4])
       );

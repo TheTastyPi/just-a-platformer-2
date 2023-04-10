@@ -1,5 +1,5 @@
 function setSpawn(start = false) {
-  saveState = deepCopy(player, false, [false, false, true]);
+  saveState = deepCopy(player);
   saveState.isDead = false;
   for (let i in diffSave) {
     let diff = diffSave[i];
@@ -25,7 +25,7 @@ function respawn(start = false, draw = true) {
   }
   rollBack(start);
   if (start) saveState = startState;
-  player = deepCopy(saveState, false, [false, false, true]);
+  player = deepCopy(saveState);
   infoDisp.coins = player.coins;
   for (let i in hasSubBlock) forAllBlock(updateBlockState, hasSubBlock[i]);
   if (startState === saveState) runEvent(globalEvents.onStart);

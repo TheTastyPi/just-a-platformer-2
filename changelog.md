@@ -742,3 +742,8 @@
 - Fixed a bug where the addedDash property of Dash Restore Fields didn't show up in the menu (I have no clue how this happened)
 - Fixed a bug where interacting with singleUse Switches, Unstable Blocks, Jump/Dash Restore Fields, and Coins can cause respawning to rollback edits made outside of play mode
   - To fix this, the blocks mentioned above are now uninteractable outside of play mode
+
+### 10 Apr. 2023
+
+- Fixed a bug where sub-block with custom presets or events are not properly saved
+- Fixed a bug where events are not properly copied when using MMB while in edit mode
