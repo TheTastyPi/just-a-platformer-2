@@ -1,8 +1,9 @@
 var playerDisp = new PIXI.Sprite(blockData[0].defaultTexture);
 playerDisp.zIndex = -1;
 levelLayer.addChild(playerDisp);
+var effectiveMaxJump = 1;
 function drawPlayer() {
-  let ratio = player.currentJump / player.maxJump;
+  let ratio = player.currentJump / effectiveMaxJump;
   if (player.maxJump === Infinity) ratio = 1;
   if (player.maxJump === 0) ratio = 0;
   let dRatio = dashTimer / dashDuration;

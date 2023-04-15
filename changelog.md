@@ -747,3 +747,9 @@
 
 - Fixed a bug where sub-block with custom presets or events are not properly saved
 - Fixed a bug where events are not properly copied when using MMB while in edit mode
+
+### 15 Apr. 2023
+
+- Improved the performance of doPhysics
+  - Removed 2 unnecessary deepCopy calls
+- Fixed a bug where temporary Jump and Dash Fields didn't work

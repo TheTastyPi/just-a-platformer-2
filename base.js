@@ -231,14 +231,7 @@ function doPhysics(obj, t, isPlayer) {
   let topPriority = [0, 0, 0, 0, 0];
   let gdxv = 0;
   let gdyv = 0;
-  let subObj = deepCopy(
-    obj,
-    false,
-    undefined,
-    "actionQueue",
-    "eventQueue",
-    "timerList"
-  );
+  let subObj = obj;
   accelx = true;
   accely = true;
   if (hasSubBlock.includes(obj.type)) {
@@ -614,14 +607,7 @@ function doPhysics(obj, t, isPlayer) {
     let prevg = subObj.g;
     let prevxg = subObj.xg;
     obj.roomLink = [];
-    let tempObj = deepCopy(
-      subObj,
-      false,
-      undefined,
-      "actionQueue",
-      "eventQueue",
-      "timerList"
-    );
+    let tempObj = { ...subObj };
     for (let i in collided) {
       let block = collided[i];
       if (block !== player) {
@@ -687,6 +673,7 @@ function doPhysics(obj, t, isPlayer) {
         collided.splice(i, 1);
       }
     }
+    effectiveMaxJump = tempObj.maxJump;
     obj.lastCollided = collided;
     friction = tempObj.friction && friction;
     if (isPlayer) {
@@ -699,15 +686,15 @@ function doPhysics(obj, t, isPlayer) {
         ) ||
         giveJump
       ) {
-        obj.currentJump = obj.maxJump;
-        if (dashTimer === 0) obj.currentDash = obj.maxDash;
+        obj.currentJump = tempObj.maxJump;
+        if (dashTimer === 0) obj.currentDash = tempObj.maxDash;
         coyoteTimer = coyoteTime;
       } else {
         if (prevg !== tempObj.g || prevxg !== tempObj.xg) coyoteTimer = -1;
         if (coyoteTimer > 0) coyoteTimer -= t * 1000;
         if (coyoteTimer < 0) {
           obj.currentJump = Math.max(
-            Math.min(obj.maxJump - 1, obj.currentJump),
+            Math.min(tempObj.maxJump - 1, obj.currentJump),
             0
           );
           coyoteTimer = 0;
@@ -754,7 +741,7 @@ function doPhysics(obj, t, isPlayer) {
     if (
       isPlayer &&
       control.dash &&
-      player.currentDash > 0 &&
+      tempObj.currentDash > 0 &&
       dashTimer === 0 &&
       canDash
     ) {
@@ -762,7 +749,7 @@ function doPhysics(obj, t, isPlayer) {
         player.xv = 0;
         player.yv = 0;
         dashTimer = dashDuration - interval;
-        player.currentDash--;
+        obj.currentDash--;
         runEvent(globalEvents.onDash);
         runEvent(roomEvents[player.currentRoom].onDash, player.currentRoom);
         canDash = false;
