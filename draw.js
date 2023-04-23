@@ -4,8 +4,8 @@ levelLayer.addChild(playerDisp);
 var effectiveMaxJump = 1;
 function drawPlayer() {
   let ratio = player.currentJump / effectiveMaxJump;
-  if (player.maxJump === Infinity) ratio = 1;
-  if (player.maxJump === 0) ratio = 0;
+  if (effectiveMaxJump === Infinity) ratio = 1;
+  if (effectiveMaxJump === 0) ratio = 0;
   let dRatio = dashTimer / dashDuration;
   let tint = [(1 - ratio) * (1 - dRatio), dRatio, ratio * (1 - dRatio)];
   if (editor?.invincible) tint = [1, 0, 1];

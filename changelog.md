@@ -753,3 +753,7 @@
 - Improved the performance of doPhysics
   - Removed 2 unnecessary deepCopy calls
 - Fixed a bug where temporary Jump and Dash Fields didn't work
+
+#### 23 Apr. 2023
+
+- Fixed a bug where Jump Fields sometime causes the player to turn black
