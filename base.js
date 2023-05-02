@@ -673,7 +673,7 @@ function doPhysics(obj, t, isPlayer) {
         collided.splice(i, 1);
       }
     }
-    effectiveMaxJump = tempObj.maxJump;
+    if (isPlayer) effectiveMaxJump = tempObj.maxJump;
     obj.lastCollided = collided;
     friction = tempObj.friction && friction;
     if (isPlayer) {

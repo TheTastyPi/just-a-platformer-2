@@ -757,3 +757,7 @@
 #### 23 Apr. 2023
 
 - Fixed a bug where Jump Fields sometime causes the player to turn black
+
+#### 2 May 2023
+
+- Fixed a bug where the player turns black when a dynamic block in in the same room.
