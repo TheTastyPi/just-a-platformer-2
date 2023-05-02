@@ -760,4 +760,4 @@
 
 #### 2 May 2023
 
-- Fixed a bug where the player turns black when a dynamic block in in the same room.
+- Fixed a bug where the player turns black when a dynamic block is in the same room.
