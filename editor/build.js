@@ -87,7 +87,7 @@ function addPreset() {
   updatePresetDisp();
 }
 function removePreset(index) {
-  if (!confirm("Are you sure you wan to delete this preset?")) return;
+  if (!confirm("Are you sure you want to delete this preset?")) return;
   let name = editor.presetNames[index];
   if (blockSelect.selectType === "c" + index)
     blockSelect.selectType = editor.presets[name].type;
@@ -201,7 +201,7 @@ function addTexture(name) {
   }
 }
 function removeTexture(index) {
-  if (!confirm("Are you sure you wan to delete this texture?")) return;
+  if (!confirm("Are you sure you want to delete this texture?")) return;
   let name = editor.textureNames[index];
   editor.textureNames.splice(index, 1);
   delete editor.textures[name];

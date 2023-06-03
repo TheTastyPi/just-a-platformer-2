@@ -761,3 +761,17 @@
 #### 2 May 2023
 
 - Fixed a bug where the player turns black when a dynamic block is in the same room.
+
+### 3 Jun. 2023
+
+- Slightly improved performance
+- Fixed two typos
+- Fixed a bug where skipped control statements are still parsed and checked for error
+- Fixed a bug where the global onStart event does not trigger after inital load
+- Fixed a few bugs where event expressions:
+  - Cannot handle numbers expressed with negative exponents in scientific notation
+  - Sometimes messes up the order of operations in way such as:
+    - For consecutive operations of the same type (a+b+c+d+e), odd numbered ones (1st, 3rd, 5th...) are prioritized
+    - For operations of what should be equal precedence, a difference in precedence was arbitrarily chosen (ex: all additions are evaluated before subtractions)
+  - Have operator symbols in strings replaced with "^"
+  - Cannot handle negative numbers inside parenthesis

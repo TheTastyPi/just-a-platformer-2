@@ -109,16 +109,15 @@ var accelx = true;
 var accely = true;
 var lastFrame = 0;
 var interval = 1000 / 60;
-var simReruns = 10;
+var simReruns = 4;
 var timeLimit = 100;
-var CThreshold = 1;
 var spawnDelay = 333;
 var deathTimer = spawnDelay;
 var saveState = deepCopy(player);
 var startState = deepCopy(player);
 var dt = 0;
-var coyoteTime = 1000 / 20;
-var coyoteTimer = 1000 / 20;
+var coyoteTime = interval*3;
+var coyoteTimer = coyoteTime;
 var dashDuration = 200;
 var dashTimer = 0;
 var dashSpeed = 500;
@@ -338,28 +337,24 @@ function doPhysics(obj, t, isPlayer) {
         dir = 3;
       } else {
         if (isLeft && isTop) {
-          if (Math.abs(tx1 - ty1) < CThreshold && tx1 < 2 * CThreshold) return;
           if (tx1 < ty1) {
             dir = 0;
           } else {
             dir = 2;
           }
         } else if (isRight && isTop) {
-          if (Math.abs(tx2 - ty1) < CThreshold && tx2 < 2 * CThreshold) return;
           if (tx2 < ty1) {
             dir = 1;
           } else {
             dir = 2;
           }
         } else if (isLeft && isBottom) {
-          if (Math.abs(tx1 - ty2) < CThreshold && tx1 < 2 * CThreshold) return;
           if (tx1 < ty2) {
             dir = 0;
           } else {
             dir = 3;
           }
         } else if (isRight && isBottom) {
-          if (Math.abs(tx2 - ty2) < CThreshold && tx2 < 2 * CThreshold) return;
           if (tx2 < ty2) {
             dir = 1;
           } else {
@@ -555,24 +550,15 @@ function doPhysics(obj, t, isPlayer) {
   }
   // crushed
   if (
-    (dirBlock[0]?.crushPlayer &&
-      dirBlock[1]?.crushPlayer &&
-      dirBlock[1].x +
-        dirOffset[1] -
-        (dirBlock[0].x + dirOffset[0]) -
-        dirBlock[0].size <
-        obj.size -
-          CThreshold *
-            (isPlayer ? !(dirBlock[0].dynamic || dirBlock[1].dyanmic) : 1)) ||
-    (dirBlock[2]?.crushPlayer &&
-      dirBlock[3]?.crushPlayer &&
-      dirBlock[3].y +
-        dirOffset[3] -
-        (dirBlock[2].y + dirOffset[2]) -
-        dirBlock[2].size <
-        obj.size -
-          CThreshold *
-            (isPlayer ? !(dirBlock[2].dynamic || dirBlock[3].dyanmic) : 1))
+    isPlayer &&
+    ((dirBlock[0]?.crushPlayer && dirBlock[1]?.crushPlayer &&
+    (dirBlock[1].x + dirOffset[1]) -
+    (dirBlock[0].x + dirOffset[0]) -
+    dirBlock[0].size < obj.size) ||
+    (dirBlock[2]?.crushPlayer && dirBlock[3]?.crushPlayer &&
+    (dirBlock[3].y + dirOffset[3]) -
+    (dirBlock[2].y + dirOffset[2]) -
+    dirBlock[2].size < obj.size))
   ) {
     obj.isDead = true;
   }
@@ -855,14 +841,6 @@ function doPhysics(obj, t, isPlayer) {
         tempObj.g * sign > 0 && (dirBlock[i]?.dynamic || dirBlock[i]?.moving)
           ? dirBlock[i]?.[hori ? "yv" : "xv"] ?? 0
           : 0;
-      if (dv[i] !== 0 && dirBlock[i]?.g > 0 && dirBlock[i].xg) {
-        if (
-          dirBlock[i ^ 1].isPlayer &&
-          (hori ? control.up || control.down : control.left || control.right)
-        ) {
-          dv[i] = -dirBlock[i][hori ? "yv" : "xv"];
-        }
-      }
       if (conveyorBlocks.includes(dirBlock[i]?.type)) {
         if (hori) {
           gdyv += dirBlock[i][dirWord[i ^ 1].toLowerCase() + "Speed"];

@@ -415,10 +415,10 @@ function load(name) {
       editor.viewLayers = [...save[6]];
     } else editor.viewLayers = [];
     assignIndex();
-    togglePlayMode();
     dynamicObjs = saveData[1];
     diffStart = [];
     diffSave = [];
+    togglePlayMode();
     respawn(true, false);
     drawLevel(true);
     switchBlocks.map(updateAll);

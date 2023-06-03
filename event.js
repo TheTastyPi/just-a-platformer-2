@@ -31,6 +31,8 @@ function evalExp(exp, context, final = true, restrict = false) {
     exp = exp.replace(/\([^(]*?\)/g, (x) => {
       let val = evalExp(x.slice(1, -1), context, false, restrict);
       if (typeof val === "string") val = "'" + val + "'";
+      if (typeof val === "number" && val < 0)
+        val = val.toString().replaceAll("-", "$");
       return val;
     });
     let err = exp.match(/ERROR:.+;/);
@@ -49,41 +51,26 @@ function evalExp(exp, context, final = true, restrict = false) {
     let err = exp.match(/ERROR:.+;/);
     if (err) return err[0];
   }
-  let ops = [
-    "~",
-    "!",
-    "%",
-    "*",
-    "/",
-    "+",
-    "-",
-    ">=",
-    "<=",
-    ">",
-    "<",
-    "==",
-    "!=",
-    "&&",
-    "||"
+  let opGroups = [
+    ["~", "!"],
+    ["%", "*", "/"],
+    ["+", "-"],
+    [">=", "<=", ">", "<"],
+    ["==", "!="],
+    ["&&"],
+    ["||"]
   ];
+  let ops = opGroups.flat();
   let objAllowed = ["!", "==", "!=", "&&", "||"];
   let unary = ["~", "!"];
-  let names = [
-    "NEGATIVE",
-    "NOT",
-    "MODULO",
-    "MULTIPLICATION",
-    "DIVISION",
-    "ADDITION",
-    "SUBTRACTION",
-    "GREATER_OR_EQUAL",
-    "LESS_OR_EQUAL",
-    "GREATER",
-    "LESS",
-    "EQUAL",
-    "UNEQUAL",
-    "AND",
-    "OR"
+  let opNames = [
+    ["NEGATIVE", "NOT"],
+    ["MODULO", "MULTIPLICATION", "DIVISION"],
+    ["ADDITION", "SUBTRACTION"],
+    ["GREATER_OR_EQUAL", "LESS_OR_EQUAL", "GREATER", "LESS"],
+    ["EQUAL", "UNEQUAL"],
+    ["AND"],
+    ["OR"]
   ];
   exp = exp.replace(/(["']).*?\1/g, (str) => {
     for (let i in ops) {
@@ -97,33 +84,49 @@ function evalExp(exp, context, final = true, restrict = false) {
     }
     return str;
   });
-  let valueRegex = /(?:[\w.~${}"' ]|(["']).*?\1)+/;
-  for (let i in ops) {
-    let op = ops[i];
-    let regex = RegExp(
-      op.replaceAll("", "\\").slice(0, -1) +
-        "(?!\\^)" +
-        (unary.includes(op) ? "(?!=)" : "")
+  let valueRegex = /(?:e-|[\w.~${}"' ]|(["']).*?\1)+/g;
+  exp = exp.replaceAll(valueRegex, (x) => x.replaceAll("-", "$"));
+  for (let i in opGroups) {
+    let group = opGroups[i];
+    let regex = group.map((op) =>
+      RegExp(
+        op.replaceAll("", "\\").slice(0, -1) +
+          "(?!\\^)" +
+          (unary.includes(op) ? "(?!=)" : "")
+      )
     );
-    let fullRegex = RegExp(
-      (unary.includes(op) ? "" : valueRegex.source) +
-        regex.source +
-        valueRegex.source,
-      "g"
+    let fullRegex = group.map((op, i) =>
+      RegExp(
+        (unary.includes(op) ? "" : valueRegex.source) +
+          regex[i].source +
+          valueRegex.source
+      )
     );
-    while (regex.test(exp)) {
-      if (!fullRegex.test(exp)) {
-        return "ERROR:INVALID_" + names[i] + "_SYNTAX;";
+    while (regex.map((x) => x.test(exp)).includes(true)) {
+      let placements = regex.map((x) => {
+        let result = exp.search(x);
+        if (result === -1) return Infinity;
+        return result;
+      });
+      let minIndex = placements.indexOf(Math.min(...placements));
+      let op = group[minIndex];
+      let targetRegex = regex[minIndex];
+      let targetFullRegex = fullRegex[minIndex];
+      let opName = opNames[i][minIndex];
+      if (!targetFullRegex.test(exp)) {
+        return "ERROR:INVALID_" + opName + "_SYNTAX;";
       }
-      exp = exp.replaceAll(fullRegex, (x) => {
-        x = x.split(regex).map((x) => parseValue(x.trim(), context, restrict));
+      exp = exp.replace(targetFullRegex, (x) => {
+        x = x
+          .split(targetRegex)
+          .map((x) => parseValue(x.trim(), context, restrict));
         if (typeof x[0] === "string" && /ERROR:/.test(x[0])) return x[0];
         if (typeof x[1] === "string" && /ERROR:/.test(x[1])) return x[1];
         if (
           !objAllowed.includes(op) &&
           (typeof x[0] === "object" || typeof x[1] === "object")
         ) {
-          return "ERROR:INVALID_" + names[i] + "_ARGUMENT;";
+          return "ERROR:INVALID_" + opName + "_ARGUMENT;";
         }
         let val;
         switch (op) {
@@ -175,8 +178,8 @@ function evalExp(exp, context, final = true, restrict = false) {
           default:
         }
         if (typeof val === "string") val = "'" + val + "'";
-        if (typeof val === "number" && val < 0)
-          val = val.toString().replace("-", "$");
+        if (typeof val === "number" && val < 1e-6)
+          val = val.toString().replaceAll("-", "$");
         return val;
       });
       let err = exp.match(/ERROR:.+;/);
@@ -185,7 +188,7 @@ function evalExp(exp, context, final = true, restrict = false) {
   }
   exp = parseValue(exp, context, restrict);
   return final && typeof exp === "string"
-    ? exp.replace(/.\^/g, (x) => x.charAt(1))
+    ? exp.replace(/.\^/g, (x) => x.charAt(0))
     : exp;
 }
 function parseValue(str, context, restrict = false) {
@@ -256,7 +259,9 @@ function handleEvents() {
     if (!command.parsed && loop) loop.push(unparsed);
     if (commandCount > 1000) err = "MAXIMUM_COMMAND_PER_SESSION_REACHED";
     if (!err && (!skip || [3, 4, 5, 6, 7, 8, 9].includes(command[0]))) {
-      if (!command.parsed) {
+      if (skip) {
+        if (command[0] !== 4) command = [3, false];
+      } else if (!command.parsed) {
         err = parseCommand(command, data);
       }
       if (!err) {
@@ -403,7 +408,7 @@ function handleActions() {
       let inputType = commandData[action[0]._type].inputType[parseInt(j) - 1];
       if (
         (inputType === "blockRef" &&
-        action[j].some((x) => !x.isBlock || x.removed)) ||
+          action[j].some((x) => !x.isBlock || x.removed)) ||
         (inputType === "obj" && action[j].isBlock && action[j].removed)
       ) {
         err = "NONEXISTENT_BLOCK_REF";
