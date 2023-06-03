@@ -767,7 +767,7 @@
 - Slightly improved performance
 - Fixed two typos
 - Fixed a bug where skipped control statements are still parsed and checked for error
-- Fixed a bug where the global onStart event does not trigger after inital load
+- Fixed a bug where the global onStart event does not trigger after initial load
 - Fixed a few bugs where event expressions:
   - Cannot handle numbers expressed with negative exponents in scientific notation
   - Sometimes messes up the order of operations in way such as:
