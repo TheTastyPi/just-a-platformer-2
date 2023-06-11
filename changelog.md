@@ -775,3 +775,10 @@
     - For operations of what should be equal precedence, a difference in precedence was arbitrarily chosen (ex: all additions are evaluated before subtractions)
   - Have operator symbols in strings replaced with "^"
   - Cannot handle negative numbers inside parenthesis
+
+#### 11 Jun. 2023
+
+- Fixed a bug where switch displays are not updated after editing switch state via events
+  - Same with Jump Block states
+- Fixed a bug where touching a dynamic sub-block crashes the game
+  - I had a line previously in the changelog that said I fixed this, but I never did??? (I checked, and no, I didn't fix this)

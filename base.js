@@ -163,6 +163,14 @@ function nextFrame(timeStamp) {
       for (let i = 0; i < simReruns; i++) {
         prevPlayer = deepCopy(player);
         prevDynObjs = deepCopy(dynamicObjs);
+        prevDynObjs.map((b, i) => {
+          b.dIndex = i;
+          if (hasSubBlock.includes(b.type)) {
+            Object.values(b).map(sb=>{
+              if (sb?.isBlock) sb.dIndex = i;
+            });
+          }
+        });
         doPhysics(player, interval / 1000 / simReruns, true);
         if ((editor?.playMode ?? true) && !justDied) {
           for (let j in dynamicObjs) {
@@ -260,17 +268,15 @@ function doPhysics(obj, t, isPlayer) {
     if (hasSubBlock.includes(block.type)) {
       let subBlock = getSubBlock(block);
       if (subBlock !== block) {
-        block = {
-          ...getSubBlock(block),
-          currentRoom: block.currentRoom,
-          x: block.x,
-          y: block.y,
-          xv: block.xv,
-          yv: block.yv,
-          xa: block.xa,
-          ya: block.ya,
-          size: block.size
-        };
+        subBlock.currentRoom = block.currentRoom;
+        subBlock.x = block.x;
+        subBlock.y = block.y;
+        subBlock.xv = block.xv;
+        subBlock.yv = block.yv;
+        subBlock.xa = block.xa;
+        subBlock.ya = block.ya;
+        subBlock.size = block.size;
+        block = subBlock;
       }
     }
     let bx1 = block.x + xOffset;
@@ -447,7 +453,7 @@ function doPhysics(obj, t, isPlayer) {
       }
       for (let i in gridSpace) {
         let subBlock = getSubBlock(gridSpace[i]);
-        if (gridSpace[i].dynamic && !prevDynObjs.includes(gridSpace[i]))
+        if ((gridSpace[i].dynamic || subBlock.dynamic) && !prevDynObjs.includes(gridSpace[i]))
           continue;
         if (isPlayer && !subBlock.collidePlayer) continue;
         if (!isPlayer && !subBlock.collideBlock) continue;
@@ -598,7 +604,7 @@ function doPhysics(obj, t, isPlayer) {
       let block = collided[i];
       if (block !== player) {
         if (block.dynamic)
-          block = dynamicObjs[prevDynObjs.findIndex((b) => b === block)];
+          block = dynamicObjs[block.dIndex];
         runEvent(block.events?.onTouch, block, { cause: obj });
       }
     }
@@ -607,7 +613,7 @@ function doPhysics(obj, t, isPlayer) {
       if (block) {
         if (block !== player) {
           if (block.dynamic)
-            block = dynamicObjs[prevDynObjs.findIndex((b) => b === block)];
+            block = dynamicObjs[block.dIndex];
           runEvent(block.events?.["onTouch" + dirWord[i ^ 1]], block, {
             cause: obj
           });

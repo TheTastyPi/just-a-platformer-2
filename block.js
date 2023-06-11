@@ -1777,30 +1777,7 @@ new BlockType(
           gridBlock.used = true;
           updateBlock(gridBlock, true);
         }
-        let checkValid = function (b) {
-          let valid =
-            switchBlocks.includes(b.type) &&
-            b.id === block.id &&
-            b.global === block.global;
-          for (let i in b) {
-            if (valid) break;
-            if (propData[i]?.[0] === "block" && b[i]) {
-              valid = checkValid(b[i]);
-            }
-          }
-          return valid;
-        };
-        forAllBlock((b) => {
-          if (checkValid(b)) {
-            if (b.type === 26) updateBlockState(b);
-          }
-        });
-        forAllVisible((b) => {
-          if (checkValid(b)) {
-            if (!block.global && obj.currentRoom !== block.currentRoom) return;
-            updateBlock(b);
-          }
-        });
+        updateSwitchBlocks(block.id,block.global,block.currentRoom);
       }
     }
   ],

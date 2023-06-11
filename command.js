@@ -109,6 +109,14 @@ new CommandType(
       updateBlock(obj, updateTexture);
       updateBlockState(obj);
     }
+    if (obj === player.switchGlobal) updateSwitchBlocks(prop,true);
+    if (Object.values(player.switchLocal).includes(obj)) {
+      updateSwitchBlocks(prop,false,Object.keys(player.switchLocal).find(x=>player.switchLocal[x]===obj));
+    }
+    if (obj === player && prop === "jumpOn") {
+      updateAll(27);
+      forAllBlock(updateBlockState, 27);
+    }
   }
 );
 new CommandType(

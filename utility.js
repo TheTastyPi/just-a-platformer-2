@@ -494,6 +494,32 @@ function updateBlockState(block) {
     block.sprite.removeChildren();
   }
 }
+function updateSwitchBlocks(id, global, room) {
+  let checkValid = function (b) {
+    let valid =
+      switchBlocks.includes(b.type) &&
+      b.id === id &&
+      b.global === global;
+    for (let i in b) {
+      if (valid) break;
+      if (propData[i]?.[0] === "block" && b[i]) {
+        valid = checkValid(b[i]);
+      }
+    }
+    return valid;
+  };
+  forAllBlock((b) => {
+    if (checkValid(b)) {
+      if (b.type === 26) updateBlockState(b);
+    }
+  });
+  if (!global && player.currentRoom !== room) return;
+  forAllVisible((b) => {
+    if (checkValid(b)) {
+      updateBlock(b);
+    }
+  });
+}
 function assignIndex() {
   let func = function (block, x, y, i) {
     block.index = parseInt(i);
