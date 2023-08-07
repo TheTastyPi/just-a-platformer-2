@@ -2,7 +2,7 @@ function addRoom() {
   let name = prompt("Please input room name.");
   while (editor.roomOrder.includes(name))
     name = prompt("Name taken. Please input new save name.");
-  if (name === null) return;
+  if (name === null || name === "") return;
   editor.roomOrder.push(name);
   levels[name] = deepCopy(levels[player.currentRoom]);
   levels[name].map((x) =>
@@ -46,7 +46,7 @@ function renameRoom(name) {
   let newName = prompt("Please input new name.");
   while (editor.roomOrder.includes(newName))
     newName = prompt("Name taken. Please input new save name.");
-  if (newName !== null && newName !== name) {
+  if (newName !== null && newName !== "" && newName !== name) {
     editor.roomOrder.splice(editor.roomOrder.indexOf(name), 1, newName);
     levels[newName] = levels[name];
     levels[newName].map((x) =>

@@ -276,7 +276,7 @@ function addSave() {
   let name = prompt("Please input save name.");
   while (editor.saveOrder.includes(name))
     name = prompt("Name taken. Please input new save name.");
-  if (name === null) return;
+  if (name === null || name === "") return;
   editor.saveOrder.push(name);
   editor.currentSave = name;
   save();
@@ -469,7 +469,7 @@ function deleteSave(name) {
 }
 function renameSave(name) {
   let newName = prompt("Please input new name.");
-  if (newName !== null && newName !== name) {
+  if (newName !== null && newName !== "" && newName !== name) {
     editor.saveOrder.splice(editor.saveOrder.indexOf(name), 1, newName);
     editor.saves[newName] = deepCopy(editor.saves[name]);
     delete editor.saves[name];
