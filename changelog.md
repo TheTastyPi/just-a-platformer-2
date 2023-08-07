@@ -782,3 +782,7 @@
   - Same with Jump Block states
 - Fixed a bug where touching a dynamic sub-block crashes the game
   - I had a line previously in the changelog that said I fixed this, but I never did??? (I checked, and no, I didn't fix this)
+
+#### 7 Aug. 2023
+
+- Fixed a bug where dashing into the boundary between the boundary between two directly adjacent block causes the player to get stuck

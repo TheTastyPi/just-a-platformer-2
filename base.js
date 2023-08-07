@@ -111,6 +111,7 @@ var lastFrame = 0;
 var interval = 1000 / 60;
 var simReruns = 4;
 var timeLimit = 100;
+var CThreshold = 1.1;
 var spawnDelay = 333;
 var deathTimer = spawnDelay;
 var saveState = deepCopy(player);
@@ -343,24 +344,28 @@ function doPhysics(obj, t, isPlayer) {
         dir = 3;
       } else {
         if (isLeft && isTop) {
+          if (Math.abs(tx1 - ty1) < CThreshold && tx1 < 2 * CThreshold) return;
           if (tx1 < ty1) {
             dir = 0;
           } else {
             dir = 2;
           }
         } else if (isRight && isTop) {
+          if (Math.abs(tx2 - ty1) < CThreshold && tx2 < 2 * CThreshold) return;
           if (tx2 < ty1) {
             dir = 1;
           } else {
             dir = 2;
           }
         } else if (isLeft && isBottom) {
+          if (Math.abs(tx1 - ty2) < CThreshold && tx1 < 2 * CThreshold) return;
           if (tx1 < ty2) {
             dir = 0;
           } else {
             dir = 3;
           }
         } else if (isRight && isBottom) {
+          if (Math.abs(tx2 - ty2) < CThreshold && tx2 < 2 * CThreshold) return;
           if (tx2 < ty2) {
             dir = 1;
           } else {
