@@ -430,11 +430,13 @@ id("display").addEventListener("contextmenu", function (event) {
 id("display").addEventListener("wheel", function (event) {
   let xPos = (event.clientX - camx) / cams;
   let yPos = (event.clientY - camy) / cams;
+  let delta = event.deltaY;
+  if (delta === 0) delta = event.deltaX;
   event.preventDefault();
   let factor = event.shiftKey ? 2 : 1.1;
-  factor **= Math.sign(-event.deltaY);
+  factor **= Math.sign(-delta);
   if (event.shiftKey && (event.ctrlKey || event.metaKey)) {
-    cams *= 1.1 ** Math.sign(-event.deltaY);
+    cams *= 1.1 ** Math.sign(-delta);
     adjustLevelSize();
     updateBuildLocation(
       (event.clientX - camx) / cams,

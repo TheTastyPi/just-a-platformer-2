@@ -787,3 +787,7 @@
 
 - Fixed a bug where dashing into the boundary between the boundary between two directly adjacent block causes the player to get stuck
 - Fixed a bug where you can add/rename saves/rooms with an empty name
+
+#### 11 Aug. 2023
+
+- Fixed a bug where, on Safari, Shift scrolling and Shift Ctrl scrolling doesn't work
