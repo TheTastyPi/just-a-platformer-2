@@ -1,26 +1,45 @@
-var playerDisp = new PIXI.Sprite(blockData[0].defaultTexture);
+var playerDisp = new PIXI.Container();
+var playerDispBody = new PIXI.Sprite(blockData[0].defaultTexture);
+var playerDispCore = new PIXI.Sprite(blockData[0].defaultTexture);
 playerDisp.zIndex = -1;
+playerDispCore.zIndex = 1;
 levelLayer.addChild(playerDisp);
+playerDisp.addChild(playerDispBody,playerDispCore);
 var effectiveMaxJump = 1;
+var effectiveMaxDash = 0;
 function drawPlayer() {
-  let ratio = player.currentJump / effectiveMaxJump;
-  if (effectiveMaxJump === Infinity) ratio = 1;
-  if (effectiveMaxJump === 0) ratio = 0;
-  let dRatio = dashTimer / dashDuration;
-  let tint = [(1 - ratio) * (1 - dRatio), dRatio, ratio * (1 - dRatio)];
-  if (editor?.invincible) tint = [1, 0, 1];
-  playerDisp.tint = PIXI.utils.rgb2hex(tint);
-  playerDisp.alpha = player.isDead ? 0.5 : 1;
+  let body = playerDispBody;
+  let core = playerDispCore;
+  let mjRatio = player.currentJump / effectiveMaxJump;
+  if (effectiveMaxJump === Infinity) mjRatio = 1;
+  if (effectiveMaxJump === 0) mjRatio = 0;
+  let mdRatio = player.currentDash / effectiveMaxDash;
+  if (effectiveMaxDash === Infinity) mdRatio = 1;
+  if (effectiveMaxDash === 0) mdRatio = 0;
+  mdRatio = Math.sqrt(mdRatio);
+  let dtRatio = dashTimer / dashDuration;
+  let bodyTint = [(1 - mjRatio) * (1 - dtRatio), dtRatio, mjRatio * (1 - dtRatio)];
+  let coreTint = [(1 - mjRatio) * (1 - mdRatio), mdRatio, mjRatio * (1-mdRatio) + mdRatio];
+  if (editor?.invincible) bodyTint = [1, 0, 1];
+  updatePlayerDisp(playerDisp,bodyTint,coreTint);
   playerDisp.x = player.x;
   playerDisp.y = player.y;
-  playerDisp.width = player.size;
-  playerDisp.height = player.size;
   if (player.dupSprite !== null) {
-    player.dupSprite.tint = playerDisp.tint;
-    player.dupSprite.alpha = playerDisp.alpha;
-    player.dupSprite.width = playerDisp.width;
-    player.dupSprite.height = playerDisp.height;
+    updatePlayerDisp(player.dupSprite,bodyTint,coreTint);
   }
+}
+function updatePlayerDisp(disp,bodyTint,coreTint) {
+  let body = disp.children[0];
+  let core = disp.children[1];
+  disp.alpha = player.isDead ? 0.5 : 1;
+  body.tint = PIXI.utils.rgb2hex(bodyTint);
+  body.width = player.size;
+  body.height = player.size;
+  core.tint = PIXI.utils.rgb2hex(coreTint);
+  core.x = player.size/4;
+  core.y = player.size/4;
+  core.width = player.size/2;
+  core.height = player.size/2;
 }
 function drawLevel(clear = false) {
   let level = levels[player.currentRoom];
@@ -308,8 +327,12 @@ function addSprite(block) {
 function addDupSprite(block) {
   let s;
   if (block === player) {
-    s = new PIXI.Sprite(blockData[0].defaultTexture);
+    s = new PIXI.Container();
+    s.addChild(new PIXI.Sprite(blockData[0].defaultTexture),new PIXI.Sprite(blockData[0].defaultTexture));
     s.zIndex = -1;
+    s.children[0].zIndex = 1;
+    levelLayer.addChild(playerDisp);
+    playerDisp.addChild(playerDispBody,playerDispCore);
   } else {
     s = createSprite(block);
   }

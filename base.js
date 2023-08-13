@@ -671,6 +671,7 @@ function doPhysics(obj, t, isPlayer) {
       }
     }
     if (isPlayer) effectiveMaxJump = tempObj.maxJump;
+    if (isPlayer) effectiveMaxDash = tempObj.maxDash;
     obj.lastCollided = collided;
     friction = tempObj.friction && friction;
     if (isPlayer) {
