@@ -738,7 +738,10 @@ function doPhysics(obj, t, isPlayer) {
     }
     if (tempObj.invincible || (isPlayer && editor?.invincible)) {
       obj.isDead = false;
-      if (isPlayer) obj.currentJump = 1;
+      if (isPlayer) {
+        obj.currentJump = 1;
+        obj.currentDash = 1;
+      }
     }
     // dashing
     if (
@@ -756,7 +759,7 @@ function doPhysics(obj, t, isPlayer) {
         runEvent(globalEvents.onDash);
         runEvent(roomEvents[player.currentRoom].onDash, player.currentRoom);
         canDash = false;
-        dashParticle.init(newDashEmitterConfig(player.size,dashSpeed,dashDuration))
+        dashParticle.init(newDashEmitterConfig());
         dashParticle.rotate(Math.atan2(control.up-control.down,control.left-control.right));
         dashParticle.updateSpawnPos(player.size/2,player.size/2);
         dashParticle.playOnce();

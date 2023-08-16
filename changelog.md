@@ -793,3 +793,4 @@
 - Fixed a bug where, on Safari, Shift scrolling and Shift Ctrl scrolling doesn't work
 - Added a indicator for dashes remaining on the center of the player
 - Added a trail to dashing
+- You can now dash infinitely when in god mode

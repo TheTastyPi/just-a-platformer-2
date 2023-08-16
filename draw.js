@@ -3,6 +3,7 @@ var playerDispBody = new PIXI.Sprite(blockData[0].defaultTexture);
 var playerDispCore = new PIXI.Sprite(blockData[0].defaultTexture);
 playerDisp.zIndex = -1;
 playerDispCore.zIndex = 1;
+playerDispCore.tint = PIXI.utils.string2hex("#ffffff");
 levelLayer.addChild(playerDisp);
 playerDisp.addChild(playerDispBody, playerDispCore);
 var dashParticleContainer = new PIXI.Container();
@@ -10,23 +11,23 @@ levelLayer.addChild(dashParticleContainer);
 dashParticleContainer.zIndex = -2;
 var dashParticle = new PIXI.particles.Emitter(
   dashParticleContainer,
-  newDashEmitterConfig(player.size,dashSpeed,dashDuration)
+  newDashEmitterConfig()
 )
-function newDashEmitterConfig(size,speed,duration) {
+function newDashEmitterConfig() {
   return {
     lifetime: {
-      min: duration/1000,
-      max: duration/1000
+      min: dashDuration/1000,
+      max: dashDuration/1000
     },
     autoUpdate: true,
     frequency: 0.01,
     spawnChance: 1,
     particlesPerWave: 1,
-    emitterLifetime: duration/1000,
+    emitterLifetime: dashDuration/1000,
     maxParticles: 1000,
     pos: {
-      x: size/2,
-      y: size/2
+      x: player.size/2,
+      y: player.size/2
     },
     addAtBack: false,
     behaviors: [
@@ -54,8 +55,8 @@ function newDashEmitterConfig(size,speed,duration) {
       {
         type: 'scaleStatic',
         config: {
-          min: size/50,
-          max: size/50
+          min: player.size/50,
+          max: player.size/50
         }
       },
       {
@@ -67,8 +68,8 @@ function newDashEmitterConfig(size,speed,duration) {
       {
         type: 'moveSpeedStatic',
         config: {
-          max: speed,
-          min: speed
+          max: dashSpeed,
+          min: dashSpeed
         }
       },
       {
@@ -116,27 +117,26 @@ function drawPlayer() {
   if (effectiveMaxDash === 0) mdRatio = 0;
   mdRatio = Math.sqrt(mdRatio);
   let dtRatio = dashTimer / dashDuration;
-  let bodyTint = [(1 - mjRatio) * (1 - dtRatio), dtRatio, mjRatio * (1 - dtRatio)];
-  let coreTint = [(1 - mjRatio) * (1 - mdRatio), mdRatio, mjRatio * (1 - mdRatio) + mdRatio];
+  let tint = [(1 - mjRatio) * (1 - dtRatio), dtRatio, mjRatio * (1 - dtRatio)];
   if (editor?.invincible) {
-    bodyTint = [1, 0, 1];
-    coreTint = [1, 0, 1];
+    tint = [1, 0, 1];
+    mdRatio = 1;
   }
-  updatePlayerDisp(playerDisp, bodyTint, coreTint);
+  updatePlayerDisp(playerDisp, tint, mdRatio);
   playerDisp.x = player.x;
   playerDisp.y = player.y;
   if (player.dupSprite !== null) {
-    updatePlayerDisp(player.dupSprite, bodyTint, coreTint);
+    updatePlayerDisp(player.dupSprite, tint, mdRatio);
   }
 }
-function updatePlayerDisp(disp, bodyTint, coreTint) {
+function updatePlayerDisp(disp, tint, coreAlpha) {
   let body = disp.children[0];
   let core = disp.children[1];
   disp.alpha = player.isDead ? 0.5 : 1;
-  body.tint = PIXI.utils.rgb2hex(bodyTint);
+  body.tint = PIXI.utils.rgb2hex(tint);
   body.width = player.size;
   body.height = player.size;
-  core.tint = PIXI.utils.rgb2hex(coreTint);
+  core.alpha = coreAlpha;
   core.x = player.size / 4;
   core.y = player.size / 4;
   core.width = player.size / 2;
