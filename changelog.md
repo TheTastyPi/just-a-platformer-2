@@ -791,6 +791,9 @@
 #### 11 Aug. 2023
 
 - Fixed a bug where, on Safari, Shift scrolling and Shift Ctrl scrolling doesn't work
+
+### 15 Aug. 2023
+
 - Added a indicator for dashes remaining on the center of the player
 - Added a trail to dashing
 - You can now dash infinitely when in god mode
