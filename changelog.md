@@ -807,3 +807,7 @@
 - Boundary Warps now shows its X texture when its "newRoom" property is empty
 - Fixed lag caused by dynamic Boundary Warps and dynamic objects in Boundary Warps (i think)
 - Fixed a bug where events cannot handle numbers >= 1e21 with operations
+
+#### 11 Oct. 2023
+
+- Fixed a bug where else() and elseIf() got skipped by if(). (how did i let this happen)
