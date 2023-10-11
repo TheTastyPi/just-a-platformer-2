@@ -1,32 +1,153 @@
-var playerDisp = new PIXI.Sprite(blockData[0].defaultTexture);
+var playerDisp = new PIXI.Container();
+var playerDispBody = new PIXI.Sprite(blockData[0].defaultTexture);
+var playerDispCore = new PIXI.Sprite(blockData[0].defaultTexture);
 playerDisp.zIndex = -1;
+playerDispCore.zIndex = 1;
+playerDispCore.tint = PIXI.utils.string2hex("#ffffff");
 levelLayer.addChild(playerDisp);
+playerDisp.addChild(playerDispBody, playerDispCore);
+var dashParticleContainer = new PIXI.Container();
+levelLayer.addChild(dashParticleContainer);
+dashParticleContainer.zIndex = -2;
+var dashParticle = new PIXI.particles.Emitter(
+  dashParticleContainer,
+  newDashEmitterConfig()
+)
+function newDashEmitterConfig() {
+  return {
+    lifetime: {
+      min: dashDuration/1000,
+      max: dashDuration/1000
+    },
+    autoUpdate: true,
+    frequency: 0.01,
+    spawnChance: 1,
+    particlesPerWave: 1,
+    emitterLifetime: dashDuration/1000,
+    maxParticles: 1000,
+    pos: {
+      x: player.size/2,
+      y: player.size/2
+    },
+    addAtBack: false,
+    behaviors: [
+      {
+        type: 'alpha',
+        config: {
+          alpha: {
+            list: [
+              {
+                value: 1,
+                time: 0
+              },
+              {
+                value: 0.25,
+                time: 0.25
+              },
+              {
+                value: 0,
+                time: 1
+              }
+            ],
+          },
+        }
+      },
+      {
+        type: 'scaleStatic',
+        config: {
+          min: player.size/50,
+          max: player.size/50
+        }
+      },
+      {
+        type: 'colorStatic',
+        config: {
+          color: "00ff00"
+        }
+      },
+      {
+        type: 'moveSpeedStatic',
+        config: {
+          max: dashSpeed,
+          min: dashSpeed
+        }
+      },
+      {
+        type: 'rotationStatic',
+        config: {
+          min: 0,
+          max: 0
+        }
+      },
+      {
+        type: 'noRotation',
+        config: {
+          rotation: 0
+        }
+      },
+      {
+        type: 'spawnShape',
+        config: {
+          type: 'rect',
+          data: {
+            x: 0,
+            y: 0,
+            w: 0,
+            h: 0
+          }
+        }
+      },
+      {
+        type: 'textureSingle',
+        config: {
+          texture: blockData[0].defaultTexture
+        }
+      }
+    ],
+  };
+}
 var effectiveMaxJump = 1;
+var effectiveMaxDash = 0;
 function drawPlayer() {
-  let ratio = player.currentJump / effectiveMaxJump;
-  if (effectiveMaxJump === Infinity) ratio = 1;
-  if (effectiveMaxJump === 0) ratio = 0;
-  let dRatio = dashTimer / dashDuration;
-  let tint = [(1 - ratio) * (1 - dRatio), dRatio, ratio * (1 - dRatio)];
-  if (editor?.invincible) tint = [1, 0, 1];
-  playerDisp.tint = PIXI.utils.rgb2hex(tint);
-  playerDisp.alpha = player.isDead ? 0.5 : 1;
+  let mjRatio = player.currentJump / effectiveMaxJump;
+  if (effectiveMaxJump === Infinity) mjRatio = 1;
+  if (effectiveMaxJump === 0) mjRatio = 0;
+  let mdRatio = player.currentDash / effectiveMaxDash;
+  if (effectiveMaxDash === Infinity) mdRatio = 1;
+  if (effectiveMaxDash === 0) mdRatio = 0;
+  mdRatio = Math.sqrt(mdRatio);
+  let dtRatio = dashTimer / dashDuration;
+  let tint = [(1 - mjRatio) * (1 - dtRatio), dtRatio, mjRatio * (1 - dtRatio)];
+  if (editor?.invincible) {
+    tint = [1, 0, 1];
+    mdRatio = 1;
+  }
+  updatePlayerDisp(playerDisp, tint, mdRatio);
   playerDisp.x = player.x;
   playerDisp.y = player.y;
-  playerDisp.width = player.size;
-  playerDisp.height = player.size;
   if (player.dupSprite !== null) {
-    player.dupSprite.tint = playerDisp.tint;
-    player.dupSprite.alpha = playerDisp.alpha;
-    player.dupSprite.width = playerDisp.width;
-    player.dupSprite.height = playerDisp.height;
+    updatePlayerDisp(player.dupSprite, tint, mdRatio);
   }
+}
+function updatePlayerDisp(disp, tint, coreAlpha) {
+  let body = disp.children[0];
+  let core = disp.children[1];
+  disp.alpha = player.isDead ? 0.5 : 1;
+  body.tint = PIXI.utils.rgb2hex(tint);
+  body.width = player.size;
+  body.height = player.size;
+  core.alpha = coreAlpha;
+  core.x = player.size / 4;
+  core.y = player.size / 4;
+  core.width = player.size / 2;
+  core.height = player.size / 2;
 }
 function drawLevel(clear = false) {
   let level = levels[player.currentRoom];
   if (clear) {
     levelLayer.removeChildren();
     levelLayer.addChild(playerDisp);
+    levelLayer.addChild(dashParticleContainer);
     forAllVisible((x) => (x.dupSprite = null));
     player.dupSprite = null;
   }
@@ -308,8 +429,12 @@ function addSprite(block) {
 function addDupSprite(block) {
   let s;
   if (block === player) {
-    s = new PIXI.Sprite(blockData[0].defaultTexture);
+    s = new PIXI.Container();
+    s.addChild(new PIXI.Sprite(blockData[0].defaultTexture), new PIXI.Sprite(blockData[0].defaultTexture));
     s.zIndex = -1;
+    s.children[0].zIndex = 1;
+    levelLayer.addChild(playerDisp);
+    playerDisp.addChild(playerDispBody, playerDispCore);
   } else {
     s = createSprite(block);
   }

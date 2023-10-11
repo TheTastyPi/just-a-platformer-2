@@ -141,11 +141,16 @@ function nextFrame(timeStamp) {
   if (dt < timeLimit) {
     while (dt >= interval) {
       dt -= interval;
-      if (dashTimer > 0) dashTimer -= interval;
+      if (dashTimer > 0) {
+        dashTimer -= interval;
+        dashParticleContainer.x = playerDisp.x;
+        dashParticleContainer.y = playerDisp.y;
+      }
       if (dashTimer < 0) {
         dashTimer = 0;
         player.xv = 0;
         player.yv = 0;
+        dashParticle.cleanup();
       }
       for (let i in player.timerList) {
         let data = player.timerList[i];
@@ -671,6 +676,7 @@ function doPhysics(obj, t, isPlayer) {
       }
     }
     if (isPlayer) effectiveMaxJump = tempObj.maxJump;
+    if (isPlayer) effectiveMaxDash = tempObj.maxDash;
     obj.lastCollided = collided;
     friction = tempObj.friction && friction;
     if (isPlayer) {
@@ -732,7 +738,10 @@ function doPhysics(obj, t, isPlayer) {
     }
     if (tempObj.invincible || (isPlayer && editor?.invincible)) {
       obj.isDead = false;
-      if (isPlayer) obj.currentJump = 1;
+      if (isPlayer) {
+        obj.currentJump = 1;
+        obj.currentDash = 1;
+      }
     }
     // dashing
     if (
@@ -750,6 +759,10 @@ function doPhysics(obj, t, isPlayer) {
         runEvent(globalEvents.onDash);
         runEvent(roomEvents[player.currentRoom].onDash, player.currentRoom);
         canDash = false;
+        dashParticle.init(newDashEmitterConfig());
+        dashParticle.rotate(Math.atan2(control.up-control.down,control.left-control.right));
+        dashParticle.updateSpawnPos(player.size/2,player.size/2);
+        dashParticle.playOnce();
       }
       if (control.left) {
         player.xv = -dashSpeed;
