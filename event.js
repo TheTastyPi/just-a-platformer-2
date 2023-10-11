@@ -180,6 +180,8 @@ function evalExp(exp, context, final = true, restrict = false) {
         if (typeof val === "string") val = "'" + val + "'";
         if (typeof val === "number" && val < 1e-6)
           val = val.toString().replaceAll("-", "$");
+        if (typeof val === "number" && val > 1e20)
+          val = val.toString().replaceAll("+", "");
         return val;
       });
       let err = exp.match(/ERROR:.+;/);
@@ -241,6 +243,7 @@ function parseValue(str, context, restrict = false) {
   }
   return value;
 }
+const maxCommandsPerSession = 1000;
 function handleEvents() {
   let commandCount = 0;
   for (let i = 0; i < player.eventQueue.length; i++) {
@@ -257,7 +260,7 @@ function handleEvents() {
     let err;
     let unparsed = [...command];
     if (!command.parsed && loop) loop.push(unparsed);
-    if (commandCount > 1000) err = "MAXIMUM_COMMAND_PER_SESSION_REACHED";
+    if (commandCount > maxCommandsPerSession) err = "MAXIMUM_COMMAND_PER_SESSION_REACHED";
     if (!err && (!skip || [3, 4, 5, 6, 7, 8, 9].includes(command[0]))) {
       if (skip) {
         if (command[0] !== 4) command = [3, false];

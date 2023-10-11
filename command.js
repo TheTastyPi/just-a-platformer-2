@@ -70,6 +70,48 @@ new CommandType(
     if (command[1] > 0) return "PAUSE";
   }
 );
+function setPropertyInEvent(vars,obj,prop,val) {
+  if (obj === player && readOnlyPlayerProp.includes(prop)) {
+    return "CANNOT_SET_READ_ONLY_PLAYER_PROPERTY_[" + prop + "]";
+  }
+  if (obj.isBlock && readOnlyBlockProp.includes(prop)) {
+    return "CANNOT_SET_READ_ONLY_BLOCK_PROPERTY_[" + prop + "]";
+  }
+  if (!Object.hasOwn(obj, prop) && obj[prop] !== undefined) {
+    return "CANNOT_SET_INVALID_VARIABLE_[" + prop + "]";
+  }
+  if (obj === vars && Object.keys(defaultEventData).includes(prop)) {
+    return "CANNOT_SET_SPECIAL_VARIABLE_[" + prop + "]";
+  }
+  let initVal = obj[prop];
+  if (typeof obj === "object" && ![vars,vars.global].includes(obj) && initVal === undefined) {
+    return "CANNOT_ADD_PROPERTY_TO_OBJECT";
+  }
+  if (typeof initVal !== typeof val && initVal !== undefined) {
+    return "INVALID_ASSIGNMENT_TYPE";
+  }
+  if (obj.isBlock) {
+    logChange(obj);
+    if (prop === "currentRoom") moveBlockRoom(obj, val);
+    if (prop === "size") scaleBlock(obj, val / obj.size, obj.x, obj.y);
+    if (prop === "x") moveBlock(obj, val - obj.x, 0);
+    if (prop === "y") moveBlock(obj, 0, val - obj.y);
+  }
+  obj[prop] = val;
+  if (obj.isBlock) {
+    let updateTexture = blockData[obj.type].textureFactor.includes(prop);
+    updateBlock(obj, updateTexture);
+    updateBlockState(obj);
+  }
+  if (obj === player.switchGlobal) updateSwitchBlocks(prop,true);
+  if (Object.values(player.switchLocal).includes(obj)) {
+    updateSwitchBlocks(prop,false,Object.keys(player.switchLocal).find(x=>player.switchLocal[x]===obj));
+  }
+  if (obj === player && prop === "jumpOn") {
+    updateAll(27);
+    forAllBlock(updateBlockState, 27);
+  }
+}
 new CommandType(
   "set",
   ["obj", "var", "any"],
@@ -77,46 +119,12 @@ new CommandType(
   "set(object,property,value)\nSets 'object[property]' to 'value'. Leave 'object' empty to access base variables.",
   ({ vars, args }) => {
     let [obj, prop, val] = args;
-    if (obj === player && readOnlyPlayerProp.includes(prop)) {
-      return "CANNOT_SET_READ_ONLY_PLAYER_PROPERTY_[" + prop + "]";
-    }
-    if (obj.isBlock && readOnlyBlockProp.includes(prop)) {
-      return "CANNOT_SET_READ_ONLY_BLOCK_PROPERTY_[" + prop + "]";
-    }
-    if (!Object.hasOwn(obj, prop) && obj[prop] !== undefined) {
-      return "CANNOT_SET_INVALID_VARIABLE_[" + prop + "]";
-    }
-    if (obj === vars && Object.keys(defaultEventData).includes(prop)) {
-      return "CANNOT_SET_SPECIAL_VARIABLE_[" + prop + "]";
-    }
-    let initVal = obj[prop];
-    if (typeof obj === "object" && ![vars,vars.global].includes(obj) && initVal === undefined) {
-      return "CANNOT_ADD_PROPERTY_TO_OBJECT";
-    }
-    if (typeof initVal !== typeof val && initVal !== undefined) {
-      return "INVALID_ASSIGNMENT_TYPE";
-    }
-    if (obj.isBlock) {
-      logChange(obj);
-      if (prop === "currentRoom") moveBlockRoom(obj, val);
-      if (prop === "size") scaleBlock(obj, val / obj.size, obj.x, obj.y);
-      if (prop === "x") moveBlock(obj, val - obj.x, 0);
-      if (prop === "y") moveBlock(obj, 0, val - obj.y);
-    }
-    obj[prop] = val;
-    if (obj.isBlock) {
-      let updateTexture = blockData[obj.type].textureFactor.includes(prop);
-      updateBlock(obj, updateTexture);
-      updateBlockState(obj);
-    }
-    if (obj === player.switchGlobal) updateSwitchBlocks(prop,true);
-    if (Object.values(player.switchLocal).includes(obj)) {
-      updateSwitchBlocks(prop,false,Object.keys(player.switchLocal).find(x=>player.switchLocal[x]===obj));
-    }
-    if (obj === player && prop === "jumpOn") {
-      updateAll(27);
-      forAllBlock(updateBlockState, 27);
-    }
+    let objIsBlockArray = Array.isArray(obj) && obj.find(x=>!x.isBlock) === undefined;
+    if (objIsBlockArray) {
+      for (let i in obj) {
+        setPropertyInEvent(vars,obj[i],prop,val);
+      }
+    } else setPropertyInEvent(vars,obj,prop,val);
   }
 );
 new CommandType(
@@ -435,16 +443,20 @@ new CommandType(
   "toggle(object,property)\nToggles 'object[property]'. Boolean only. Leave 'object' empty to access base variables.",
   ({ vars, args }) => {
     let [obj, prop] = args;
-    if (typeof obj[prop] !== "boolean") return "NON_BOOL_IN_TOGGLE";
-    let err = commandData[2].eventFunc({
-      vars: vars,
-      args: [obj, prop, !obj[prop]]
-    });
-    if (err) return err;
+    if (!Array.isArray(obj)) obj = [obj];
+    for (let i in obj) {
+      let currentVal = obj[i][prop];
+      if (typeof currentVal !== "boolean") return "NON_BOOL_IN_TOGGLE";
+      let err = commandData[2].eventFunc({
+        vars: vars,
+        args: [obj[i], prop, !currentVal]
+      });
+      if (err) return err;
+    }
   }
 );
 new CommandType(
-  "setSingleBlock",
+  "setSingleBlock (DEPRECATED)",
   ["obj", "var", "blockRef"],
   ["", "", []],
   "setSingleBlock(object,property,block)\nSet 'object[property]' to a single block not in an array. Will use index 0 when given an array of blocks. Leave 'object' empty to access base variables.",
@@ -534,24 +546,34 @@ new CommandType(
 );
 new CommandType(
   "log",
-  ["str"],
+  ["any"],
   [""],
   "log(text)\nAdds a message to the console.",
   ({ args }) => {
     let [text] = args;
+    if (typeof text === "object") return "CANNOT_LOG_OBJ";
+    if (!(typeof text === "string")) text = text.toString();
     consoleLog(text, "log");
   }
 );
 new CommandType(
   "err",
-  ["str"],
+  ["any"],
   [""],
   "err(text)\nAdds an error to the console.",
   ({ args }) => {
     let [text] = args;
+    if (typeof text === "object") return "CANNOT_ERR_OBJ";
+    if (!(typeof text === "string")) text = text.toString();
     consoleLog(text, "err");
   }
 );
+function advancePos(t,t0,x0,xf,v0) {
+  let dV = xf - x0;
+  v0 ??= dV / t;
+  let a = (2 * (dV - v0 * t)) / t / t;
+  return (a / 2) * t0 ** 2 + v0 * t0 + x0;
+}
 new CommandType(
   "gradient",
   ["obj","var","any","num", "!num"],
@@ -559,54 +581,49 @@ new CommandType(
   "gradient(obj,prop,target, t, v0)\nGradually changes obj[prop] to target value in 't' second starting at 'v0' units per second.\nLeave v0 blank for constant rate.\nTarget value must the of the same type as initial value, and be either numerical, or a color.",
   ({ args, vars, command }) => {
     let [obj, prop, target, t, v0] = args;
-    if (typeof obj[prop] !== typeof target) {
+    if (!Array.isArray(obj)) {
+      obj = [obj];
+      args[0] = obj;
+    }
+    let initVal = obj.map(x=>x[prop]);
+    if (typeof initVal[0] !== typeof target) {
       return "MISMATCHED_TYPES_FOR_GRADIENT";
     }
-    if (!(typeof obj[prop] === "number") && !(typeof obj[prop] === "string" && /^#[0-9A-F]{6}$/i.test(obj[prop]))) {
+    if (!(typeof initVal[0] === "number") && !(typeof initVal[0] === "string" && /^#[0-9A-F]{6}$/i.test(initVal[0]))) {
       return "INVALID_TYPES_FOR_GRADIENT";
     }
-    let initVal = obj[prop];
     if (typeof target === "string") {
-      args[2] = PIXI.utils.hex2rgb(PIXI.utils.string2hex(target));
-      initVal = PIXI.utils.hex2rgb(PIXI.utils.string2hex(initVal))
+      target = PIXI.utils.hex2rgb(PIXI.utils.string2hex(target));
+      args[2] = target;
     }
     args.push(initVal,0);
     runAction(args, vars, command);
   },
   ({action, args}) => {
-    let [, obj, prop, target, t, v0, initVal, ct] = args;
+    let [, obj, prop, target, t, v0, initVals, ct] = args;
     let delt = interval / 1000;
     if (ct + delt > t) delt = t - ct;
     let isColor = typeof target === "object";
-    let dV, a, valFunc, dx, currentVal;
-    if (isColor) {
-      currentVal = PIXI.utils.hex2rgb(PIXI.utils.string2hex(obj[prop]));
-      dV = target.map((n,i)=>n-initVal[i]);
-      if (v0 === undefined) v0 = dV.map(n=>n/t);
-      a = dV.map((n,i)=>(2 * (n - v0[i] * t)) / t / t);
-      valFunc = (t) => a.map((n,i)=>(n / 2) * t ** 2 + v0[i] * t + initVal[i]);
-      dx = valFunc(ct + delt).map((n,i)=>n - currentVal[i]);
-    } else {
-      currentVal = obj[prop];
-      dV = target - initVal;
-      if (v0 === undefined) v0 = dV / t;
-      a = (2 * (dV - v0 * t)) / t / t;
-      valFunc = (t) => (a / 2) * t ** 2 + v0 * t + initVal;
-      dx = valFunc(ct + delt) - currentVal;
+    for (let i in initVals) {
+      let initVal = initVals[i];
+      let newVal
+      if (t === 0) {
+        newVal = iV + dx;
+      } else {
+        if (isColor) {
+          initVal = PIXI.utils.hex2rgb(PIXI.utils.string2hex(initVal));
+          newVal = initVal.map((x,i)=>advancePos(t,ct+delt,initVal[i],target[i],v0));
+          newVal = PIXI.utils.hex2string(PIXI.utils.rgb2hex(newVal));
+        } else {
+          newVal = advancePos(t,ct+delt,initVal,target,v0)
+        }
+      }
+      let err = commandData[2].eventFunc({
+        vars: action[0],
+        args: [obj[i], prop, newVal]
+      });
+      if (err) return err;
     }
-    if (t === 0) dx = dV;
-    let newVal;
-    if (isColor) {
-      newVal = currentVal.map((n,i)=>n+dx[i]);
-      newVal = PIXI.utils.hex2string(PIXI.utils.rgb2hex(newVal));
-    } else {
-      newVal = obj[prop] + dx;
-    }
-    let err = commandData[2].eventFunc({
-      vars: action[0],
-      args: [obj, prop, newVal]
-    });
-    if (err) return err;
     action[action.length - 1] += delt;
     if (action[action.length - 1] >= t) {
       return "END";

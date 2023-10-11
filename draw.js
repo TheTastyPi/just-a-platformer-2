@@ -362,7 +362,7 @@ function updateDupSprite(block) {
   } else if (!block.dupSprite) addDupSprite(block);
   if (block === player) {
     drawPlayer();
-  } else updateSprite(block.dupSprite, block, updateTexture);
+  } else updateSprite(block.dupSprite, block);
   let level = levels[player.currentRoom];
   let newlvl = levels[block.roomLink[1].currentRoom];
   let dx = block.roomLink[1].x - block.roomLink[0].x;

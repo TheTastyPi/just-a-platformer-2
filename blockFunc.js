@@ -63,7 +63,7 @@ function moveBlock(block, dx, dy, draw = true, log = true) {
     gridSpace.splice(block.index, 1);
     block.index = newGridSpace.push(block) - 1;
   }
-  if (block.currentRoom === player.currentRoom && block.type === 23)
+  if (block.currentRoom === player.currentRoom && block.type === 23 && !editor.playMode)
     updateBlock(block);
 }
 function moveBlockRoom(block, room, log = true) {

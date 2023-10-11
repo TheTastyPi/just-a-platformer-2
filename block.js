@@ -1430,7 +1430,12 @@ new BlockType(
       width: 5,
       color: 0x000000
     });
-    if ((block.x === 0 && !block.forceVert) || app !== display) {
+    if (block.newRoom === "" && app === display) {
+      g.moveTo(10, 10);
+      g.lineTo(40, 40);
+      g.moveTo(10, 40);
+      g.lineTo(40, 10);
+    } else if ((block.x === 0 && !block.forceVert) || app !== display) {
       g.moveTo(25, 15);
       g.lineTo(15, 25);
       g.lineTo(25, 35);

@@ -787,3 +787,13 @@
 
 - Fixed a bug where dashing into the boundary between the boundary between two directly adjacent block causes the player to get stuck
 - Fixed a bug where you can add/rename saves/rooms with an empty name
+
+#### 10 Oct. 2023
+
+- set() in events is now able to loop through each blocks in an array of blocks. (How it is stored when using a 'block' type input)
+  - This also applies to toggle() and gradient()
+  - As such, setSingleBlock() has been removed, as all functions now works with an array of blocks instead of a singular block
+- log() and err() now accept all non-object inputs instead of just strings
+- Boundary Warps now shows its X texture when its "newRoom" property is empty
+- Fixed lag caused by dynamic Boundary Warps and dynamic objects in Boundary Warps (i think)
+- Fixed a bug where events cannot handle numbers >= 1e21 with operations

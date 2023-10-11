@@ -828,22 +828,24 @@
                 </ul>
               </li>
               <li>
-                log(text[str])
+                log(text[any BUT obj])
                 <ul>
                   <li>Adds a message to the console. The message will appear yellow.</li>
+                  <li>If 'text' is of type [obj], it will give a "CANNOT_LOG_OBJECT" error.</li>
                 </ul>
               </li>
               <li>
-                err(text[str])
+                err(text[any BUT obj])
                 <ul>
                   <li>Adds an error to the console. The message will appear red.</li>
+                  <li>If 'text' is of type [obj], it will give a "CANNOT_ERR_OBJECT" error.</li>
                 </ul>
               </li>
             </ul>
             <h2>Variable Commands</h2>
             <ul>
               <li>
-                set(object[obj][optional],property[str],value[any])
+                set(object[obj OR blockRef][optional],property[str],value[any])
                 <ul>
                   <li>Sets ‘object[property]’ to ‘value’.</li>
                   <li>Leave 'object' empty to access base variables.</li>
@@ -856,15 +858,7 @@
                 </ul>
               </li>
               <li>
-                setSingleBlock(object[obj][optional],property[str],block[blockRef])
-                <ul>
-                  <li>Set 'object[property]' to a single [blockRef] not contained in an [array].</li>
-                  <li>Will use index 0 when given an array of [blockRef].</li>
-                  <li>Leave 'object' empty to access base variables.</li>
-                </ul>
-              </li>
-              <li>
-                toggle(object[obj][optional],property[str])
+                toggle(object[obj OR blockRef][optional],property[str])
                 <ul>
                   <li>Toggles 'object[property]'.</li>
                   <li>‘object[property]’ must be of type [bool], otherwise, it will give a NON_BOOL_IN_TOGGLE error.</li>
@@ -872,7 +866,7 @@
                 </ul>
               </li>
               <li>
-                gradient(object[obj][optional],property[str],target[num OR str],t[num],v0[num])
+                gradient(object[obj OR blockRef][optional],property[str],target[num OR str],t[num],v0[num])
                 <ul>
                   <li>Gradually set ‘object[property]’ to ‘target’ over ‘t’ seconds starting at a rate of change of ‘v0’.</li>
                   <li>If ‘object[property]’ and ‘target’ have different types, it will give a MISMATCHED_TYPES_FOR_GRADIENT error.</li>
@@ -962,8 +956,8 @@
               <li>[str]: String, like letters and stuff.  Note that when used as a variable/property name, numbers are also allowed.</li>
               <li>[array]: Array, a list of variables.</li>
               <li>[obj]: Object, a collection of variables identified by a key.</li>
-              <li>[block]: Block, a template of a block that does not exist in the level. Can also be an array of [block]. Note: When selecting [block] via the block selector, it give an array of [block].</li>
-              <li>[blockRef]: Block Reference, an existing block. Can also be an array of [blockRef]. Note: When selecting [blockRef] via the block selector, it give an array of [blockRef].</li>
+              <li>[block]: Block, a template of a block that does not exist in the level. Can also be an array of [block]. Note: When selecting multiple [block] via the block selector, it'll give an array of [block].</li>
+              <li>[blockRef]: Block Reference, an existing block. Can also be an array of [blockRef]. Note: When selecting multiple [blockRef] via the block selector, it give an array of [blockRef].</li>
             </ul>
             <h3>String Literals</h3>
             One can write a string into an expression by enclosing a series of symbols with matching quotes, single (‘) or double (“).

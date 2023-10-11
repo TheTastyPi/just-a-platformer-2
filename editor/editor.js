@@ -178,7 +178,7 @@ const blockList = {
 };
 const commandList = {
   Control: [1, 3, 6, 5, 4, 7, 8, 9, 20, 21],
-  Variable: [2, 16, 15, 22, 18, 19],
+  Variable: [2, 15, 22, 18, 19],
   Gameplay: [0, 10, 11, 17, 14, 13, 12]
 };
 const eventDataAlias = {
