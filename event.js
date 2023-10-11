@@ -258,12 +258,12 @@ function handleEvents() {
     let loop = data._loops[data._loops.length - 1];
     if (latest && !latest[1]) skip = true;
     let err;
-    let unparsed = [...command];
+    let unparsed = deepCopy(command);
     if (!command.parsed && loop) loop.push(unparsed);
     if (commandCount > maxCommandsPerSession) err = "MAXIMUM_COMMAND_PER_SESSION_REACHED";
     if (!err && (!skip || [3, 4, 5, 6, 7, 8, 9].includes(command[0]))) {
       if (skip) {
-        if (command[0] !== 4) command = [3, false];
+        if (![4,5,6].includes(command[0])) command = [3, false];
       } else if (!command.parsed) {
         err = parseCommand(command, data);
       }
