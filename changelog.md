@@ -811,3 +811,8 @@
 #### 11 Oct. 2023
 
 - Fixed a bug where else() and elseIf() got skipped by if(). (how did i let this happen)
+
+### 29 Nov. 2023
+
+- Fixed a bug where the "block" input for addBlock() in events were not propertly saved
+- Fixed a bug where global and room onTick events ran twice per tick

@@ -77,6 +77,7 @@ function compressBlock(block, usePreset) {
   if (usePreset) {
     baseBlock = editor.presets[block.preset];
   } else baseBlock = blockData[block.type].defaultBlock;
+  let isRef = isBlockRef([block]);
   for (let prop in block) {
     if (usePreset) {
       if (prop === "preset") continue;
@@ -84,7 +85,7 @@ function compressBlock(block, usePreset) {
     if (
       block[prop] === baseBlock[prop] ||
       propData[prop] === undefined ||
-      prop === "currentRoom"
+      (prop === "currentRoom" && isRef)
     ) {
       delete block[prop];
       continue;
