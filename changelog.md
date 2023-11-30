@@ -814,5 +814,5 @@
 
 ### 29 Nov. 2023
 
-- Fixed a bug where the "block" input for addBlock() in events were not propertly saved
+- Fixed a bug where the "block" input for addBlock() in events were not properly saved
 - Fixed a bug where global and room onTick events ran twice per tick
