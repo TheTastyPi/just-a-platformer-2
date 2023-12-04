@@ -62,20 +62,36 @@ const defaultEventData = {
   _playerTrigger: true,
   _blockTrigger: true
 };
+const allowedPlayerProp = [
+  "x",
+  "y",
+  "xv",
+  "yv",
+  "xa",
+  "ya",
+  "size",
+  "g",
+  "xg",
+  "maxJump",
+  "currentJump",
+  "maxDash",
+  "currentDash",
+  "moveSpeed",
+  "friction",
+  "gameSpeed",
+  "currentRoom",
+  "switchLocal",
+  "switchGlobal",
+  "coins",
+  "jumpOn",
+]
 const readOnlyPlayerProp = [
   "isDead",
   "canWallJump",
   "wallJumpDir",
-  "textDisp",
-  "lastCollided",
   "isPlayer",
-  "roomLink",
-  "dupSprite",
-  "eventQueue",
-  "actionQueue",
-  "timerList"
 ];
-const readOnlyBlockProp = [
+const unallowedBlockProp = [
   "link",
   "events",
   "isBlock",

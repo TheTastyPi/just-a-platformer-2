@@ -816,3 +816,11 @@
 
 - Fixed a bug where the "block" input for addBlock() in events were not properly saved
 - Fixed a bug where global and room onTick events ran twice per tick
+
+### ? Dec. 2023
+
+- Significantly refactored events expression evaluation, which allowed for these changes:
+  - The unary negative operator is now "-" instead of "~"
+  - New operator "**" for exponentiation
+  - You no longer need escape characters in strings for characters representing operations
+  - More specific error messages

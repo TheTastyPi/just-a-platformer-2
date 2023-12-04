@@ -17,14 +17,15 @@ class Block {
     this.opacity = 1;
     this.friction = true;
     this.dynamic = false;
+    this.viewLayer = "";
+    this.preset = "";
+    this.texture = "";
+    // non-editable
     this.link = null;
     this.events = {};
     this.isBlock = true;
     this.isRootBlock = true;
     this.moving = false;
-    this.viewLayer = "";
-    this.preset = "";
-    this.texture = "";
     // solid only
     this.floorLeniency = 0;
     // dynamic props
@@ -38,6 +39,7 @@ class Block {
     this.blockPushable = false;
     this.crushPlayer = true;
     this.invincible = false;
+    // non-editable
     this.lastCollided = [];
     this.roomLink = [];
     this.dupSprite = null;

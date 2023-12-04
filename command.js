@@ -74,9 +74,6 @@ function setPropertyInEvent(vars,obj,prop,val) {
   if (obj === player && readOnlyPlayerProp.includes(prop)) {
     return "CANNOT_SET_READ_ONLY_PLAYER_PROPERTY_[" + prop + "]";
   }
-  if (obj.isBlock && readOnlyBlockProp.includes(prop)) {
-    return "CANNOT_SET_READ_ONLY_BLOCK_PROPERTY_[" + prop + "]";
-  }
   if (!Object.hasOwn(obj, prop) && obj[prop] !== undefined) {
     return "CANNOT_SET_INVALID_VARIABLE_[" + prop + "]";
   }

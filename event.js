@@ -22,226 +22,283 @@ function runEvent(event, source, extraContext = {}) {
   event[0].ran = true;
   //handleEvents();
 }
-function evalExp(exp, context, final = true, restrict = false) {
-  // ()
-  while (exp.search(/[()]/) !== -1) {
-    if (exp.search(/\([^(]*?\)/) === -1) {
-      return "ERROR:UNMATCHED_BRACKETS;";
+function tokenize(exp) {
+  exp = exp.replace(" ","");
+  let tokenArray = [];
+  let unaryToken = [
+    [/^!/,"not"],
+    [/^-/,"negative"],
+  ].map(x=>[...x,"unary"]);
+  let valToken = [
+    [/^\-?\d+(\.\d+)?(e(\+|\-)?\d+)?/,"number"],
+    [/^".*?"/,"string"],
+    [/^'.*?'/,"string"],
+    [/^false/,"boolean"],
+    [/^true/,"boolean"],
+    [/^[\w\d]+/,"variable"],
+  ].map(x=>[...x,"value"]);
+  let opToken = [
+    [/^\./,"member_access"],
+    [/^\[/,"open_square"], // trust me, this works
+    [/^\*\*/,"exponentiation"],
+    [/^%/,"modulo"],
+    [/^\*/,"multiplication"],
+    [/^\//,"division"],
+    [/^\+/,"addition"],
+    [/^-/,"subtraction"],
+    [/^<=/,"less_or_equal"],
+    [/^>=/,"greater_or_equal"],
+    [/^</,"less"],
+    [/^>/,"greater"],
+    [/^==/,"equal"],
+    [/^!=/,"unequal"],
+    [/^&&/,"and"],
+    [/^\|\|/,"or"],
+  ].map(x=>[...x,"operation"]);
+  let genToken = [
+    [/^\(/,"open_round"],
+    [/^\)/,"close_round"],
+    [/^\]/,"close_square"],
+  ].map(x=>[...x,"any"]);
+  let expectVal = genToken
+          .concat(valToken)
+          .concat(unaryToken)
+          .concat(opToken);
+  let expectOp = genToken
+         .concat(opToken)
+         .concat(valToken)
+         .concat(unaryToken);
+  let expected = expectVal;
+  while(exp !== "") {
+    let token, specificType, tokenType;
+    for (let i in expected) {
+      let regex;
+      [regex, specificType, tokenType] = expected[i]
+      token = exp.match(regex)?.[0];
+      if (token) {
+        exp = exp.slice(token.length);
+        break;
+      }
     }
-    exp = exp.replace(/\([^(]*?\)/g, (x) => {
-      let val = evalExp(x.slice(1, -1), context, false, restrict);
-      if (typeof val === "string") val = "'" + val + "'";
-      if (typeof val === "number" && val < 0)
-        val = val.toString().replaceAll("-", "$");
-      return val;
-    });
-    let err = exp.match(/ERROR:.+;/);
-    if (err) return err[0];
-  }
-  // []
-  while (exp.search(/[[\]]/) !== -1) {
-    if (exp.search(/\[[^[]*?\]/) === -1) {
-      return "ERROR:UNMATCHED_SQUARE_BRACKETS;";
+    if (!token) {
+      if (["\"","'"].includes(exp[0])) return "ERROR:INVALID_STRING;";
+      return `ERROR:UNKNOWN_SYMBOL_[${exp[0]}];`;
     }
-    exp = exp.replace(/\[[^[]*?\]/g, (x) => {
-      let val = evalExp(x.slice(1, -1), context, false, restrict);
-      if (typeof val === "string") val = "'" + val + "'";
-      return "{" + val + "}";
-    });
-    let err = exp.match(/ERROR:.+;/);
-    if (err) return err[0];
+    switch (tokenType) {
+      case "value":
+        if (expected === expectOp) {
+          return `ERROR:UNEXPECTED_VALUE_[${token}];`;
+        }
+        expected = expectOp;
+        break;
+      case "operation":
+        if (expected === expectVal) {
+          if (token === "[") return "ERROR:UNEXPECTED_SQUARE_BRACKET;";
+          return `ERROR:UNEXPECTED_OPERATION_[${token}];`;
+        }
+        expected = expectVal;
+        break;
+      case "unary":
+        if (expected === expectOp) {
+          return `ERROR:UNEXPECTED_UNARY_OPERATION_[${token}];`;
+        }
+        expected = expectVal;
+        break;
+    }
+    if (specificType === "negative") {
+      tokenArray.push(["~", specificType]);
+    } else tokenArray.push([token, specificType]);
   }
+  return tokenArray;
+}
+function evalExp(exp, context, expectObjOutput = false) {
+  let tokens = tokenize(exp);
+  if (typeof tokens === "string") return tokens;
+  if (tokens.length === 0) return undefined;
+  let unary = ["!","~"];
   let opGroups = [
-    ["~", "!"],
+    ["."],
+    ["!", "~"],
+    ["**"],
     ["%", "*", "/"],
     ["+", "-"],
     [">=", "<=", ">", "<"],
     ["==", "!="],
     ["&&"],
-    ["||"]
+    ["||"],
   ];
-  let ops = opGroups.flat();
-  let objAllowed = ["!", "==", "!=", "&&", "||"];
-  let unary = ["~", "!"];
-  let opNames = [
-    ["NEGATIVE", "NOT"],
-    ["MODULO", "MULTIPLICATION", "DIVISION"],
-    ["ADDITION", "SUBTRACTION"],
-    ["GREATER_OR_EQUAL", "LESS_OR_EQUAL", "GREATER", "LESS"],
-    ["EQUAL", "UNEQUAL"],
-    ["AND"],
-    ["OR"]
-  ];
-  exp = exp.replace(/(["']).*?\1/g, (str) => {
-    for (let i in ops) {
-      let op = ops[i];
-      let regex = RegExp(
-        op.replaceAll("", "\\").slice(0, -1) +
-          (unary.includes(op) ? "(?!=)" : ""),
-        "g"
-      );
-      str = str.replace(regex, (x) => x + "^");
+  let objAllowed = [".", "!", "==", "!=", "&&", "||"];
+  // convert square brackets
+  tokens = tokens.flatMap(
+    t=>{
+      if (t[0]=== "[") return [
+        [".","member_access"],
+        ["(","open_round"]
+      ];
+      if (t[0] === "]") return [
+        [")","close_round"]
+      ];
+      return [t];
     }
-    return str;
-  });
-  let valueRegex = /(?:e-|[\w.~${}"' ]|(["']).*?\1)+/g;
-  exp = exp.replaceAll(valueRegex, (x) => x.replaceAll("-", "$"));
-  for (let i in opGroups) {
-    let group = opGroups[i];
-    let regex = group.map((op) =>
-      RegExp(
-        op.replaceAll("", "\\").slice(0, -1) +
-          "(?!\\^)" +
-          (unary.includes(op) ? "(?!=)" : "")
-      )
-    );
-    let fullRegex = group.map((op, i) =>
-      RegExp(
-        (unary.includes(op) ? "" : valueRegex.source) +
-          regex[i].source +
-          valueRegex.source
-      )
-    );
-    while (regex.map((x) => x.test(exp)).includes(true)) {
-      let placements = regex.map((x) => {
-        let result = exp.search(x);
-        if (result === -1) return Infinity;
-        return result;
-      });
-      let minIndex = placements.indexOf(Math.min(...placements));
-      let op = group[minIndex];
-      let targetRegex = regex[minIndex];
-      let targetFullRegex = fullRegex[minIndex];
-      let opName = opNames[i][minIndex];
-      if (!targetFullRegex.test(exp)) {
-        return "ERROR:INVALID_" + opName + "_SYNTAX;";
-      }
-      exp = exp.replace(targetFullRegex, (x) => {
-        x = x
-          .split(targetRegex)
-          .map((x) => parseValue(x.trim(), context, restrict));
-        if (typeof x[0] === "string" && /ERROR:/.test(x[0])) return x[0];
-        if (typeof x[1] === "string" && /ERROR:/.test(x[1])) return x[1];
-        if (
-          !objAllowed.includes(op) &&
-          (typeof x[0] === "object" || typeof x[1] === "object")
-        ) {
-          return "ERROR:INVALID_" + opName + "_ARGUMENT;";
-        }
-        let val;
-        switch (op) {
-          case "~":
-            val = -x[1];
-            break;
-          case "!":
-            val = !x[1];
-            break;
-          case "%":
-            val = x[0] % x[1];
-            break;
-          case "*":
-            val = x[0] * x[1];
-            break;
-          case "/":
-            val = x[0] / x[1];
-            break;
-          case "+":
-            val = x[0] + x[1];
-            break;
-          case "-":
-            val = x[0] - x[1];
-            break;
-          case ">":
-            val = x[0] > x[1];
-            break;
-          case "<":
-            val = x[0] < x[1];
-            break;
-          case ">=":
-            val = x[0] >= x[1];
-            break;
-          case "<=":
-            val = x[0] <= x[1];
-            break;
-          case "==":
-            val = x[0] == x[1];
-            break;
-          case "!=":
-            val = x[0] != x[1];
-            break;
-          case "&&":
-            val = x[0] && x[1];
-            break;
-          case "||":
-            val = x[0] || x[1];
-            break;
-          default:
-        }
-        if (typeof val === "string") val = "'" + val + "'";
-        if (typeof val === "number" && val < 1e-6)
-          val = val.toString().replaceAll("-", "$");
-        if (typeof val === "number" && val > 1e20)
-          val = val.toString().replaceAll("+", "");
-        return val;
-      });
-      let err = exp.match(/ERROR:.+;/);
-      if (err) return err[0];
-    }
-  }
-  exp = parseValue(exp, context, restrict);
-  return final && typeof exp === "string"
-    ? exp.replace(/.\^/g, (x) => x.charAt(0))
-    : exp;
-}
-function parseValue(str, context, restrict = false) {
-  // bool
-  if (str === "true") return true;
-  if (str === "false") return false;
-  // num
-  let fixedStr = str.replace(/\$/g, "-");
-  let value = parseFloat(fixedStr);
-  if (fixedStr == value) return value;
-  str = str.replace(/\$/g, "~");
-  // str
-  if (/^".*"$|^'.*'$/.test(str)) return str.slice(1, -1);
-  if (/^["']|["']$/.test(str)) return "ERROR:INVALID_STRING;";
-  // obj
-  value = undefined;
-  str = str.replaceAll("{", ".{").replace(/["']/g, "");
-  while (str.length > 0) {
-    let i = str.search(/\./);
-    if (str.charAt(0) === "{") i = str.search(/}/) + 1;
-    if (i === -1) i = str.length;
-    let varName = str.slice(0, i).replace(/[{}]/g, "");
-    if (restrict) {
-      if (value === player && readOnlyPlayerProp.includes(varName)) {
-        return (
-          "ERROR:CANNOT_INPUT_READ_ONLY_PLAYER_PROPERTY_[" + varName + "];"
-        );
-      }
-      if (value?.isBlock && readOnlyBlockProp.includes(varName)) {
-        return "ERROR:CANNOT_INPUT_READ_ONLY_BLOCK_PROPERTY_[" + varName + "];";
-      }
-    }
-    if (value === undefined) {
-      if (context[varName] === undefined)
-        return "ERROR:UNDEFINED_VARIABLE_[" + varName + "];";
-      if (!Object.hasOwn(context, varName))
-        return "ERROR:INVALID_VARIABLE_[" + varName + "];";
-      value = context[varName];
+  );
+  // create depth array + find max depth
+  let depthArray = [];
+  let currentDepth = 0;
+  let maxDepth = 0
+  for (let i = 0; i < tokens.length; i++) {
+    let token = tokens[i][0];
+    if (token === "(") {
+      currentDepth++;
+      tokens.splice(i,1);
+      i--;
+    } else if (token === ")") {
+      currentDepth--;
+      tokens.splice(i,1);
+      i--;
     } else {
-      if (
-        typeof value !== "object" ||
-        (!Object.hasOwn(value, varName) && value[varName] !== undefined)
-      )
-        return "ERROR:INVALID_PROPERTY_[" + varName + "];";
-      value = value[varName];
-      if (value === undefined)
-        return "ERROR:UNDEFINED_PROPERTY_[" + varName + "];";
+      depthArray.push(currentDepth);
     }
-    str = str.slice(i + 1);
+    maxDepth = Math.max(maxDepth,currentDepth);
   }
-  return value;
+  if (currentDepth !== 0) return "ERROR:UNMATCHED_BRACKETS;";
+  while (tokens.length > 1) {
+    if (maxDepth < 0) return "ERROR:YOU_SHOULDN'T_SEE_THIS_PLEASE_REPORT_THIS_BUG;";
+    let pos;
+    // find deepest occurence of highest priority operation
+    for (let i in opGroups) {
+      let group = opGroups[i];
+      pos = tokens.findIndex(
+        (t,j)=>(depthArray[j]>=maxDepth && group.includes(t[0])));
+      if (pos!==-1) break;
+    }
+    if (pos===-1) { // layer complete
+      maxDepth--;
+      continue;
+    }
+    let opInfo = tokens[pos];
+    let [op,opName] = opInfo;
+    opName = opName.toUpperCase();
+    let isUnary = unary.includes(op);
+    name = name.toUpperCase();
+    let LHSInfo = tokens[pos-1];
+    let RHSInfo = tokens[pos+1];
+    let LHS,LHSType;
+    let RHS,RHSType;
+    if (LHSInfo !== undefined) [LHS,LHSType] = LHSInfo;
+    if (RHSInfo !== undefined) [RHS,RHSType] = RHSInfo;
+    // OOB check
+    let LHSExists;
+    if (!isUnary) LHSExists = (LHS !== undefined) && depthArray[pos-1] >= maxDepth;
+    let RHSExists = (RHS !== undefined) && depthArray[pos+1] >= maxDepth;
+    if (!isUnary && !LHSExists) return `ERROR:${opName}_MISSING_LHS;`;
+    if (!RHSExists) return `ERROR:${opName}_MISSING_RHS;`;
+    // parse value
+    if (isUnary) {
+      RHS = parseValue(RHS,RHSType,context);
+    } else if (op !== ".") {
+      LHS = parseValue(LHS,LHSType,context);
+      RHS = parseValue(RHS,RHSType,context);
+    } else {
+      LHS = parseValue(LHS,LHSType,context);
+      if (RHSType === "string") RHS = parseValue(RHS,RHSType,context);
+    }
+    if (!isUnary &&
+        typeof LHS === "string" &&
+        LHS.match(/^ERROR:/)) return LHS;
+    if (typeof RHS === "string" &&
+        RHS.match(/^ERROR:/)) return RHS;
+    // type checking
+    if (!objAllowed.includes(op)) {
+      if (!isUnary && typeof LHS === "object") return `ERROR:INVALID_LHS_FOR_${opName};`;
+      if (typeof RHS === "object") return `ERROR:INVALID_RHS_FOR_${opName};`;
+    }
+    // eval result
+    let result;
+    switch (op) {
+      case ".":
+        if (LHS[RHS]===undefined) return `ERROR:UNDEFINED_PROPERTY_[${RHS}];`;
+        if (!Object.hasOwn(LHS,RHS)) return `ERROR:INVALID_PROPERTY_[${RHS}];`;
+        if (LHS === player && !allowedPlayerProp.includes(RHS))
+          return "ERROR:CANNOT_ACCESS_UNALLOWED_PLAYER_PROPERTY_[" + RHS + "];";
+        if (LHS.isBlock && unallowedBlockProp.includes(RHS))
+          return "ERROR:CANNOT_ACCESS_UNALLOWED_BLOCK_PROPERTY_[" + RHS + "];";
+        result = LHS[RHS];
+        break;
+      case "!":
+        result = !RHS;
+        break;
+      case "~":
+        result = -RHS;
+        break;
+      case "**":
+        result = LHS ** RHS;
+        break;
+      case "%":
+        result = LHS % RHS;
+        break;
+      case "*":
+        result = LHS * RHS;
+        break;
+      case "/":
+        result = LHS / RHS;
+        break;
+      case "+":
+        result = LHS + RHS;
+        break;
+      case "-":
+        result = LHS - RHS;
+        break;
+      case ">":
+        result = LHS > RHS;
+        break;
+      case "<":
+        result = LHS < RHS;
+        break;
+      case ">=":
+        result = LHS >= RHS;
+        break;
+      case "<=":
+        result = LHS <= RHS;
+        break;
+      case "==":
+        result = LHS == RHS;
+        break;
+      case "!=":
+        result = LHS != RHS;
+        break;
+      case "&&":
+        result = LHS && RHS;
+        break;
+      case "||":
+        result = LHS || RHS;
+        break;
+    }
+    // replace [LHS,op,RHS] with result
+    if (isUnary) {
+      tokens.splice(pos,2,[result,"result"]);
+      depthArray.splice(pos,2,maxDepth);
+    } else {
+      tokens.splice(pos-1,3,[result,"result"]);
+      depthArray.splice(pos-1,3,maxDepth);
+    }
+  }
+  return parseValue(tokens[0][0],tokens[0][1],context);
+}
+function parseValue(token, type, context) {
+  switch (type) {
+    case "number":
+      return parseFloat(token);
+    case "string":
+      return token.slice(1,-1);
+    case "boolean":
+      if (token === "false") return false;
+      if (token === "true") return true;
+    case "variable":
+      if (context[token]===undefined || !Object.hasOwn(context,token)) return `ERROR:UNDEFINED_VARIABLE_[${token}];`;
+      return context[token];
+    case "result":
+      return token;
+  }
 }
 const maxCommandsPerSession = 1000;
 function handleEvents() {

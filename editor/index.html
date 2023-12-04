@@ -956,8 +956,8 @@
               <li>[str]: String, like letters and stuff.  Note that when used as a variable/property name, numbers are also allowed.</li>
               <li>[array]: Array, a list of variables.</li>
               <li>[obj]: Object, a collection of variables identified by a key.</li>
-              <li>[block]: Block, a template of a block that does not exist in the level. Can also be an array of [block]. Note: When selecting multiple [block] via the block selector, it'll give an array of [block].</li>
-              <li>[blockRef]: Block Reference, an existing block. Can also be an array of [blockRef]. Note: When selecting multiple [blockRef] via the block selector, it give an array of [blockRef].</li>
+              <li>[block]: Block, a template of a block that does not exist in the level. Can also be an array of [block]. Note: When selecting multiple [block] via the block selector, it gives an array of [block].</li>
+              <li>[blockRef]: Block Reference, an existing block. Can also be an array of [blockRef]. Note: When selecting multiple [blockRef] via the block selector, it gives an array of [blockRef].</li>
             </ul>
             <h3>String Literals</h3>
             One can write a string into an expression by enclosing a series of symbols with matching quotes, single (‘) or double (“).
@@ -977,7 +977,8 @@
                   <li>yv[num]: The player’s y velocity.</li>
                   <li>xa[num]: The player’s x acceleration.</li>
                   <li>ya[num]: The player’s y acceleration.</li>
-                  <li>size[num]: The player’s size</li>
+                  <li>targetSize[num]: The player’s target size (that the player will eventually grow/shrink to).</li>
+                  <li>size[num]: The player’s current size.</li>
                   <li>isDead[bool][readOnly]: Whether the player’s dead or not.</li>
                   <li>g[num]: The player’s gravitational acceleration multiplier.</li>
                   <li>xg[bool]: Whether the player’s gravity is horizontal or not.</li>
@@ -995,12 +996,6 @@
                   <li>moveSpeed[num]: The player’s move speed multiplier.</li>
                   <li>friction[bool]: Whether the player’s affected by friction or not.</li>
                   <li>gameSpeed[num]: The game speed multiplier.</li>
-                  <li>
-                    lastCollided[array][readOnly]: A list of objects that the player has last collided with.
-                    <ul>
-                      <li>lastCollided will only list non-solid blocks, as the player immediately un-collides with any solid blocks.</li>
-                    </ul>
-                  </li>
                   <li>isPlayer[bool][readOnly]: Is true.</li>
                   <li>currentRoom[str]: The room the player resides in.</li>
                   <li>
@@ -1064,17 +1059,18 @@
             <h2>Operators</h2>
             All operators are binary (as in, taking in two values) except for “~” and “!”, which are unary and only take one value (like so: ‘~numValue’, ‘!boolValue’).
             <br><br>
-            Only some operators take objects and arrays as inputs, and all others do not. They are indicated with [YesObj].
+            Only some operators can take objects and arrays as inputs, and all others do not. They are indicated with [YesObj].
             <br><br>
             Below is a list of all valid operators in japascript, in order of priority.
             <ul>
               <li>
-                “~”: Negative operator [Unary]
+                “-”: Negative operator [Unary]
                 <ul>
-                  <li>Not to be confused with “-”, which is the subtraction operator.</li>
+                  <li>Not to be confused with the subtraction operator, which uses the same symbol, but this non-distinction is actually quite intuitive.</li>
                 </ul>
               </li>
               <li>“!”: Boolean NOT operator [Unary][YesObj]</li>
+              <li>"**": Exponentiation operator</li>
               <li>"%": Modulo operator</li>
               <li>"*": Multiplication operator</li>
               <li>"/": Division operator</li>
@@ -1100,9 +1096,11 @@
             <br><br>
             To use dot notation, write the name of object/array, then write a dot and the property name, like so: object.property.
             <br><br>
-            To use square bracket notation, write the name of object/array, then write the property name in square brackets, like so: object[property].
+            To use square bracket notation, write the name of the object/array, then write the property name in square brackets, like so: object["property"].
             <br><br>
             Square brackets also acts like parenthesis, so it allows one to use an expression in place of a property name.
+            <br><br>
+            In fact, "[" and "]" are actually completely equivalent to ".(" and ")" respectively. (Yes this means that you can write stuff like "(1+1]", but why would you do that).
           </div>
           <div v-else-if="docTab=='errors'">
             All errors occur in runtime, as in, they’ll only occur as the script is running. During gameplay, if any error occurs, then it will halt the event and have it displayed in the in-game console, in this format:
@@ -1119,14 +1117,18 @@
                   <li>This usually means that the original reference block has been deleted.</li>
                 </ul>
               </li>
-              <li>UNMATCHED_BRACKETS: Occurs when parenthesis “()” does not correctly match.</li>
-              <li>UNMATCHED_SQUARE_BRACKETS: Occurs when square brackets “[]” does not correctly match.</li>
-              <li>INVALID_[operation]_SYNTAX: Occurs when an operation does not have a valid right-hand side and/or left-hand side</li>
-              <li>INVALID_[operation]_ARGUMENT: Occurs when an operator that does not take objects or arrays is given an object or array.</li>
-              <li>INVALID_STRING: Occurs when the expression contains quotes of any type in the beginning and end, but the quotes do not match.</li>
+              <li>UNKNOWN_SYMBOL_[symbol]: Occurs when an unrecognized symbol is in the expression.</li>
+              <li>UNEXPECTED_VALUE_[value]: Occurs when a value is placed directly after another value.</li>
+              <li>UNEXPECTED_OPERATION_[operation]: Occurs when an operation is placed directly after another operation.</li>
+              <li>UNEXPECTED_UNARY_OPERATION_[operation]: Occurs when an unary operation is placed directly after a value.</li>
+              <li>UNMATCHED_BRACKETS: Occurs when parenthesis “()” or square brackets “[]” does not correctly match.</li>
+              <li>[operation]_MISSING_LHS: Occurs when an operation does not have a left-hand side.</li>
+              <li>[operation]_MISSING_RHS: Occurs when an operation does not have a right-hand side.</li>
+              <li>INVALID_LHS_FOR_[operation]: Occurs when an operator that does not take objects or arrays is given an object or array on the left-hand side.</li>
+              <li>INVALID_RHS_FOR_[operation]: Occurs when an operator that does not take objects or arrays is given an object or array on the right-hand side.</li>
+              <li>INVALID_STRING: Occurs when the expression contains quotes that do not match any other quotes to for a string.</li>
               <li>UNDEFINED_[VARIABLE/PROPERTY]_[varName]: Occurs when you attempt to access a variable/property that does not exist</li>
-              <li>INVALID_[VARIABLE/PROPERTY]_[varName]: Occurs when you attempt to input an inherited property of an object/array into a command.</li>
-              <li>CANNOT_INPUT_READ_ONLY_[PLAYER/BLOCK]_PROPERTY_[propertyName]: Occurs when you attempt to input a read-only property of the player/a block into a command as a [obj] or [array].</li>
+              <li>CANNOT_ACCESS_UNALLOWED_[PLAYER/BLOCK]_PROPERTY_[propertyName]: Occurs when you attempt to access a property of the player/a block that not listed in this documentation nor in the block edit menu.</li>
               <li>CANNOT_SET_SPECIAL_VARIABLE_[propertyName]: Occurs when you attempt to alter a special variable.</li>
               <li>CANNOT_SET_READ_ONLY_[PLAYER/BLOCK]_PROPERTY_[propertyName]: Occurs when you attempt to alter a read-only property of the player/a block.</li>
               <li>CANNOT_SET_INVALID_VARIABLE_[propertyName]: Occurs when you attempt to alter an inherited property of an object/array.</li>
