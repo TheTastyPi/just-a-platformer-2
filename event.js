@@ -111,7 +111,7 @@ function tokenize(exp) {
   }
   return tokenArray;
 }
-function evalExp(exp, context, expectObjOutput = false) {
+function evalExp(exp, context) {
   let tokens = tokenize(exp);
   if (typeof tokens === "string") return tokens;
   if (tokens.length === 0) return undefined;
@@ -300,6 +300,7 @@ function parseValue(token, type, context) {
       return token;
   }
 }
+const flowControlCommands = [3, 4, 5, 6, 7, 8, 9];
 const maxCommandsPerSession = 1000;
 function handleEvents() {
   let commandCount = 0;
@@ -308,6 +309,7 @@ function handleEvents() {
     let event = player.eventQueue[i];
     let data = event[0];
     let command = event[1];
+    let commandType = command[0];
     let pause = false;
     let cont = false;
     let skip = false;
@@ -318,29 +320,35 @@ function handleEvents() {
     let unparsed = deepCopy(command);
     if (!command.parsed && loop) loop.push(unparsed);
     if (commandCount > maxCommandsPerSession) err = "MAXIMUM_COMMAND_PER_SESSION_REACHED";
-    if (!err && (!skip || [3, 4, 5, 6, 7, 8, 9].includes(command[0]))) {
-      if (skip) {
-        if (![4,5,6].includes(command[0])) command = [3, false];
-      } else if (!command.parsed) {
-        err = parseCommand(command, data);
-      }
-      if (!err) {
-        let args = [...command];
-        args.shift();
-        let output = commandData[command[0]].eventFunc({
-          event: event,
-          command: command,
-          vars: data,
-          args: args,
-          unparsed: unparsed
-        });
-        if (output === "LOOP") {
-          pause = true;
-          cont = true;
-        } else if (output === "PAUSE") {
-          pause = true;
-        } else if (output !== undefined) {
-          err = output;
+    if (!err) {
+      let ifBlockRan = latest && latest[0] === "if" && latest[2];
+      let ignoreSkip = [4,5].includes(commandType) || (commandType === 6 && !ifBlockRan);
+      if (!skip || ignoreSkip) {
+        if (commandType === 6 && ifBlockRan) {
+          command[1] = false;
+        } else err = parseCommand(command, data);
+        if (!err) {
+          let args = [...command];
+          args.shift();
+          let output = commandData[commandType].eventFunc({
+            event: event,
+            command: command,
+            vars: data,
+            args: args,
+            unparsed: unparsed
+          });
+          if (output === "LOOP") {
+            pause = true;
+            cont = true;
+          } else if (output === "PAUSE") {
+            pause = true;
+          } else if (output !== undefined) {
+            err = output;
+          }
+        }
+      } else {
+        if ([3,7,8,9].includes(commandType)) {
+          data._controls.push(["if",false,true]);
         }
       }
     }

@@ -824,3 +824,7 @@
   - New operator "**" for exponentiation
   - You no longer need escape characters in strings for characters representing operations
   - More specific error messages
+
+### 10 Dec. 2023
+
+- Fixed the if(), elseIf(), and else() command, again
