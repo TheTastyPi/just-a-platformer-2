@@ -414,6 +414,11 @@ new BlockType(
     bottomSpeed: [() => -2000, () => 2000]
   }
 );
+const tempFadeUpdtFn = (block, sprite = block.sprite, app) => {
+  if (block.temporary) {
+    sprite.alpha = block.opacity * (Math.sin(lastFrame/180)/4 + 0.75);
+  }
+};
 new BlockType(
   "Gravity Field",
   {
@@ -490,12 +495,6 @@ new BlockType(
       } else {
         g.drawCircle(25, 25, 15);
       }
-      if (!block.temporary) {
-        g.moveTo(35, 10);
-        g.lineTo(45, 10);
-        g.moveTo(40, 5);
-        g.lineTo(40, 15);
-      }
     } else {
       if (block.newg !== 0) {
         if (!block.dirOnly) {
@@ -512,12 +511,6 @@ new BlockType(
         g.drawCircle(25, 25, 15);
         f("moveTo", 25, 10);
         f("lineTo", 25, 40);
-      }
-      if (!block.temporary) {
-        g.moveTo(35, 10);
-        g.lineTo(45, 10);
-        g.moveTo(40, 5);
-        g.lineTo(40, 15);
       }
     }
     return app.renderer.generateTexture(g);
@@ -547,7 +540,7 @@ new BlockType(
       if (!block.magOnly) tempObj.xg = block.newxg;
     }
   ],
-  () => {},
+  tempFadeUpdtFn,
   {
     newg: [() => -5, () => 5],
     newxg: [],
@@ -592,12 +585,6 @@ new BlockType(
       g.moveTo(45, 5);
       g.lineTo(45, 45);
     }
-    if (!block.temporary) {
-      g.moveTo(35, 10);
-      g.lineTo(45, 10);
-      g.moveTo(40, 5);
-      g.lineTo(40, 15);
-    }
     return app.renderer.generateTexture(g);
   },
   [
@@ -613,7 +600,7 @@ new BlockType(
       tempObj.moveSpeed = block.newSpeed;
     }
   ],
-  () => {},
+  tempFadeUpdtFn,
   {
     newSpeed: [() => 0, () => 10],
     temporary: []
@@ -806,12 +793,6 @@ new BlockType(
       block.infJump * 3,
       20
     );
-    if (!block.temporary) {
-      g.moveTo(35, 10);
-      g.lineTo(45, 10);
-      g.moveTo(40, 5);
-      g.lineTo(40, 15);
-    }
     return app.renderer.generateTexture(g);
   },
   [
@@ -829,7 +810,7 @@ new BlockType(
       if (block.infJump) tempObj.maxJump = Infinity;
     }
   ],
-  () => {},
+  tempFadeUpdtFn,
   {
     newJump: [() => 0, () => 100],
     infJump: [],
@@ -1680,12 +1661,6 @@ new BlockType(
         );
       }
     }
-    if (!block.temporary) {
-      g.moveTo(20, 8);
-      g.lineTo(30, 8);
-      g.moveTo(25, 3);
-      g.lineTo(25, 13);
-    }
     return app.renderer.generateTexture(
       g,
       undefined,
@@ -1705,7 +1680,7 @@ new BlockType(
       tempObj.targetSize = block.newSize;
     }
   ],
-  () => {},
+  tempFadeUpdtFn,
   {
     newSize: [() => 6.25, () => maxBlockSize],
     temporary: []
@@ -2175,12 +2150,6 @@ new BlockType(
       block.infDash * 3,
       20
     );
-    if (!block.temporary) {
-      g.moveTo(35, 10);
-      g.lineTo(45, 10);
-      g.moveTo(40, 5);
-      g.lineTo(40, 15);
-    }
     return app.renderer.generateTexture(g);
   },
   [
@@ -2198,7 +2167,7 @@ new BlockType(
       if (block.infDash) tempObj.maxDash = Infinity;
     }
   ],
-  () => {},
+  tempFadeUpdtFn,
   {
     newDash: [() => 0, () => 100],
     infDash: [],

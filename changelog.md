@@ -828,3 +828,7 @@
 ### 10 Dec. 2023
 
 - Fixed the if(), elseIf(), and else() command, again
+
+### 18 Dec. 2023
+
+- Changed the appearance of temporary/non-temporary status fields
