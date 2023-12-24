@@ -548,6 +548,7 @@ new CommandType(
   "log(text)\nAdds a message to the console.",
   ({ args }) => {
     let [text] = args;
+    if (!text) text = "\n";
     if (typeof text === "object") return "CANNOT_LOG_OBJ";
     if (!(typeof text === "string")) text = text.toString();
     consoleLog(text, "log");
@@ -560,6 +561,7 @@ new CommandType(
   "err(text)\nAdds an error to the console.",
   ({ args }) => {
     let [text] = args;
+    if (!text) text = "\n";
     if (typeof text === "object") return "CANNOT_ERR_OBJ";
     if (!(typeof text === "string")) text = text.toString();
     consoleLog(text, "err");

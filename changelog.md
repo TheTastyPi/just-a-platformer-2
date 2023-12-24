@@ -832,3 +832,7 @@
 ### 18 Dec. 2023
 
 - Changed the appearance of temporary/non-temporary status fields
+
+### 24 Dec. 2023
+
+- Fixed log() and err() crashing the game if they are ran without inputs. They now instead give an empty log/error when ran without input.
