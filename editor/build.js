@@ -186,12 +186,6 @@ function addTexture(name) {
   let replace = editor.textures[name] !== undefined;
   if (!replace) editor.textureNames.push(name);
   let source = editor.textureSources[name];
-  for (let j in source) {
-    let block = source[j];
-    for (let i in block) {
-      if (blockData[0].defaultBlock[i] === undefined) delete block[i];
-    }
-  }
   editor.textures[name] = getTextureFromSource(source);
   updateTextureDisp();
   if (replace) {
