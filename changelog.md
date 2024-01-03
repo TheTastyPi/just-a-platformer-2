@@ -837,3 +837,7 @@
 
 - Fixed log() and err() crashing the game if they are ran without inputs. They now instead give an empty log/error when ran without input.
 - Fixed custom textures not properly displaying any block whose texture depends on a special property other than 'color'
+
+#### 2 Jan. 2024
+
+- Unstable Block now also reacts to the player when non-solid

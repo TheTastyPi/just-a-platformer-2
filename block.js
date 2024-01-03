@@ -1941,7 +1941,7 @@ new BlockType(
     g.endFill();
     return app.renderer.generateTexture(g);
   },
-  [unstableBlock, unstableBlock, unstableBlock, unstableBlock, () => {}],
+  [unstableBlock, unstableBlock, unstableBlock, unstableBlock, unstableBlock],
   (block, sprite = block.sprite, app) => {
     let ratio;
     if (block.active) {
