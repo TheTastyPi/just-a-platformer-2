@@ -16,6 +16,7 @@ var defaultPlayer = {
   wallJumpDir: 0,
   maxDash: 0,
   currentDash: 1,
+  dashTimer: 0,
   moveSpeed: 1,
   friction: true,
   gameSpeed: 1,
@@ -114,9 +115,6 @@ var display = new PIXI.Application({
 var levelLayer = new PIXI.Container();
 levelLayer.sortableChildren = true;
 display.stage.addChild(levelLayer);
-var levelMask = new PIXI.Graphics();
-display.stage.addChild(levelMask);
-levelLayer.mask = levelMask;
 var canJump = true;
 var canWJ = true;
 var canDash = true;
@@ -136,7 +134,6 @@ var dt = 0;
 var coyoteTime = interval*3;
 var coyoteTimer = coyoteTime;
 var dashDuration = 200;
-var dashTimer = 0;
 var dashSpeed = 500;
 var prevPlayer = null;
 var prevDynObjs = [];
@@ -157,16 +154,15 @@ function nextFrame(timeStamp) {
   if (dt < timeLimit) {
     while (dt >= interval) {
       dt -= interval;
-      if (dashTimer > 0) {
-        dashTimer -= interval;
-        dashParticleContainer.x = playerDisp.x;
-        dashParticleContainer.y = playerDisp.y;
+      updateDashTrail();
+      if (player.dashTimer > 0) {
+        player.dashTimer -= interval;
+        addToDashTrail();
       }
-      if (dashTimer < 0) {
-        dashTimer = 0;
+      if (player.dashTimer < 0) {
+        player.dashTimer = 0;
         player.xv = 0;
         player.yv = 0;
-        dashParticle.cleanup();
       }
       for (let i in player.timerList) {
         let data = player.timerList[i];
@@ -706,7 +702,7 @@ function doPhysics(obj, t, isPlayer) {
         giveJump
       ) {
         obj.currentJump = tempObj.maxJump;
-        if (dashTimer === 0) obj.currentDash = tempObj.maxDash;
+        if (player.dashTimer === 0) obj.currentDash = tempObj.maxDash;
         coyoteTimer = coyoteTime;
       } else {
         if (prevg !== tempObj.g || prevxg !== tempObj.xg) coyoteTimer = -1;
@@ -764,21 +760,18 @@ function doPhysics(obj, t, isPlayer) {
       isPlayer &&
       control.dash &&
       tempObj.currentDash > 0 &&
-      dashTimer === 0 &&
+      player.dashTimer === 0 &&
       canDash
     ) {
       if (control.left || control.right || control.up || control.down) {
         player.xv = 0;
         player.yv = 0;
-        dashTimer = dashDuration - interval;
+        player.dashTimer = dashDuration - interval;
         obj.currentDash--;
         runEvent(globalEvents.onDash);
         runEvent(roomEvents[player.currentRoom].onDash, player.currentRoom);
         canDash = false;
-        dashParticle.init(newDashEmitterConfig());
-        dashParticle.rotate(Math.atan2(control.up-control.down,control.left-control.right));
-        dashParticle.updateSpawnPos(player.size/2,player.size/2);
-        dashParticle.playOnce();
+        // init dashTrail
       }
       if (control.left) {
         player.xv = -dashSpeed;
@@ -792,7 +785,7 @@ function doPhysics(obj, t, isPlayer) {
       }
     }
     // jumping
-    if (isPlayer && dashTimer === 0) {
+    if (isPlayer && player.dashTimer === 0) {
       let jumpEvent = function () {
         player.jumpOn = !player.jumpOn;
         runEvent(globalEvents.onJump);
@@ -924,7 +917,7 @@ function doPhysics(obj, t, isPlayer) {
         obj.xa += fricAcc;
     }
     // change velocity
-    if (dashTimer === 0 || !isPlayer) {
+    if (player.dashTimer === 0 || !isPlayer) {
       if (accelx) obj.xv += obj.xa * t * (!tempObj.xg * 74 + 1);
       if (accely) obj.yv += obj.ya * t * (tempObj.xg * 74 + 1);
       if (

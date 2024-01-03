@@ -6,106 +6,10 @@ playerDispCore.zIndex = 1;
 playerDispCore.tint = PIXI.utils.string2hex("#ffffff");
 levelLayer.addChild(playerDisp);
 playerDisp.addChild(playerDispBody, playerDispCore);
-var dashParticleContainer = new PIXI.Container();
-levelLayer.addChild(dashParticleContainer);
-dashParticleContainer.zIndex = -2;
-var dashParticle = new PIXI.particles.Emitter(
-  dashParticleContainer,
-  newDashEmitterConfig()
-)
-function newDashEmitterConfig() {
-  return {
-    lifetime: {
-      min: dashDuration/1000,
-      max: dashDuration/1000
-    },
-    autoUpdate: true,
-    frequency: 0.01,
-    spawnChance: 1,
-    particlesPerWave: 1,
-    emitterLifetime: dashDuration/1000,
-    maxParticles: 1000,
-    pos: {
-      x: player.size/2,
-      y: player.size/2
-    },
-    addAtBack: false,
-    behaviors: [
-      {
-        type: 'alpha',
-        config: {
-          alpha: {
-            list: [
-              {
-                value: 1,
-                time: 0
-              },
-              {
-                value: 0.25,
-                time: 0.25
-              },
-              {
-                value: 0,
-                time: 1
-              }
-            ],
-          },
-        }
-      },
-      {
-        type: 'scaleStatic',
-        config: {
-          min: player.size/50,
-          max: player.size/50
-        }
-      },
-      {
-        type: 'colorStatic',
-        config: {
-          color: "00ff00"
-        }
-      },
-      {
-        type: 'moveSpeedStatic',
-        config: {
-          max: dashSpeed,
-          min: dashSpeed
-        }
-      },
-      {
-        type: 'rotationStatic',
-        config: {
-          min: 0,
-          max: 0
-        }
-      },
-      {
-        type: 'noRotation',
-        config: {
-          rotation: 0
-        }
-      },
-      {
-        type: 'spawnShape',
-        config: {
-          type: 'rect',
-          data: {
-            x: 0,
-            y: 0,
-            w: 0,
-            h: 0
-          }
-        }
-      },
-      {
-        type: 'textureSingle',
-        config: {
-          texture: blockData[0].defaultTexture
-        }
-      }
-    ],
-  };
-}
+var dashTrail = new PIXI.ParticleContainer();
+dashTrail.zIndex = -2;
+dashTrail.tint = 0x00ff00;
+levelLayer.addChild(dashTrail);
 var effectiveMaxJump = 1;
 var effectiveMaxDash = 0;
 function drawPlayer() {
@@ -116,7 +20,7 @@ function drawPlayer() {
   if (effectiveMaxDash === Infinity) mdRatio = 1;
   if (effectiveMaxDash === 0) mdRatio = 0;
   mdRatio = Math.sqrt(mdRatio);
-  let dtRatio = dashTimer / dashDuration;
+  let dtRatio = player.dashTimer / dashDuration;
   let tint = [(1 - mjRatio) * (1 - dtRatio), dtRatio, mjRatio * (1 - dtRatio)];
   if (editor?.invincible) {
     tint = [1, 0, 1];
@@ -147,7 +51,7 @@ function drawLevel(clear = false) {
   if (clear) {
     levelLayer.removeChildren();
     levelLayer.addChild(playerDisp);
-    levelLayer.addChild(dashParticleContainer);
+    levelLayer.addChild(dashTrail);
     forAllVisible((x) => (x.dupSprite = null));
     player.dupSprite = null;
   }
@@ -289,14 +193,6 @@ function adjustScreen(instant = false) {
       ) + "px";
     levelLayer.x = camx;
     levelLayer.y = camy;
-    levelMask.x = Math.min(
-      Math.max(0, camx),
-      camx + Math.max(0, level.length * 50 * cams - window.innerWidth)
-    );
-    levelMask.y = Math.min(
-      Math.max(0, camy),
-      camy + Math.max(0, level[0].length * 50 * cams - window.innerHeight)
-    );
     if (editor !== undefined && gridDisp.visible) {
       gridDisp.x =
         Math.min(
@@ -368,10 +264,6 @@ function adjustLevelSize() {
   id("background").style.height = h + "px";
   levelLayer.scale.set(cams, cams);
   selectLayer?.scale?.set(cams, cams);
-  levelMask.clear();
-  levelMask.beginFill(0xff0000);
-  levelMask.drawRect(0, 0, w, h);
-  levelMask.endFill();
   editOptions.width = level.length;
   editOptions.height = level[0].length;
 }
@@ -523,4 +415,18 @@ function createConveyorTexture(app = display) {
     app.renderer.generateTexture(hori),
     app.renderer.generateTexture(vert)
   ];
+}
+function addToDashTrail() {
+  let trailPart = new PIXI.Sprite(blockData[0].defaultTexture);
+  trailPart.x = player.x;
+  trailPart.y = player.y;
+  trailPart.width = player.size;
+  trailPart.height = player.size;
+  dashTrail.addChild(trailPart);
+}
+function updateDashTrail() {
+  dashTrail.children.map(s=>{
+    s.alpha-=0.12;
+    if (s.alpha < 0) dashTrail.removeChild(s);
+  });
 }

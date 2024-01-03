@@ -841,3 +841,5 @@
 #### 2 Jan. 2024
 
 - Unstable Block now also reacts to the player when non-solid
+- Improved the trail for dashing
+- Added the editable player property "dashTimer" for events

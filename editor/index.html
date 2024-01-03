@@ -993,6 +993,11 @@
                   </li>
                   <li>maxDash[num]: The player’s maximum dash amount.</li>
                   <li>currentDash[num]: The player’s current dash amount.</li>
+                  <li>dashTimer[num]: Time left until dash ends in ms.
+                    <ul>
+                      <li>Note: When using this to initiate a dash, the dash speed is the player's xv and yv.</li>
+                    </ul>
+                  </li>
                   <li>moveSpeed[num]: The player’s move speed multiplier.</li>
                   <li>friction[bool]: Whether the player’s affected by friction or not.</li>
                   <li>gameSpeed[num]: The game speed multiplier.</li>
@@ -1232,7 +1237,6 @@
   <script src="../option.js"></script>
   <script src="../lz-string.min.js"></script>
   <script src="../pixi-legacy.min.js"></script>
-  <script src="../particle-emitter.min.js"></script>
   <script src="../vue.min.js"></script>
   <script src="../base.js"></script>
   <script src="../block.js"></script>
