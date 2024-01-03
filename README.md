@@ -17,6 +17,5 @@ Sequel to "just a platformer", with several new features.
 ### Libraries
 
 - The game is rendered using [PixiJS](https://pixijs.com/).
-    - Additionally, particles are handled by [pixijs/particle-emitter] (http://pixijs.io/particle-emitter/docs/)
 - The game uses [Vue.JS](https://vuejs.org/) for the UI.
 - The level editor also uses [lz-string](https://github.com/pieroxy/lz-string/) to compress save data.
