@@ -437,13 +437,11 @@ function load(name) {
 }
 function exportSave(name) {
   let exportData = [...editor.saves[name], name];
-  id("exportArea").value = JSON.stringify(exportData);
-  id("exportArea").style.display = "inline";
-  id("exportArea").focus();
-  id("exportArea").select();
-  document.execCommand("copy");
-  id("exportArea").style.display = "none";
-  alert("Level data copied to clipboard!");
+  let text = JSON.stringify(exportData);
+  navigator.clipboard.writeText(text).then(
+    ()=>{alert("Level data copied to clipboard!")},
+    ()=>{alert("Export failed. Please try again.")}
+  );
 }
 function importSave() {
   let exportData = JSON.parse(prompt("Please input export data."));
