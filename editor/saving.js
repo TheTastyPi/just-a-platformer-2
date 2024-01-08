@@ -316,124 +316,123 @@ function save() {
 function load(name) {
   rollBack(true);
   let save = editor.saves[name];
-  if (save) {
-    let saveData;
-    editor.textures = {};
-    if (save[9]) {
-      editor.textureNames = [...save[10]];
-      editor.textureSources = str2textures(save[9]);
-      for (let i in editor.textureSources) {
-        editor.textures[i] = getTextureFromSource(editor.textureSources[i]);
-      }
-    } else {
-      editor.textureNames = [];
-      editor.textureSources = {};
+  if (!save) return;
+  let saveData;
+  editor.textures = {};
+  if (save[9]) {
+    editor.textureNames = [...save[10]];
+    editor.textureSources = str2textures(save[9]);
+    for (let i in editor.textureSources) {
+      editor.textures[i] = getTextureFromSource(editor.textureSources[i]);
     }
-    if (save[7]) {
-      editor.presetNames = [...save[8]];
-      editor.presets = str2presets(save[7]);
-    } else {
-      editor.presetNames = [];
-      editor.presets = {};
-    }
-    let noRooms = false;
-    if (save[2] !== undefined) editor.roomOrder = save[2];
-    try {
-      saveData = str2lvls(save[0], save[4] !== undefined);
-      levels = saveData[0];
-    } catch (err) {
-      saveData = str2lvl(save[0]);
-      levels = { [name]: saveData[0] };
-      levels[name].map((x) =>
-        x.map((y) =>
-          y.map((b) => {
-            b.currentRoom = name;
-          })
-        )
-      );
-      for (let i in saveData[1]) saveData[1][i].currentRoom = name;
-      for (let i in saveData[2]) saveData[2][i].currentRoom = name;
-      noRooms = true;
-    }
-    animatedObjs = saveData[2];
-    startState = str2pState(save[1]);
-    if (noRooms) {
-      startState.currentRoom = name;
-      player.currentRoom = name;
-      editor.roomOrder = Object.keys(levels);
-    }
-    if (!editor.roomOrder.includes(startState.currentRoom)) {
-      startState.currentRoom = editor.roomOrder[0];
-      player.currentRoom = editor.roomOrder[0];
-    }
-    roomEvents = {};
-    globalEvents = {};
-    if (save[4]) {
-      let lvlsTemp = {};
-      for (let i in editor.roomOrder) {
-        lvlsTemp[editor.roomOrder[i]] = levels[i];
-      }
-      levels = lvlsTemp;
-      forAllBlock((b, x, y, i, room) => {
-        decompressEvents(b.events, "block", room);
-        for (let prop in b) {
-          if (propData[prop]?.[0] === "block")
-            decompressEvents(b[prop].events, "block", room);
-        }
-      });
-      let roomEventsComp = JSON.parse(
-        LZString.decompressFromEncodedURIComponent(save[4])
-      );
-      roomEventsComp.map((x) => decompressEvents(x, "room"));
-      for (let i in editor.roomOrder) {
-        roomEvents[editor.roomOrder[i]] = roomEventsComp[i];
-      }
-      globalEvents = JSON.parse(
-        LZString.decompressFromEncodedURIComponent(save[5])
-      );
-      decompressEvents(globalEvents, "global");
-    } else {
-      for (let i in editor.roomOrder) {
-        roomEvents[editor.roomOrder[i]] = {};
-      }
-    }
-    if (save[3] === undefined) {
-      editor.links = [];
-    } else {
-      let links = JSON.parse(
-        LZString.decompressFromEncodedURIComponent(save[3])
-      );
-      editor.links = links.map((l) => l.map((adr) => getBlockFromAddress(adr)));
-      for (let i in editor.links) {
-        let link = editor.links[i];
-        for (let j in link) {
-          let block = link[j];
-          block.link = link;
-        }
-      }
-    }
-    if (save[6]) {
-      editor.viewLayers = [...save[6]];
-    } else editor.viewLayers = [];
-    assignIndex();
-    dynamicObjs = saveData[1];
-    diffStart = [];
-    diffSave = [];
-    togglePlayMode();
-    respawn(true, false);
-    drawLevel(true);
-    switchBlocks.map(updateAll);
-    updateAll(27);
-    updateAll(30);
-    forAllBlock(updateBlockState, 26);
-    adjustLevelSize();
-    adjustScreen(true);
-    updateGrid();
-    deselect();
-    editor.currentSave = name;
-    updatePresetDisp();
-    updateTextureDisp();
+  } else {
+    editor.textureNames = [];
+    editor.textureSources = {};
   }
+  if (save[7]) {
+    editor.presetNames = [...save[8]];
+    editor.presets = str2presets(save[7]);
+  } else {
+    editor.presetNames = [];
+    editor.presets = {};
+  }
+  let noRooms = false;
+  if (save[2] !== undefined) editor.roomOrder = save[2];
+  try {
+    saveData = str2lvls(save[0], save[4] !== undefined);
+    levels = saveData[0];
+  } catch (err) {
+    saveData = str2lvl(save[0]);
+    levels = { [name]: saveData[0] };
+    levels[name].map((x) =>
+      x.map((y) =>
+        y.map((b) => {
+          b.currentRoom = name;
+        })
+      )
+    );
+    for (let i in saveData[1]) saveData[1][i].currentRoom = name;
+    for (let i in saveData[2]) saveData[2][i].currentRoom = name;
+    noRooms = true;
+  }
+  animatedObjs = saveData[2];
+  startState = str2pState(save[1]);
+  if (noRooms) {
+    startState.currentRoom = name;
+    player.currentRoom = name;
+    editor.roomOrder = Object.keys(levels);
+  }
+  if (!editor.roomOrder.includes(startState.currentRoom)) {
+    startState.currentRoom = editor.roomOrder[0];
+    player.currentRoom = editor.roomOrder[0];
+  }
+  roomEvents = {};
+  globalEvents = {};
+  if (save[4]) {
+    let lvlsTemp = {};
+    for (let i in editor.roomOrder) {
+      lvlsTemp[editor.roomOrder[i]] = levels[i];
+    }
+    levels = lvlsTemp;
+    forAllBlock((b, x, y, i, room) => {
+      decompressEvents(b.events, "block", room);
+      for (let prop in b) {
+        if (propData[prop]?.[0] === "block")
+          decompressEvents(b[prop].events, "block", room);
+      }
+    });
+    let roomEventsComp = JSON.parse(
+      LZString.decompressFromEncodedURIComponent(save[4])
+    );
+    roomEventsComp.map((x) => decompressEvents(x, "room"));
+    for (let i in editor.roomOrder) {
+      roomEvents[editor.roomOrder[i]] = roomEventsComp[i];
+    }
+    globalEvents = JSON.parse(
+      LZString.decompressFromEncodedURIComponent(save[5])
+    );
+    decompressEvents(globalEvents, "global");
+  } else {
+    for (let i in editor.roomOrder) {
+      roomEvents[editor.roomOrder[i]] = {};
+    }
+  }
+  if (save[3] === undefined) {
+    editor.links = [];
+  } else {
+    let links = JSON.parse(
+      LZString.decompressFromEncodedURIComponent(save[3])
+    );
+    editor.links = links.map((l) => l.map((adr) => getBlockFromAddress(adr)));
+    for (let i in editor.links) {
+      let link = editor.links[i];
+      for (let j in link) {
+        let block = link[j];
+        block.link = link;
+      }
+    }
+  }
+  if (save[6]) {
+    editor.viewLayers = [...save[6]];
+  } else editor.viewLayers = [];
+  assignIndex();
+  dynamicObjs = saveData[1];
+  diffStart = [];
+  diffSave = [];
+  togglePlayMode();
+  respawn(true, false);
+  drawLevel(true);
+  switchBlocks.map(updateAll);
+  updateAll(27);
+  updateAll(30);
+  forAllBlock(updateBlockState, 26);
+  adjustLevelSize();
+  adjustScreen(true);
+  updateGrid();
+  deselect();
+  editor.currentSave = name;
+  updatePresetDisp();
+  updateTextureDisp();
 }
 function exportSave(name) {
   let exportData = [...editor.saves[name], name];
@@ -468,6 +467,8 @@ function deleteSave(name) {
 }
 function renameSave(name) {
   let newName = prompt("Please input new name.");
+  while (editor.saveOrder.includes(newName))
+    newName = prompt("Name taken. Please input new save name.");
   if (newName !== null && newName !== "" && newName !== name) {
     editor.saveOrder.splice(editor.saveOrder.indexOf(name), 1, newName);
     editor.saves[newName] = deepCopy(editor.saves[name]);
