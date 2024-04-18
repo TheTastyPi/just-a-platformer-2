@@ -847,3 +847,4 @@
 #### 17 Apr. 2024
 
 - Fixed a bug where events in presets don't get properly loaded (finally)
+- Actually added the editable player property "dashTimer" for events (ig i just hallucinated adding it before)
