@@ -843,3 +843,7 @@
 - Unstable Block now also reacts to the player when non-solid
 - Improved the trail for dashing
 - Added the editable player property "dashTimer" for events
+
+#### 17 Apr. 2024
+
+- Fixed a bug where events in presets don't get properly loaded (finally)

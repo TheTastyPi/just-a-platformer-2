@@ -163,6 +163,7 @@ function str2presets(str) {
   let presets = {};
   for (let i in editor.presetNames) {
     decompressBlock(comp[i], undefined, undefined, false);
+    decompressEvents(comp[i].events);
     presets[editor.presetNames[i]] = comp[i];
   }
   return presets;

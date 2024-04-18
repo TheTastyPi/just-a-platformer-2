@@ -907,37 +907,27 @@ function doPhysics(obj, t, isPlayer) {
       yFric = false;
     }
     if (tempObj.xg || gdyv !== 0) {
-      let fricAcc = -dyv * yFric * friction + gdyv;
+      let fricAcc = (-dyv * yFric * friction + gdyv) * 75;
       if (isPlayer || !(dirBlock[2]?.yv > 0 || dirBlock[3]?.yv < 0))
         obj.ya += fricAcc;
     }
     if (!tempObj.xg || gdxv !== 0) {
-      let fricAcc = -dxv * xFric * friction + gdxv;
+      let fricAcc = (-dxv * xFric * friction + gdxv) * 75;
       if (isPlayer || !(dirBlock[0]?.xv > 0 || dirBlock[1]?.xv < 0))
         obj.xa += fricAcc;
     }
     // change velocity
     if (player.dashTimer === 0 || !isPlayer) {
-      if (accelx) obj.xv += obj.xa * t * (!tempObj.xg * 74 + 1);
-      if (accely) obj.yv += obj.ya * t * (tempObj.xg * 74 + 1);
-      if (
-        accelx &&
-        Math.abs(dxv - gdxv) > Math.abs(obj.xa) &&
-        Math.sign(dxv - gdxv) === Math.sign(obj.xa)
-      )
-        obj.xv =
-          obj.xa +
-          (tempObj.g < 0 ? dirBlock[2]?.xv ?? 0 : 0) +
-          (tempObj.g > 0 ? dirBlock[3]?.xv ?? 0 : 0);
-      if (
-        accely &&
-        Math.abs(dyv - gdyv) > Math.abs(obj.ya) &&
-        Math.sign(dyv - gdyv) === Math.sign(obj.ya)
-      )
-        obj.yv =
-          obj.ya +
-          (tempObj.g < 0 ? dirBlock[0]?.yv ?? 0 : 0) +
-          (tempObj.g > 0 ? dirBlock[1]?.yv ?? 0 : 0);
+      if (accelx) obj.xv += obj.xa * t;
+      if (accely) obj.yv += obj.ya * t;
+      // enforce terminal velocity
+      if (obj.xg && Math.abs(obj.xv) > Math.abs(obj.xa)
+      && Math.sign(obj.xv) == Math.sign(obj.xa)) {
+        obj.xv = obj.xa
+      } else if (Math.abs(obj.yv) > Math.abs(obj.ya)
+      && Math.sign(obj.yv) == Math.sign(obj.ya)) {
+        obj.yv = obj.ya ;
+      }
       if (tempObj.xg) {
         if (Math.abs(dyv - gdyv) < 0.1 && accely) obj.yv -= dyv - gdyv;
       } else {
