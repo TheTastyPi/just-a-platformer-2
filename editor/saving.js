@@ -62,6 +62,9 @@ function decompressEvents(events, scope, room) {
           line[k].map((b) => decompressBlock(b, room));
           line[k].map((b) => (b.isRootBlock = false));
         }
+        if (line[k][0]===undefined) {
+          line[k][0] = "";
+        }
       }
     }
     for (let prop in defaultEventData) {
@@ -163,7 +166,6 @@ function str2presets(str) {
   let presets = {};
   for (let i in editor.presetNames) {
     decompressBlock(comp[i], undefined, undefined, false);
-    decompressEvents(comp[i].events);
     presets[editor.presetNames[i]] = comp[i];
   }
   return presets;
@@ -330,6 +332,13 @@ function load(name) {
     editor.textureNames = [];
     editor.textureSources = {};
   }
+  if (save[7]) {
+    editor.presetNames = [...save[8]];
+    editor.presets = str2presets(save[7]);
+  } else {
+    editor.presetNames = [];
+    editor.presets = {};
+  }
   let noRooms = false;
   if (save[2] !== undefined) editor.roomOrder = save[2];
   try {
@@ -386,17 +395,13 @@ function load(name) {
       LZString.decompressFromEncodedURIComponent(save[5])
     );
     decompressEvents(globalEvents, "global");
+    for (let i in editor.presets) {
+      decompressEvents(editor.presets[i].events);
+    }
   } else {
     for (let i in editor.roomOrder) {
       roomEvents[editor.roomOrder[i]] = {};
     }
-  }
-  if (save[7]) {
-    editor.presetNames = [...save[8]];
-    editor.presets = str2presets(save[7]);
-  } else {
-    editor.presetNames = [];
-    editor.presets = {};
   }
   if (save[3] === undefined) {
     editor.links = [];

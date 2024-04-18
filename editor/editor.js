@@ -391,11 +391,6 @@ function addTooltip(elem, text) {
   });
   elem.addEventListener("mouseleave", hideTooltips);
 }
-function blurAll() {
-  id("exportArea").style.display = "inline";
-  id("exportArea").focus();
-  id("exportArea").style.display = "none";
-}
 function togglePlayMode() {
   editor.playMode = !editor.playMode;
   if (editor.playMode) {

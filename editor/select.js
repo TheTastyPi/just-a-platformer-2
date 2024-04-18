@@ -343,7 +343,6 @@ function chooseFromLevel(type, chooseObj, chooseKey, inEvent = false) {
     default:
   }
   editor.displayTooltip = guide;
-  blurAll();
 }
 function stopChoose() {
   if (editor.chooseType === "region") {
