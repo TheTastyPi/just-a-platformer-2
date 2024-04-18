@@ -330,13 +330,6 @@ function load(name) {
     editor.textureNames = [];
     editor.textureSources = {};
   }
-  if (save[7]) {
-    editor.presetNames = [...save[8]];
-    editor.presets = str2presets(save[7]);
-  } else {
-    editor.presetNames = [];
-    editor.presets = {};
-  }
   let noRooms = false;
   if (save[2] !== undefined) editor.roomOrder = save[2];
   try {
@@ -397,6 +390,13 @@ function load(name) {
     for (let i in editor.roomOrder) {
       roomEvents[editor.roomOrder[i]] = {};
     }
+  }
+  if (save[7]) {
+    editor.presetNames = [...save[8]];
+    editor.presets = str2presets(save[7]);
+  } else {
+    editor.presetNames = [];
+    editor.presets = {};
   }
   if (save[3] === undefined) {
     editor.links = [];
