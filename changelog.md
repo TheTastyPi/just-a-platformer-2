@@ -853,3 +853,7 @@
 
 - Actually fixed the bug where events in presets don't get properly loaded
 - Fixed a bug related to loading multi-input commands
+
+#### 27 Apr. 2024
+
+- Fixed a bug where using the property edit menu to move a block from one grid space into another grid space can sometime cause unintended behavior

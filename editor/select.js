@@ -301,7 +301,11 @@ function confirmPropEdit(block) {
     block.y = y;
     block.size = size;
     block.currentRoom = currentRoom;
-  } else Object.assign(block, newBlock);
+  } else {
+    let { index } = block;
+    Object.assign(block, newBlock);
+    block.index = index;
+  }
   updateBlock(block, true);
   updateBlockState(block);
 }
