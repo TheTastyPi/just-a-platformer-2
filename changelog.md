@@ -857,3 +857,8 @@
 #### 27 Apr. 2024
 
 - Fixed a bug where using the property edit menu to move a block from one grid space into another grid space can sometime cause unintended behavior
+
+### 7 Sep. 2024
+
+- Fixed a bug where events originating from a block can still run even after the source block is removed.
+- Fixed a bug where blocks deleted mid-gameplay weren't getting properly reverted after reset.

@@ -308,6 +308,11 @@ function handleEvents() {
     commandCount++;
     let event = player.eventQueue[i];
     let data = event[0];
+    if (data.source?.isBlock && data.source.removed) {
+      player.eventQueue.splice(i, 1);
+      i--;
+      continue;
+    }
     let command = event[1];
     let commandType = command[0];
     let pause = false;

@@ -4,7 +4,6 @@ function setSpawn(start = false) {
   for (let i in diffSave) {
     let diff = diffSave[i];
     diff[1] = deepCopy(diff[2]);
-    if (start) diff[0] = deepCopy(diff[2]);
   }
   if (start) {
     startState = saveState;
@@ -61,7 +60,7 @@ function logChange(block) {
     !diffSave.find((x) => x[2] === block) &&
     (page === "game" || editor.playMode)
   ) {
-    diffSave.push([deepCopy(block), undefined, block]);
+    diffSave.push([deepCopy(block), deepCopy(block), block]);
   }
 }
 function rollBackBlock(block, start) {
@@ -87,7 +86,7 @@ function rollBackBlock(block, start) {
 function rollBack(start) {
   for (let i = diffSave.length - 1; i > -1; i--) {
     let diff = diffSave[i];
-    let useStart = start || diff[1] === undefined;
+    let useStart = start || diff[0] === diff[1];
     let init = diff[useStart ? 0 : 1];
     let end = diff[2];
     if (init === end) continue;
@@ -99,7 +98,7 @@ function rollBack(start) {
       if (!diff[0] && !diff[1]) diffSave.splice(i, 1);
     } else if (!end) {
       let index = init.index;
-      let block = addBlock(deepCopy(init), false);
+      let block = addBlock(init, false);
       shiftIndex(block, index);
       diff[2] = block;
     } else {
