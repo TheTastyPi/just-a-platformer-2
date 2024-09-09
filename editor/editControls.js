@@ -6,6 +6,7 @@ document.addEventListener("keydown", function (event) {
       editor.editMode = !editor.editMode;
       buildDisp.visible = !editor.editMode;
       selectDisp.visible = editor.editMode;
+      deselect();
       break;
     case "Backspace":
       if (editor.editMode) {
@@ -41,7 +42,7 @@ document.addEventListener("keydown", function (event) {
           copy();
           addAction("removeBlock", [...editor.editSelect]);
           for (let i in editor.editSelect) {
-            removeBlock(editor.editSelect[i]);
+            removeBlock(editor.editSelect[i], false);
           }
           deselect();
         }
@@ -252,7 +253,7 @@ id("display").addEventListener("mousedown", function (event) {
       if (event.shiftKey && (event.ctrlKey || event.metaKey)) {
         camFocused = true;
         adjustScreen();
-      } else {
+      } else if (editor.editMode) {
         if (editor.playMode) return;
         editor.moveSelect = [0, 0];
         if (editor.editSelect.length === 0) {
@@ -267,6 +268,16 @@ id("display").addEventListener("mousedown", function (event) {
           );
         }
         editor.moveStart = [editor.selectBox.x, editor.selectBox.y];
+      } else {
+        let removed = getSelected({
+          x: xPos,
+          y: yPos,
+          width: 0,
+          height: 0
+        })[0];
+        if (removed === undefined) return;
+        addAction("removeBlock", [removed]);
+        removeBlock(removed, false);
       }
       break;
     case 1: // middle

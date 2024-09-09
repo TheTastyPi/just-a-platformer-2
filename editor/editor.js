@@ -18,7 +18,7 @@ var editor = {
     mins: Infinity
   },
   gridSize: 50,
-  gridSnap: [false, false, false],
+  gridSnap: [true, false, false],
   snapOverride: false,
   snapRadius: 12.5,
   expandAmt: 1,

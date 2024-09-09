@@ -862,3 +862,9 @@
 
 - Fixed a bug where events originating from a block can still run even after the source block is removed.
 - Fixed a bug where blocks deleted mid-gameplay weren't getting properly reverted after reset.
+
+### 8 Sep. 2024
+
+- Corner grid snapping is now on by default.
+- Added the ability to delete blocks while in build mode via \[RClick].
+- Blocks now get deselected when you switch editor modes.
