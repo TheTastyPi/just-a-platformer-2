@@ -868,3 +868,7 @@
 - Corner grid snapping is now on by default.
 - Added the ability to delete blocks while in build mode via \[RClick].
 - Blocks now get deselected when you switch editor modes.
+
+### 14 Sep. 2024
+
+- While in god mode, the player now becomes green when they should've died.

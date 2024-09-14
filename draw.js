@@ -12,6 +12,7 @@ dashTrail.tint = 0x00ff00;
 levelLayer.addChild(dashTrail);
 var effectiveMaxJump = 1;
 var effectiveMaxDash = 0;
+var shouldHaveDied = false;
 function drawPlayer() {
   let mjRatio = player.currentJump / effectiveMaxJump;
   if (effectiveMaxJump === Infinity) mjRatio = 1;
@@ -23,7 +24,11 @@ function drawPlayer() {
   let dtRatio = player.dashTimer / dashDuration;
   let tint = [(1 - mjRatio) * (1 - dtRatio), dtRatio, mjRatio * (1 - dtRatio)];
   if (editor?.invincible) {
-    tint = [1, 0, 1];
+    if (shouldHaveDied) {
+      tint = [0, 1, 0];
+    } else {
+      tint = [1, 0, 1];
+    }
     mdRatio = 1;
   }
   updatePlayerDisp(playerDisp, tint, mdRatio);

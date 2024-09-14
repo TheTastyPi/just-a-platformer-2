@@ -591,6 +591,7 @@ function doPhysics(obj, t, isPlayer) {
   ) {
     obj.isDead = true;
   }
+  if (isPlayer && editor?.invincible) shouldHaveDied = obj.isDead;
   if (subObj.invincible || (isPlayer && editor?.invincible)) obj.isDead = false;
   // MOVEMENT & EVENTS
   if (!isDead && !obj.isDead) {
@@ -749,6 +750,7 @@ function doPhysics(obj, t, isPlayer) {
         prevTextDisp = [];
       }
     }
+    if (isPlayer && editor?.invincible) shouldHaveDied = obj.isDead;
     if (tempObj.invincible || (isPlayer && editor?.invincible)) {
       obj.isDead = false;
       if (isPlayer) {
