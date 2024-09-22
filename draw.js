@@ -300,10 +300,10 @@ function createTexture(block, app) {
   } else t = blockData[block.type].getTexture(block, app);
   return t;
 }
-function updateTexture(block) {
-  if (block.sprite.texture !== blockData[block.type].defaultTexture)
-    block.sprite.texture.destroy(true);
-  block.sprite.texture = createTexture(block);
+function updateTexture(block, sprite = block.sprite, app = display) {
+  if (sprite.texture !== blockData[block.type].defaultTexture)
+    sprite.texture.destroy(true);
+  sprite.texture = createTexture(block, app);
 }
 function createSprite(block, app = display) {
   let t = createTexture(block, app);
@@ -356,7 +356,7 @@ function removeAllSprite(block) {
   block.sprite = undefined;
   block.dupSprite = null;
 }
-function updateSprite(sprite, block, updateTexture = false, app = display) {
+function updateSprite(sprite, block, doUpdateTexture = false, app = display) {
   if (!sprite) return;
   sprite.renderable = !block.invisible;
   sprite.alpha = block.opacity;
@@ -368,7 +368,7 @@ function updateSprite(sprite, block, updateTexture = false, app = display) {
     sprite.alpha = 0.1;
   sprite.zIndex = block.zLayer ? block.zLayer : block.eventPriority;
   sprite.tint = 0xffffff;
-  if (updateTexture) sprite.texture = createTexture(block, app);
+  if (doUpdateTexture) updateTexture(block, sprite, app);
   if (!block.texture) blockData[block.type].update(block, sprite, app);
 }
 function updateDupSprite(block) {

@@ -1541,6 +1541,8 @@ new BlockType(
     }
   ],
   (block, sprite = block.sprite, app) => {
+    if (sprite.texture !== blockData[block.type].defaultTexture)
+      sprite.texture.destroy(true);
     sprite.texture = createTexture(block, app);
   },
   {
@@ -1836,6 +1838,8 @@ new BlockType(
   },
   [() => {}, () => {}, () => {}, () => {}, () => {}],
   (block, sprite = block.sprite, app) => {
+    if (sprite.texture !== blockData[block.type].defaultTexture)
+      sprite.texture.destroy(true);
     sprite.texture = createTexture(block, app);
   },
   {

@@ -872,3 +872,7 @@
 ### 14 Sep. 2024
 
 - While in god mode, the player now becomes green when they should've died.
+
+### 22 Sep. 2024
+
+- Fixed a memory leak related to dynamic Boundary Warps and setting block properties via events.
