@@ -1541,9 +1541,7 @@ new BlockType(
     }
   ],
   (block, sprite = block.sprite, app) => {
-    if (sprite.texture !== blockData[block.type].defaultTexture)
-      sprite.texture.destroy(true);
-    sprite.texture = createTexture(block, app);
+    updateTexture(block, sprite, app);
   },
   {
     newRoom: [],
@@ -1838,9 +1836,7 @@ new BlockType(
   },
   [() => {}, () => {}, () => {}, () => {}, () => {}],
   (block, sprite = block.sprite, app) => {
-    if (sprite.texture !== blockData[block.type].defaultTexture)
-      sprite.texture.destroy(true);
-    sprite.texture = createTexture(block, app);
+    updateTexture(block, sprite, app);
   },
   {
     id: [() => 0, () => Infinity],
@@ -1889,7 +1885,7 @@ new BlockType(
   },
   [() => {}, () => {}, () => {}, () => {}, () => {}],
   (block, sprite = block.sprite, app) => {
-    sprite.texture = createTexture(block, app);
+    updateTexture(block, sprite, app);
   },
   {
     blockA: [],
@@ -2081,7 +2077,7 @@ new BlockType(
   },
   [() => {}, () => {}, () => {}, () => {}, () => {}],
   (block, sprite = block.sprite, app) => {
-    sprite.texture = createTexture(block, app);
+    updateTexture(block, sprite, app);
   },
   {
     value: [() => -Infinity, () => Infinity],
