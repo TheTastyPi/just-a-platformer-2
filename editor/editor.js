@@ -20,7 +20,6 @@ var editor = {
   gridSize: 50,
   gridSnap: [true, false, false],
   snapOverride: false,
-  snapRadius: 12.5,
   expandAmt: 1,
   invertExpand: false,
   actionList: [],

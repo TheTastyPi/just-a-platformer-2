@@ -897,14 +897,18 @@ function doPhysics(obj, t, isPlayer) {
     if (tempObj.xg) {
       obj.xa += 1000 * tempObj.g;
       if (isPlayer) {
-        dyv -= (control.down - control.up) * tempObj.moveSpeed * 200;
+        let controlMultiplier = control.down - control.up;
+        if (control.down && control.up) controlMultiplier = control.latestDir;
+        dyv -= controlMultiplier * tempObj.moveSpeed * 200;
         if (control.up || control.down) friction = true;
       }
       xFric = false;
     } else {
       obj.ya += 1000 * tempObj.g;
       if (isPlayer) {
-        dxv -= (control.right - control.left) * tempObj.moveSpeed * 200;
+        let controlMultiplier = control.right - control.left;
+        if (control.right && control.left) controlMultiplier = control.latestDir;
+        dxv -= controlMultiplier * tempObj.moveSpeed * 200;
         if (control.right || control.left) friction = true;
       }
       yFric = false;

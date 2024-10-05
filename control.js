@@ -5,7 +5,8 @@ const control = {
   down: false,
   jump: false,
   dash: false,
-  interact: false
+  interact: false,
+  latestDir: 0
 };
 document.addEventListener("keydown", function (event) {
   let key = event.code;
@@ -14,10 +15,22 @@ document.addEventListener("keydown", function (event) {
     key: key
   });
   let c = options.controls;
-  if (c.Left.includes(key)) control.left = true;
-  if (c.Right.includes(key)) control.right = true;
-  if (c.Up.includes(key)) control.up = true;
-  if (c.Down.includes(key)) control.down = true;
+  if (c.Left.includes(key)) {
+    control.left = true;
+    if (!player.xg) control.latestDir = -1;
+  }
+  if (c.Right.includes(key)) {
+    control.right = true;
+    if (!player.xg) control.latestDir = 1;
+  }
+  if (c.Up.includes(key)) {
+    control.up = true;
+    if (player.xg) control.latestDir = -1;
+  }
+  if (c.Down.includes(key)) {
+    control.down = true;
+    if (player.xg) control.latestDir = 1;
+  }
   if (player.xg) {
     if (c["Jump(Alt-Grav)"].includes(key)) control.jump = true;
   } else if (c.Jump.includes(key)) control.jump = true;

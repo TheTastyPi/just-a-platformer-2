@@ -97,7 +97,7 @@ function getSnapPos(box) {
     for (let i = 0; i < 3; i++) {
       if (editor.gridSnap[i]) {
         let d = dist(normX, normY, snapX[i], snapY[i]);
-        if (d < minD && d < editor.snapRadius) {
+        if (d < minD) {
           minD = d;
           newX = snapX[i];
           newY = snapY[i];

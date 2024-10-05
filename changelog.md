@@ -876,3 +876,8 @@
 ### 22 Sep. 2024
 
 - Fixed a memory leak related to dynamic Boundary Warps and setting block properties via events.
+
+### 5 Oct. 2024
+
+- Moving both left and right (or up and down in horizontal gravity) no longer stops the player. Instead, in that situation, the player now moves in the most recently pressed direction.
+- Block snapping no longer has a max snapping distance.
