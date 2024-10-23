@@ -269,6 +269,7 @@ id("display").addEventListener("mousedown", function (event) {
         }
         editor.moveStart = [editor.selectBox.x, editor.selectBox.y];
       } else {
+        if (editor.playMode) return;
         let removed = getSelected({
           x: xPos,
           y: yPos,

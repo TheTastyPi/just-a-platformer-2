@@ -881,3 +881,7 @@
 
 - Moving both left and right (or up and down in horizontal gravity) no longer stops the player. Instead, in that situation, the player now moves in the most recently pressed direction.
 - Block snapping no longer has a max snapping distance.
+
+#### 23 Oct. 2024
+
+- Fixed a bug where you can delete blocks via right click while in play mode.
