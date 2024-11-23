@@ -885,3 +885,7 @@
 #### 23 Oct. 2024
 
 - Fixed a bug where you can delete blocks via right click while in play mode.
+
+### 22 Mov. 2024
+
+- Fixed a bug where blocks deleted via events were sometimes not rolled back correctly.

@@ -423,7 +423,6 @@ function load(name) {
   } else editor.viewLayers = [];
   assignIndex();
   dynamicObjs = saveData[1];
-  diffStart = [];
   diffSave = [];
   togglePlayMode();
   respawn(true, false);

@@ -23,14 +23,12 @@ function removeBlock(block, log = true) {
   gridSpace.splice(block.index, 1);
   if ((page === "game" || editor.playMode) && log) {
     let index = diffSave.findIndex((x) => x[2] === block);
-    let diff = diffSave[index] ?? [block, block, undefined];
+    let diff = diffSave[index] ?? [deepCopy(block), deepCopy(block), block];
     if (index === -1) {
       diffSave.push(diff);
     } else {
       if (!diff[0] && !diff[1]) {
         diffSave.splice(index, 1);
-      } else {
-        diff[2] = undefined;
       }
     } 
   }

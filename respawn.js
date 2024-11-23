@@ -96,11 +96,9 @@ function rollBack(start) {
       removeBlock(end, false);
       diff[2] = undefined;
       if (!diff[0] && !diff[1]) diffSave.splice(i, 1);
-    } else if (!end) {
-      let index = init.index;
-      let block = addBlock(init, false);
-      shiftIndex(block, index);
-      diff[2] = block;
+    } else if (end.removed) {
+      let block = addBlock(end, false);
+      rollBackBlock(block, init);
     } else {
       let block = getGridBlock(end);
       rollBackBlock(block, init);
