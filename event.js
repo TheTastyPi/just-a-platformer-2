@@ -20,7 +20,6 @@ function runEvent(event, source, extraContext = {}) {
     player.eventQueue.push(copy);
   }
   event[0].ran = true;
-  //handleEvents();
 }
 function tokenize(exp) {
   exp = exp.replace(" ","");

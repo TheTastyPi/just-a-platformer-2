@@ -67,7 +67,7 @@ new CommandType(
   "wait(t)\nPauses the script for 't' seconds.",
   ({ command }) => {
     command[1] -= interval / 1000;
-    if (command[1] > 0) return "PAUSE";
+    if (command[1] > -interval / 1000) return "PAUSE";
   }
 );
 function setPropertyInEvent(vars,obj,prop,val) {
