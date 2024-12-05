@@ -123,19 +123,22 @@ var canInteract = true;
 var accelx = true;
 var accely = true;
 var lastFrame = 0;
-var interval = 1000 / 60;
-var simReruns = 4;
-var timeLimit = 100;
-var CThreshold = 1.1;
+const interval = 1000 / 60;
+const simReruns = 4;
+const timeLimit = 100;
+const CThreshold = 1.1;
+const gravityPower = 1275;
+const jumpPower = 410;
+const moveSpeed = 210;
 var spawnDelay = 333;
 var deathTimer = spawnDelay;
 var saveState = deepCopy(player);
 var startState = deepCopy(player);
 var dt = 0;
-var coyoteTime = interval*3;
+const coyoteTime = interval*3;
 var coyoteTimer = coyoteTime;
-var dashDuration = 200;
-var dashSpeed = 500;
+const dashDuration = 200;
+const dashSpeed = 500;
 var prevPlayer = null;
 var prevDynObjs = [];
 var prevTextDisp = [];
@@ -774,7 +777,6 @@ function doPhysics(obj, t, isPlayer) {
         runEvent(globalEvents.onDash);
         runEvent(roomEvents[player.currentRoom].onDash, player.currentRoom);
         canDash = false;
-        // init dashTrail
       }
       if (control.left) {
         player.xv = -dashSpeed;
@@ -805,7 +807,7 @@ function doPhysics(obj, t, isPlayer) {
           switch (tempObj.wallJumpDir) {
             case 0:
               if (control.right) {
-                obj.yv = Math.sign(tempObj.g) * -375;
+                obj.yv = Math.sign(tempObj.g) * -jumpPower;
                 obj.xv = obj.moveSpeed * 400;
                 canWJ = false;
                 jumpEvent();
@@ -813,7 +815,7 @@ function doPhysics(obj, t, isPlayer) {
               break;
             case 1:
               if (control.left) {
-                obj.yv = Math.sign(tempObj.g) * -375;
+                obj.yv = Math.sign(tempObj.g) * -jumpPower;
                 obj.xv = -obj.moveSpeed * 400;
                 canWJ = false;
                 jumpEvent();
@@ -821,7 +823,7 @@ function doPhysics(obj, t, isPlayer) {
               break;
             case 2:
               if (control.down) {
-                obj.xv = Math.sign(tempObj.g) * -375;
+                obj.xv = Math.sign(tempObj.g) * -jumpPower;
                 obj.yv = obj.moveSpeed * 400;
                 canWJ = false;
                 jumpEvent();
@@ -829,7 +831,7 @@ function doPhysics(obj, t, isPlayer) {
               break;
             case 3:
               if (control.up) {
-                obj.xv = Math.sign(tempObj.g) * -375;
+                obj.xv = Math.sign(tempObj.g) * -jumpPower;
                 obj.yv = -obj.moveSpeed * 400;
                 canWJ = false;
                 jumpEvent();
@@ -840,9 +842,9 @@ function doPhysics(obj, t, isPlayer) {
         }
       } else if (obj.currentJump > 0 && control.jump && canJump) {
         if (tempObj.xg) {
-          obj.xv = Math.sign(tempObj.g) * -375;
+          obj.xv = Math.sign(tempObj.g) * -jumpPower;
         } else {
-          obj.yv = Math.sign(tempObj.g) * -375;
+          obj.yv = Math.sign(tempObj.g) * -jumpPower;
         }
         canJump = false;
         obj.currentJump--;
@@ -895,20 +897,20 @@ function doPhysics(obj, t, isPlayer) {
     let xFric = true;
     let yFric = true;
     if (tempObj.xg) {
-      obj.xa += 1000 * tempObj.g;
+      obj.xa = gravityPower * tempObj.g;
       if (isPlayer) {
         let controlMultiplier = control.down - control.up;
         if (control.down && control.up) controlMultiplier = control.latestDir;
-        dyv -= controlMultiplier * tempObj.moveSpeed * 200;
+        dyv -= controlMultiplier * tempObj.moveSpeed * moveSpeed;
         if (control.up || control.down) friction = true;
       }
       xFric = false;
     } else {
-      obj.ya += 1000 * tempObj.g;
+      obj.ya = gravityPower * tempObj.g;
       if (isPlayer) {
         let controlMultiplier = control.right - control.left;
         if (control.right && control.left) controlMultiplier = control.latestDir;
-        dxv -= controlMultiplier * tempObj.moveSpeed * 200;
+        dxv -= controlMultiplier * tempObj.moveSpeed * moveSpeed;
         if (control.right || control.left) friction = true;
       }
       yFric = false;

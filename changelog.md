@@ -890,6 +890,7 @@
 
 - Fixed a bug where blocks deleted via events were sometimes not rolled back correctly.
 
-#### 4 Dec. 2024
+### 4 Dec. 2024
 
 - Fixed a bug where the wait() command waited for one tick less than expected.
+- Adjusted the physics to match more with just a platformer 1
