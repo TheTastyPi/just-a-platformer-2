@@ -316,7 +316,7 @@ new BlockType(
   "Water Block",
   {
     ...new Block(7, 0, 0, 50, false, true, 3),
-    maxSpeed: 210,
+    maxSpeed: 200,
     color: "#8888ff"
   },
   (block, app = display) => {
