@@ -800,9 +800,9 @@ function doPhysics(obj, t, isPlayer) {
       };
       if (tempObj.canWallJump && canWJ) {
         if (tempObj.xg) {
-          obj.xv = Math[obj.g < 0 ? "max" : "min"](obj.xv, tempObj.g * 100);
+          obj.xv = Math[obj.g < 0 ? "max" : "min"](obj.xv, tempObj.g * 75);
         } else
-          obj.yv = Math[obj.g < 0 ? "max" : "min"](obj.yv, tempObj.g * 100);
+          obj.yv = Math[obj.g < 0 ? "max" : "min"](obj.yv, tempObj.g * 75);
         if (control.jump) {
           switch (tempObj.wallJumpDir) {
             case 0:
