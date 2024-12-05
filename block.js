@@ -173,7 +173,7 @@ new BlockType(
 );
 new BlockType(
   "Bounce Block",
-  { ...new Block(3, 0, 0, 50, true, false, 2), power: 500 },
+  { ...new Block(3, 0, 0, 50, true, false, 2), power: 550 },
   (block, app = display) => {
     let g = new PIXI.Graphics();
     g.beginFill(0xffffff);
