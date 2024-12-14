@@ -208,9 +208,9 @@ new BlockType(
   ],
   (block, sprite = block.sprite) => {
     let rgb = [
-      2 - Math.abs(block.power - 1000) / 500,
-      2 - Math.abs(block.power) / 500,
-      2 - Math.abs(block.power - 2000) / 500
+      2 - Math.abs(block.power - 1000) / 550,
+      2 - Math.abs(block.power) / 550,
+      2 - Math.abs(block.power - 2000) / 550
     ];
     rgb = rgb.map((x) => Math.max(Math.min(x, 1), 0));
     sprite.tint = PIXI.utils.rgb2hex(rgb);
@@ -1102,9 +1102,9 @@ new BlockType(
   ],
   (block, sprite = block.sprite, app) => {
     let rgb = [
-      2 - Math.abs(block.power - 1000) / 500,
-      2 - Math.abs(block.power) / 500,
-      2 - Math.abs(block.power - 2000) / 500
+      2 - Math.abs(block.power - 1000) / 550,
+      2 - Math.abs(block.power) / 550,
+      2 - Math.abs(block.power - 2000) / 550
     ];
     rgb = rgb.map((x) => Math.max(Math.min(x, 1), 0));
     sprite.tint = PIXI.utils.rgb2hex(rgb);
