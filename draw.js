@@ -301,7 +301,7 @@ function createTexture(block, app) {
   return t;
 }
 function updateTexture(block, sprite = block.sprite, app = display) {
-  if (sprite.texture !== blockData[block.type].defaultTexture)
+  if (!blockData.find(data => data.defaultTexture === sprite.texture))
     sprite.texture.destroy(true);
   sprite.texture = createTexture(block, app);
 }

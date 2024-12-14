@@ -893,4 +893,8 @@
 ### 4 Dec. 2024
 
 - Fixed a bug where the wait() command waited for one tick less than expected.
-- Adjusted the physics to match more with just a platformer 1
+- Adjusted the physics to match more with just a platformer 1.
+
+### 14 Dec. 2024
+
+- Fixed a bug where the game crashes after editing a block's type in any way.
