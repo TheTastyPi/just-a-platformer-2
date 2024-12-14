@@ -1058,7 +1058,7 @@ new BlockType(
     topWall: true,
     bottomWall: false,
     passOnPush: false,
-    power: 500
+    power: 550
   },
   (block, app = display) => {
     let g = new PIXI.Graphics();
