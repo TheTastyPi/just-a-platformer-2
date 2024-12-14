@@ -365,28 +365,40 @@ function doPhysics(obj, t, isPlayer) {
         dir = 3;
       } else {
         if (isLeft && isTop) {
-          if (Math.abs(tx1 - ty1) < CThreshold && tx1 < 2 * CThreshold) return;
+          if (Math.abs(tx1 - ty1) < CThreshold && tx1 < 2 * CThreshold) {
+            collided.pop();
+            return;
+          }
           if (tx1 < ty1) {
             dir = 0;
           } else {
             dir = 2;
           }
         } else if (isRight && isTop) {
-          if (Math.abs(tx2 - ty1) < CThreshold && tx2 < 2 * CThreshold) return;
+          if (Math.abs(tx2 - ty1) < CThreshold && tx2 < 2 * CThreshold) {
+            collided.pop();
+            return;
+          }
           if (tx2 < ty1) {
             dir = 1;
           } else {
             dir = 2;
           }
         } else if (isLeft && isBottom) {
-          if (Math.abs(tx1 - ty2) < CThreshold && tx1 < 2 * CThreshold) return;
+          if (Math.abs(tx1 - ty2) < CThreshold && tx1 < 2 * CThreshold) {
+            collided.pop();
+            return;
+          }
           if (tx1 < ty2) {
             dir = 0;
           } else {
             dir = 3;
           }
         } else if (isRight && isBottom) {
-          if (Math.abs(tx2 - ty2) < CThreshold && tx2 < 2 * CThreshold) return;
+          if (Math.abs(tx2 - ty2) < CThreshold && tx2 < 2 * CThreshold) {
+            collided.pop();
+            return;
+          }
           if (tx2 < ty2) {
             dir = 1;
           } else {
