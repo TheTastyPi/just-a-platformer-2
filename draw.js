@@ -301,8 +301,10 @@ function createTexture(block, app) {
   return t;
 }
 function updateTexture(block, sprite = block.sprite, app = display) {
-  if (!blockData.find(data => data.defaultTexture === sprite.texture))
-    sprite.texture.destroy(true);
+  if (!blockData.find(data => data.defaultTexture === sprite.texture)) {
+    if (!editor.textureNames.find(name => editor.textures[name] == sprite.texture))
+      sprite.texture.destroy(true);
+  }
   sprite.texture = createTexture(block, app);
 }
 function createSprite(block, app = display) {

@@ -899,3 +899,7 @@
 
 - Fixed a bug where the game crashes after editing a block's type in any way.
 - Fixed a bug where you can clip through a corner made out of panels by making a precise jump into the corner (it has a ~4 pixel window).
+
+### 15 Dec. 2024
+
+- Fixed a bug where editing a block with a custom texture crashes the game.
