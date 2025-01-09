@@ -903,3 +903,7 @@
 ### 15 Dec. 2024
 
 - Fixed a bug where editing a block with a custom texture crashes the game.
+
+### 9 Jan. 2025
+
+- Fixed a bug where if you try to move when you're faster than your move speed, your speed gets set to your move speed.

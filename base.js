@@ -913,8 +913,11 @@ function doPhysics(obj, t, isPlayer) {
       if (isPlayer) {
         let controlMultiplier = control.down - control.up;
         if (control.down && control.up) controlMultiplier = control.latestDir;
-        dyv -= controlMultiplier * tempObj.moveSpeed * moveSpeed;
+        let maxSpeed = tempObj.moveSpeed * moveSpeed;
+        dyv -= controlMultiplier * maxSpeed;
         if (control.up || control.down) friction = true;
+        if (control.up && player.yv < -maxSpeed) friction = false;
+        if (control.down && player.yv > maxSpeed) friction = false;
       }
       xFric = false;
     } else {
@@ -922,8 +925,11 @@ function doPhysics(obj, t, isPlayer) {
       if (isPlayer) {
         let controlMultiplier = control.right - control.left;
         if (control.right && control.left) controlMultiplier = control.latestDir;
-        dxv -= controlMultiplier * tempObj.moveSpeed * moveSpeed;
+        let maxSpeed = tempObj.moveSpeed * moveSpeed;
+        dxv -= controlMultiplier * maxSpeed;
         if (control.right || control.left) friction = true;
+        if (control.left && player.xv < -maxSpeed) friction = false;
+        if (control.right && player.xv > maxSpeed) friction = false;
       }
       yFric = false;
     }
