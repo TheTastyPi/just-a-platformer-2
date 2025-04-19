@@ -14,6 +14,9 @@ document.addEventListener("keydown", function (event) {
   runEvent(roomEvents[player.currentRoom].onKeyDown, player.currentRoom, {
     key: key
   });
+  if ((event.shiftKey && key !== "ShiftLeft" && key !== "ShiftRight")
+    || (event.ctrlKey && key !== "ControlLeft" && key !== "ControlRight")
+    || (event.metaKey && key !== "MetaLeft" && key !== "MetaRight")) return;
   let c = options.controls;
   if (c.Left.includes(key)) {
     control.left = true;

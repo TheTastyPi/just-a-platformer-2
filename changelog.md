@@ -907,3 +907,7 @@
 ### 9 Jan. 2025
 
 - Fixed a bug where if you try to move when you're faster than your move speed, your speed gets set to your move speed.
+
+#### 19 Apr. 2025
+
+- All 2+ key combinations involving Shift, Ctrl, or Cmd no longer triggers player movement. This prevents certain editor actions from causing player movement (i.e. Undo/Redo on default controls).
