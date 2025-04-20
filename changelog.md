@@ -911,3 +911,5 @@
 #### 19 Apr. 2025
 
 - All 2+ key combinations involving Shift, Ctrl, or Cmd no longer triggers player movement. This prevents certain editor actions from causing player movement (i.e. Undo/Redo on default controls).
+- Fixed a bug where selecting linked blocks would cause you to select a block twice.
+- Fixed a bug where deleting linked blocks would cause the level to not load properly after saving

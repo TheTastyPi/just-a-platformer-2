@@ -20,6 +20,10 @@ function removeBlock(block, log = true) {
   for (let i = parseInt(block.index) + 1; i < gridSpace.length; i++) {
     gridSpace[i].index--;
   }
+  editor.links.filter((link)=>link.includes(block)).forEach(link => {
+    link.splice(link.indexOf(block), 1);
+    if (link.length === 0) editor.links.splice(editor.links.indexOf(link), 1);
+  });
   gridSpace.splice(block.index, 1);
   if ((page === "game" || editor.playMode) && log) {
     let index = diffSave.findIndex((x) => x[2] === block);

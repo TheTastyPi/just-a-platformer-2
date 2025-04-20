@@ -90,8 +90,10 @@ function select(selectRect, single = false, prev, build = false) {
     editor.editSelect.push(block);
     if (block.link) {
       for (let j in block.link) {
-        addToEditBlock(block.link[j]);
-        editor.editSelect.push(block.link[j]);
+        if (!editor.editSelect.includes(block.link[j])) {
+          addToEditBlock(block.link[j]);
+          editor.editSelect.push(block.link[j]);
+        }
       }
     }
     if (single) break;
