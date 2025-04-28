@@ -1361,7 +1361,7 @@ new BlockType(
   },
   (block, app = display) => {
     let g = new PIXI.Graphics();
-    g.beginFill(PIXI.utils.string2hex(block.color));
+    g.beginFill(0xffffff);
     g.drawRect(0, 0, 50, 50);
     g.endFill();
     g.lineStyle({
@@ -1389,7 +1389,9 @@ new BlockType(
       } else moveBlock(obj, nx - obj.x, ny - obj.y);
     }
   ],
-  () => {},
+  (block, sprite = block.sprite) => {
+    sprite.tint = PIXI.utils.string2hex(block.color);
+  },
   {
     color: [],
     newPos: []
