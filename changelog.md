@@ -918,7 +918,7 @@
 
 - Fixed a bug where Teleporters' colors couldn't be changed.
 
-### 18 Jun. 2025
+### 20 Jun. 2025
 
 - Jumping/wall-jumping now preserve momentum from the block you're jumping from.
   - This was contributed by aShorterName.
