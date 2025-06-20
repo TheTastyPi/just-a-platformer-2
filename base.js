@@ -816,11 +816,12 @@ function doPhysics(obj, t, isPlayer) {
         } else
           obj.yv = Math[obj.g < 0 ? "max" : "min"](obj.yv, tempObj.g * 75);
         if (control.jump) {
+          let maxSpeed = obj.moveSpeed * moveSpeed;
           switch (tempObj.wallJumpDir) {
             case 0:
               if (control.right) {
                 obj.yv = Math.sign(tempObj.g) * -jumpPower;
-                obj.xv = obj.moveSpeed * 400;
+                obj.xv = maxSpeed + ((dirBlock[0]?.dynamic || dirBlock[0]?.moving)?(dirBlock[0]?.xv || 0):0);
                 canWJ = false;
                 jumpEvent();
               }
@@ -828,7 +829,7 @@ function doPhysics(obj, t, isPlayer) {
             case 1:
               if (control.left) {
                 obj.yv = Math.sign(tempObj.g) * -jumpPower;
-                obj.xv = -obj.moveSpeed * 400;
+                obj.xv = -maxSpeed + ((dirBlock[1]?.dynamic || dirBlock[1]?.moving)?(dirBlock[1]?.xv || 0):0);
                 canWJ = false;
                 jumpEvent();
               }
@@ -836,7 +837,7 @@ function doPhysics(obj, t, isPlayer) {
             case 2:
               if (control.down) {
                 obj.xv = Math.sign(tempObj.g) * -jumpPower;
-                obj.yv = obj.moveSpeed * 400;
+                obj.yv = maxSpeed + ((dirBlock[2]?.dynamic || dirBlock[2]?.moving)?(dirBlock[2]?.yv || 0):0);
                 canWJ = false;
                 jumpEvent();
               }
@@ -844,7 +845,7 @@ function doPhysics(obj, t, isPlayer) {
             case 3:
               if (control.up) {
                 obj.xv = Math.sign(tempObj.g) * -jumpPower;
-                obj.yv = -obj.moveSpeed * 400;
+                obj.yv = -maxSpeed + ((dirBlock[3]?.dynamic || dirBlock[3]?.moving)?(dirBlock[3]?.yv || 0):0);
                 canWJ = false;
                 jumpEvent();
               }
@@ -854,9 +855,9 @@ function doPhysics(obj, t, isPlayer) {
         }
       } else if (obj.currentJump > 0 && control.jump && canJump) {
         if (tempObj.xg) {
-          obj.xv = Math.sign(tempObj.g) * -jumpPower;
+          obj.xv = Math.sign(tempObj.g) * -jumpPower + ((dirBlock[0]?.dynamic || dirBlock[0]?.moving)?(dirBlock[0]?.xv || 0):0) + ((dirBlock[1]?.dynamic || dirBlock[1]?.moving)?(dirBlock[1]?.xv || 0):0);
         } else {
-          obj.yv = Math.sign(tempObj.g) * -jumpPower;
+          obj.yv = Math.sign(tempObj.g) * -jumpPower + ((dirBlock[2]?.dynamic || dirBlock[2]?.moving)?(dirBlock[2]?.yv || 0):0) + ((dirBlock[3]?.dynamic || dirBlock[3]?.moving)?(dirBlock[3]?.yv || 0):0);
         }
         canJump = false;
         obj.currentJump--;

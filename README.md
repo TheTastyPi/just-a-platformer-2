@@ -12,7 +12,8 @@ Sequel to "just a platformer", with several new features.
 ### Code Contributors
 
 - [TheTastyPi](https://thetastypi.github.io/) made pretty much all of the game.
-- [yhvr](https://yhvr.me/) helped out with the little things.
+- [yhvr](https://yhvr.me/) made a minor contribution.
+- [aShorterName](https://github.com/aShorterName) also made a minor contribution.
 
 ### Libraries
 
