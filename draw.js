@@ -341,7 +341,7 @@ function addDupSprite(block) {
   block.dupSprite = s;
 }
 function removeSprite(s, block) {
-  if (block.currentRoom === player.currentRoom) {
+  if (block.currentRoom === player.currentRoom || s == block.dupSprite) {
     s.removeChildren();
     let deleteTexture =
       block !== player &&

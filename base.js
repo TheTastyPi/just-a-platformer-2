@@ -145,6 +145,7 @@ var prevTextDisp = [];
 var justDied = false;
 var fpsTimer = 10;
 var logfps = false;
+const dirWord = ["Left", "Right", "Top", "Bottom"];
 function nextFrame(timeStamp) {
   dt += (timeStamp - lastFrame) * player.gameSpeed;
   if (logfps) {
@@ -193,7 +194,7 @@ function nextFrame(timeStamp) {
             });
           }
         });
-        doPhysics(player, interval / 1000 / simReruns, true);
+        doPhysics(player, interval / 1000 / simReruns);
         if ((editor?.playMode ?? true) && !justDied) {
           for (let j in dynamicObjs) {
             if (
@@ -203,7 +204,7 @@ function nextFrame(timeStamp) {
               dynamicObjs[j].roomLink[1]?.currentRoom === player.currentRoom ||
               dynamicObjs[j].currentRoom === player.roomLink[1]?.currentRoom
             )
-              doPhysics(dynamicObjs[j], interval / 1000 / simReruns, false);
+              doPhysics(dynamicObjs[j], interval / 1000 / simReruns);
             if (
               dynamicObjs[j] !== undefined &&
               dynamicObjs[j].currentRoom === player.currentRoom
@@ -238,244 +239,203 @@ function nextFrame(timeStamp) {
   if (page === "editor") editor.currentRoom = player.currentRoom;
   window.requestAnimationFrame(nextFrame);
 }
-function doPhysics(obj, t, isPlayer) {
-  if (!isPlayer) logChange(obj);
-  let level = levels[obj.currentRoom];
+function doCollision(obj, block, dirBlock, dirOffset, eventList, ignoreEventList, xOffset = 0, yOffset = 0) {
+  let topPriority = [0, 0, 0, 0, 0];
+  let colliding = isColliding(obj, block, true, xOffset, yOffset);
+  if ([15, 19].includes(block?.type)) {
+    colliding = isColliding(obj, block, true, xOffset, yOffset, true);
+  }
+  if (
+    !colliding ||
+    (block.x === obj.x && block.y === obj.y && block.index === obj.index) ||
+    (block.type === 28 && !block.active)
+  ) return false;
+  if (hasSubBlock.includes(block.type)) {
+    let subBlock = getSubBlock(block);
+    if (subBlock !== block) {
+      subBlock.currentRoom = block.currentRoom;
+      subBlock.x = block.x;
+      subBlock.y = block.y;
+      subBlock.xv = block.xv;
+      subBlock.yv = block.yv;
+      subBlock.xa = block.xa;
+      subBlock.ya = block.ya;
+      subBlock.size = block.size;
+      subBlock.index = block.index;
+      block = subBlock;
+    }
+  }
   let px1 = obj.x;
   let px2 = px1 + obj.size;
   let py1 = obj.y;
   let py2 = py1 + obj.size;
-  let dirPos = [px1, px2, py1, py2];
-  let dirBlock = [undefined, undefined, undefined, undefined];
-  let dirOffset = [0, 0, 0, 0];
-  let dirWord = ["Left", "Right", "Top", "Bottom"];
-  let isDead = false;
-  let friction = true;
-  let giveJump = false;
-  obj.xa = 0;
-  obj.ya = 0;
-  let collided = [];
-  let eventList = [[], [], [], [], []];
-  let ignoreEventList = [[], [], [], [], []];
-  let topPriority = [0, 0, 0, 0, 0];
-  let gdxv = 0;
-  let gdyv = 0;
-  let subObj = obj;
-  accelx = true;
-  accely = true;
-  if (hasSubBlock.includes(obj.type)) {
-    subObj = {
-      ...getSubBlock(subObj),
-      currentRoom: obj.currentRoom,
-      x: obj.x,
-      y: obj.y,
-      xv: obj.xv,
-      yv: obj.yv,
-      xa: obj.xa,
-      ya: obj.ya,
-      size: obj.size
-    };
-  }
-  let doCollision = function (block, xOffset = 0, yOffset = 0) {
-    let colliding = isColliding(obj, block, true, xOffset, yOffset);
-    if ([15, 19].includes(block?.type)) {
-      colliding = isColliding(obj, block, true, xOffset, yOffset, true);
-    }
+  let bx1 = block.x + xOffset;
+  let bx2 = bx1 + block.size;
+  let by1 = block.y + yOffset;
+  let by2 = by1 + block.size;
+  let dirBPos = [bx1, bx2, by1, by2];
+  let data = blockData[block.type];
+  // solid block
+  if (block.isPlayer || block.isSolid) {
+    let tx1 = Math.abs(px1 - bx2);
+    let tx2 = Math.abs(px2 - bx1);
+    let ty1 = Math.abs(py1 - by2);
+    let ty2 = Math.abs(py2 - by1);
+    let isLeft = bx1 <= px1 && bx2 >= px1 && bx2 <= px2;
+    let isRight = bx1 <= px2 && bx2 >= px2 && bx1 >= px1;
+    let isTop = by1 <= py1 && by2 >= py1 && by2 <= py2;
+    let isBottom = by1 <= py2 && by2 >= py2 && by1 >= py1;
+    let dir;
+    // block inside
     if (
-      !colliding ||
-      (block.x === obj.x && block.y === obj.y && block.index === obj.index) ||
-      (block.type === 28 && !block.active)
-    )
-      return;
-    if (hasSubBlock.includes(block.type)) {
-      let subBlock = getSubBlock(block);
-      if (subBlock !== block) {
-        subBlock.currentRoom = block.currentRoom;
-        subBlock.x = block.x;
-        subBlock.y = block.y;
-        subBlock.xv = block.xv;
-        subBlock.yv = block.yv;
-        subBlock.xa = block.xa;
-        subBlock.ya = block.ya;
-        subBlock.size = block.size;
-        block = subBlock;
-      }
+      block !== player &&
+      !oneWayBlocks.includes(block.type) &&
+      bx1 >= px1 &&
+      bx2 <= px2 &&
+      by1 >= py1 &&
+      by2 <= py2
+    ) {
+      obj.isDead = true;
+      return true;
     }
-    let bx1 = block.x + xOffset;
-    let bx2 = bx1 + block.size;
-    let by1 = block.y + yOffset;
-    let by2 = by1 + block.size;
-    let dirBPos = [bx1, bx2, by1, by2];
-    let data = blockData[block.type];
-    collided.push(block);
-    // solid block
-    if (block.isPlayer || block.isSolid) {
-      let tx1 = Math.abs(px1 - bx2);
-      let tx2 = Math.abs(px2 - bx1);
-      let ty1 = Math.abs(py1 - by2);
-      let ty2 = Math.abs(py2 - by1);
-      let isLeft = bx1 <= px1 && bx2 >= px1 && bx2 <= px2;
-      let isRight = bx1 <= px2 && bx2 >= px2 && bx1 >= px1;
-      let isTop = by1 <= py1 && by2 >= py1 && by2 <= py2;
-      let isBottom = by1 <= py2 && by2 >= py2 && by1 >= py1;
-      let dir;
-      // block inside
-      if (
-        block !== player &&
-        !oneWayBlocks.includes(block.type) &&
-        bx1 >= px1 &&
-        bx2 <= px2 &&
-        by1 >= py1 &&
-        by2 <= py2
-      ) {
-        obj.isDead = true;
-        return;
-      }
-      // inside block
-      if (
-        block !== player &&
-        !oneWayBlocks.includes(block.type) &&
-        bx1 <= px1 &&
-        bx2 >= px2 &&
-        by1 <= py1 &&
-        by2 >= py2
-      ) {
-        obj.isDead = true;
-        return;
-      }
-      if (subObj.xg && subObj.g < 0 && block.floorLeniency >= bx2 - px1) {
-        dir = 0;
-      } else if (
-        subObj.xg &&
-        subObj.g > 0 &&
-        block.floorLeniency >= px2 - bx1
-      ) {
-        dir = 1;
-      } else if (
-        !subObj.xg &&
-        subObj.g < 0 &&
-        block.floorLeniency >= by2 - py1
-      ) {
-        dir = 2;
-      } else if (
-        !subObj.xg &&
-        subObj.g > 0 &&
-        block.floorLeniency >= py2 - by1
-      ) {
-        dir = 3;
-      } else {
-        if (isLeft && isTop) {
-          if (Math.abs(tx1 - ty1) < CThreshold && tx1 < 2 * CThreshold) {
-            collided.pop();
-            return;
-          }
-          if (tx1 < ty1) {
-            dir = 0;
-          } else {
-            dir = 2;
-          }
-        } else if (isRight && isTop) {
-          if (Math.abs(tx2 - ty1) < CThreshold && tx2 < 2 * CThreshold) {
-            collided.pop();
-            return;
-          }
-          if (tx2 < ty1) {
-            dir = 1;
-          } else {
-            dir = 2;
-          }
-        } else if (isLeft && isBottom) {
-          if (Math.abs(tx1 - ty2) < CThreshold && tx1 < 2 * CThreshold) {
-            collided.pop();
-            return;
-          }
-          if (tx1 < ty2) {
-            dir = 0;
-          } else {
-            dir = 3;
-          }
-        } else if (isRight && isBottom) {
-          if (Math.abs(tx2 - ty2) < CThreshold && tx2 < 2 * CThreshold) {
-            collided.pop();
-            return;
-          }
-          if (tx2 < ty2) {
-            dir = 1;
-          } else {
-            dir = 3;
-          }
-        } else if (isLeft) {
+    // inside block
+    if (
+      block !== player &&
+      !oneWayBlocks.includes(block.type) &&
+      bx1 <= px1 &&
+      bx2 >= px2 &&
+      by1 <= py1 &&
+      by2 >= py2
+    ) {
+      obj.isDead = true;
+      return true;
+    }
+    if (obj.xg && obj.g < 0 && block.floorLeniency >= bx2 - px1) {
+      dir = 0;
+    } else if (
+      obj.xg &&
+      obj.g > 0 &&
+      block.floorLeniency >= px2 - bx1
+    ) {
+      dir = 1;
+    } else if (
+      !obj.xg &&
+      obj.g < 0 &&
+      block.floorLeniency >= by2 - py1
+    ) {
+      dir = 2;
+    } else if (
+      !obj.xg &&
+      obj.g > 0 &&
+      block.floorLeniency >= py2 - by1
+    ) {
+      dir = 3;
+    } else {
+      if (isLeft && isTop) {
+        if (Math.abs(tx1 - ty1) < CThreshold && tx1 < 2 * CThreshold) {
+          return false;
+        }
+        if (tx1 < ty1) {
           dir = 0;
-        } else if (isRight) {
-          dir = 1;
-        } else if (isTop) {
+        } else {
           dir = 2;
-        } else if (isBottom) {
+        }
+      } else if (isRight && isTop) {
+        if (Math.abs(tx2 - ty1) < CThreshold && tx2 < 2 * CThreshold) {
+          return false;
+        }
+        if (tx2 < ty1) {
+          dir = 1;
+        } else {
+          dir = 2;
+        }
+      } else if (isLeft && isBottom) {
+        if (Math.abs(tx1 - ty2) < CThreshold && tx1 < 2 * CThreshold) {
+          return false;
+        }
+        if (tx1 < ty2) {
+          dir = 0;
+        } else {
           dir = 3;
         }
+      } else if (isRight && isBottom) {
+        if (Math.abs(tx2 - ty2) < CThreshold && tx2 < 2 * CThreshold) {
+          return false;
+        }
+        if (tx2 < ty2) {
+          dir = 1;
+        } else {
+          dir = 3;
+        }
+      } else if (isLeft) {
+        dir = 0;
+      } else if (isRight) {
+        dir = 1;
+      } else if (isTop) {
+        dir = 2;
+      } else if (isBottom) {
+        dir = 3;
       }
-      let dBlock = dirBlock[dir];
-      if (oneWayBlocks.includes(block.type)) {
-        if (
-          !block[dirWord[dir ^ 1].toLowerCase() + "Wall"] ||
-          obj.lastCollided.find((x) => getGridBlock(x) === getGridBlock(block))
-        ) {
-          return;
-        } else if (!block.passOnPush)
-          collided.splice(
-            collided.findIndex((x) => x === block),
-            1
-          );
-      }
-      let axis = dir < 2 ? "x" : "y";
-      let sign = dir % 2 ? 1 : -1;
-      if (!block.friction && obj.xg === dir < 2 && Math.sign(obj.g) === sign)
-        friction = false;
-      let border =
-        dBlock?.[axis] + (dir % 2 ? 0 : dBlock?.size) + dirOffset[dir];
-      if (
-        dBlock === undefined ||
-        sign * border > sign * dirBPos[dir ^ 1] ||
-        (border === dirBPos[dir ^ 1] &&
-          block.eventPriority > dBlock.eventPriority)
-      ) {
-        dirBlock[dir] = block;
-        dirOffset[dir] = dir < 2 ? xOffset : yOffset;
-      }
-      if (block.isPlayer) return;
-      if (block.ignorePriority) {
-        ignoreEventList[dir].push([block, data.touchEvent[dir]]);
-        return;
-      }
-      if (block.eventPriority > topPriority[dir]) {
-        eventList[dir] = [];
-        topPriority[dir] = block.eventPriority;
-      }
-      if (block.eventPriority === topPriority[dir])
-        eventList[dir].push([block, data.touchEvent[dir]]);
-    } else {
-      if (!block.friction) friction = false;
-      if (block.type === 12 && block.addVel) {
-        gdxv += block.newxv;
-        gdyv += block.newyv;
-      }
-      if (block.ignorePriority) {
-        ignoreEventList[4].push([block, data.touchEvent[4]]);
-        return;
-      }
-      if (block.eventPriority > topPriority[4]) {
-        eventList[4] = [];
-        topPriority[4] = block.eventPriority;
-      }
-      if (block.eventPriority === topPriority[4])
-        eventList[4].push([block, data.touchEvent[4]]);
-      if (isPlayer && block.giveJump) giveJump = true;
     }
-  };
-  for (let x = gridUnit(px1) - maxBlockSize / 50; x <= gridUnit(px2); x++) {
-    if (isDead || obj.isDead) break;
-    for (let y = gridUnit(py1) - maxBlockSize / 50; y <= gridUnit(py2); y++) {
-      if (isDead || obj.isDead) break;
+    if (oneWayBlocks.includes(block.type)) {
+      if (
+        !block[dirWord[dir ^ 1].toLowerCase() + "Wall"] ||
+        obj.lastCollided.find((x) => getGridBlock(x) === getGridBlock(block))
+      ) return true;
+    }
+    let dBlock = dirBlock[dir];
+    let axis = dir < 2 ? "x" : "y";
+    let sign = dir % 2 ? 1 : -1;
+    if (!block.friction && obj.xg === dir < 2 && Math.sign(obj.g) === sign)
+      friction = false;
+    let border =
+      dBlock?.[axis] + (dir % 2 ? 0 : dBlock?.size) + dirOffset[dir];
+    if (
+      dBlock === undefined ||
+      sign * border > sign * dirBPos[dir ^ 1] ||
+      (border === dirBPos[dir ^ 1] &&
+        block.eventPriority > dBlock.eventPriority)
+    ) {
+      dirBlock[dir] = block;
+      dirOffset[dir] = dir < 2 ? xOffset : yOffset;
+    }
+    if (block.isPlayer) return true;
+    if (block.ignorePriority) {
+      ignoreEventList[dir].push([block, data.touchEvent[dir]]);
+      return true;
+    }
+    if (block.eventPriority > topPriority[dir]) {
+      eventList[dir] = [];
+      topPriority[dir] = block.eventPriority;
+    }
+    if (block.eventPriority === topPriority[dir])
+      eventList[dir].push([block, data.touchEvent[dir]]);
+  } else {
+    if (!block.friction) friction = false;
+    if (block.type === 12 && block.addVel) {
+      gdxv += block.newxv;
+      gdyv += block.newyv;
+    }
+    if (block.ignorePriority) {
+      ignoreEventList[4].push([block, data.touchEvent[4]]);
+      return true;
+    }
+    if (block.eventPriority > topPriority[4]) {
+      eventList[4] = [];
+      topPriority[4] = block.eventPriority;
+    }
+    if (block.eventPriority === topPriority[4])
+      eventList[4].push([block, data.touchEvent[4]]);
+    if (obj.isPlayer && block.giveJump) giveJump = true;
+  }
+  return true;
+};
+function doAllCollisions(levelName, obj, subObj, collided, dirBlock, dirOffset, eventList, ignoreEventList, xOff = 0, yOff = 0) {
+  let level = levels[levelName];
+  for (let x = gridUnit(obj.x+xOff) - maxBlockSize / 50; x <= gridUnit(subObj.x+subObj.size+xOff); x++) {
+    if (subObj.isDead) break;
+    for (let y = gridUnit(obj.y+yOff) - maxBlockSize / 50; y <= gridUnit(subObj.y+subObj.size+yOff); y++) {
+      if (subObj.isDead) break;
       let gridSpace = level[x]?.[y];
       if (gridSpace === undefined) {
         let hori = obj.roomLink[2] === "left" || obj.roomLink[2] === "right";
@@ -485,17 +445,18 @@ function doPhysics(obj, t, isPlayer) {
           (hori && x > level.length - 1) ||
           (vert && y < 0) ||
           (vert && y > level[0].length - 1)
-        )
-          continue;
+        ) continue;
         gridSpace = [new Block(0, x * 50, y * 50, 50, true, true, 3)];
       }
       for (let i in gridSpace) {
         let subBlock = getSubBlock(gridSpace[i]);
         if ((gridSpace[i].dynamic || subBlock.dynamic) && !prevDynObjs.includes(gridSpace[i]))
           continue;
-        if (isPlayer && !subBlock.collidePlayer) continue;
-        if (!isPlayer && !subBlock.collideBlock) continue;
-        doCollision(gridSpace[i]);
+        if (subObj.isPlayer && !subBlock.collidePlayer) continue;
+        if (!subObj.isPlayer && !subBlock.collideBlock) continue;
+        if (doCollision(subObj, gridSpace[i], dirBlock, dirOffset, eventList, ignoreEventList, -xOff, -yOff)) {
+          collided.push(gridSpace[i]);
+        }
       }
     }
   }
@@ -503,24 +464,68 @@ function doPhysics(obj, t, isPlayer) {
     subObj.dynamic &&
     subObj.playerPushable &&
     subObj.collidePlayer &&
-    obj.currentRoom === prevPlayer.currentRoom
+    prevPlayer.currentRoom === levelName
   ) {
-    doCollision(prevPlayer);
-  }
-  if (isPlayer || subObj.blockPushable) {
-    for (let i in prevDynObjs) {
-      if (isPlayer && !prevDynObjs[i].collidePlayer) continue;
-      if (!isPlayer && !prevDynObjs[i].collideBlock) continue;
-      if (prevDynObjs[i].currentRoom === obj.currentRoom)
-        doCollision(prevDynObjs[i]);
+    if (doCollision(subObj, prevPlayer, dirBlock, dirOffset, eventList, ignoreEventList, -xOff, -yOff)) {
+      collided.push(prevPlayer);
     }
   }
+  if (subObj.isPlayer || subObj.blockPushable) {
+    for (let i in prevDynObjs) {
+      let block = prevDynObjs[i];
+      let subBlock = getSubBlock(block);
+      if (subObj.isPlayer && !subBlock.collidePlayer) continue;
+      if (!subObj.isPlayer && !subBlock.collideBlock) continue;
+      if (block.currentRoom === levelName) {
+        if (doCollision(subObj, block, dirBlock, dirOffset, eventList, ignoreEventList, -xOff, -yOff)) {
+          collided.push(block);
+        }
+      }
+    }
+  }
+}
+function doPhysics(obj, t) {
+  if (!obj.isPlayer) logChange(obj);
+  let level = levels[obj.currentRoom];
+  let px1 = obj.x;
+  let px2 = px1 + obj.size;
+  let py1 = obj.y;
+  let py2 = py1 + obj.size;
+  let dirPos = [px1, px2, py1, py2];
+  let dirBlock = [undefined, undefined, undefined, undefined];
+  let dirOffset = [0, 0, 0, 0];
+  let friction = true;
+  let giveJump = false;
+  obj.xa = 0;
+  obj.ya = 0;
+  let collided = [];
+  let eventList = [[], [], [], [], []];
+  let ignoreEventList = [[], [], [], [], []];
+  let gdxv = 0;
+  let gdyv = 0;
+  let subObj = obj;
+  accelx = true;
+  accely = true;
+  if (hasSubBlock.includes(obj.type)) {
+    subObj = getSubBlock(subObj);
+    subObj.currentRoom = obj.currentRoom;
+    subObj.x = obj.x;
+    subObj.y = obj.y;
+    subObj.xv = obj.xv;
+    subObj.yv = obj.yv;
+    subObj.xa = obj.xa;
+    subObj.ya = obj.ya;
+    subObj.size = obj.size;
+    subObj.index = obj.index;
+  }
+  doAllCollisions(obj.currentRoom, obj, subObj, collided, dirBlock, dirOffset, eventList, ignoreEventList);
   // room link
   let xWarp = 0;
   let yWarp = 0;
   let rWarp;
   if (obj.roomLink[0] !== undefined) {
-    let newlvl = levels[obj.roomLink[1].currentRoom];
+    let newlvlName = obj.roomLink[1].currentRoom;
+    let newlvl = levels[newlvlName];
     let dx = obj.roomLink[1].x - obj.roomLink[0].x;
     let dy = obj.roomLink[1].y - obj.roomLink[0].y;
     let hori = false;
@@ -530,71 +535,24 @@ function doPhysics(obj, t, isPlayer) {
     let lvlOffsetted = neg > 0 ? newlvl : level;
     let xOff = hori ? neg * lvlOffsetted.length * 50 : dx;
     let yOff = !hori ? neg * lvlOffsetted[0].length * 50 : dy;
-    for (
-      let x = gridUnit(px1 + xOff) - maxBlockSize / 50;
-      x <= gridUnit(px2 + xOff);
-      x++
-    ) {
-      if (isDead || obj.isDead) break;
-      for (
-        let y = gridUnit(py1 + yOff) - maxBlockSize / 50;
-        y <= gridUnit(py2 + yOff);
-        y++
-      ) {
-        if (isDead || obj.isDead) break;
-        let gridSpace = newlvl[x]?.[y];
-        if (gridSpace === undefined) {
-          if (hori) {
-            if (x < 0 || x > lvlOffsetted.length - 1) continue;
-          } else {
-            if (y < 0 || y > lvlOffsetted[0].length - 1) continue;
-          }
-          gridSpace = [new Block(0, x * 50, y * 50, 50, true, true, 3)];
-        }
-        for (let i in gridSpace) {
-          let subBlock = getSubBlock(gridSpace[i]);
-          if (gridSpace[i].dynamic && !prevDynObjs.includes(gridSpace[i]))
-            continue;
-          if (isPlayer && !subBlock.collidePlayer) continue;
-          if (!isPlayer && !subBlock.collideBlock) continue;
-          doCollision(gridSpace[i], -xOff, -yOff);
-        }
-      }
-    }
-    if (isPlayer || subObj.blockPushable) {
-      for (let i in prevDynObjs) {
-        let block = prevDynObjs[i];
-        let subBlock = getSubBlock(prevDynObjs[i]);
-        if (isPlayer && !subBlock.collidePlayer) continue;
-        if (!isPlayer && !subBlock.collideBlock) continue;
-        if (block.currentRoom === obj.roomLink[1].currentRoom)
-          doCollision(block, -xOff, -yOff);
-      }
-    }
-    if (
-      subObj.dynamic &&
-      subObj.playerPushable &&
-      subObj.collidePlayer &&
-      prevPlayer.currentRoom === obj.roomLink[1].currentRoom
-    )
-      doCollision(prevPlayer, -xOff, -yOff);
+    doAllCollisions(newlvlName, obj, subObj, collided, dirBlock, dirOffset, eventList, ignoreEventList, xOff, yOff);
     if (
       neg * (hori ? obj.x : obj.y) <
       neg *
         ((neg < 0 ? (hori ? level : level[0]).length * 50 : 0) - obj.size / 2)
     ) {
-      rWarp = obj.roomLink[1].currentRoom;
+      rWarp = newlvlName;
       xWarp = xOff;
       yWarp = yOff;
     }
-    if (isPlayer && rWarp !== player.currentRoom) {
+    if (obj.isPlayer && rWarp !== player.currentRoom) {
       camx -= xWarp;
       camy -= yWarp;
     }
   }
   // crushed
   if (
-    isPlayer &&
+    obj.isPlayer &&
     ((dirBlock[0]?.crushPlayer && dirBlock[1]?.crushPlayer &&
     (dirBlock[1].x + dirOffset[1]) -
     (dirBlock[0].x + dirOffset[0]) -
@@ -606,10 +564,10 @@ function doPhysics(obj, t, isPlayer) {
   ) {
     obj.isDead = true;
   }
-  if (isPlayer && editor?.invincible) shouldHaveDied = obj.isDead;
-  if (subObj.invincible || (isPlayer && editor?.invincible)) obj.isDead = false;
+  if (obj.isPlayer && editor?.invincible) shouldHaveDied = obj.isDead;
+  if (subObj.invincible || (obj.isPlayer && editor?.invincible)) obj.isDead = false;
   // MOVEMENT & EVENTS
-  if (!isDead && !obj.isDead) {
+  if (!obj.isDead) {
     // collision
     let dirPush = dirBlock.map(
       (b, i) =>
@@ -675,7 +633,7 @@ function doPhysics(obj, t, isPlayer) {
           obj,
           block,
           tempObj,
-          isPlayer,
+          obj.isPlayer,
           !obj.lastCollided.find(
             (x) => getGridBlock(x) === getGridBlock(block)
           ),
@@ -691,7 +649,7 @@ function doPhysics(obj, t, isPlayer) {
         obj,
         getSubBlock(block),
         tempObj,
-        isPlayer,
+        obj.isPlayer,
         false,
         true
       );
@@ -704,11 +662,11 @@ function doPhysics(obj, t, isPlayer) {
         collided.splice(i, 1);
       }
     }
-    if (isPlayer) effectiveMaxJump = tempObj.maxJump;
-    if (isPlayer) effectiveMaxDash = tempObj.maxDash;
+    if (obj.isPlayer) effectiveMaxJump = tempObj.maxJump;
+    if (obj.isPlayer) effectiveMaxDash = tempObj.maxDash;
     obj.lastCollided = collided;
     friction = tempObj.friction && friction;
-    if (isPlayer) {
+    if (obj.isPlayer) {
       if (
         dirBlock.some(
           (b, i) =>
@@ -765,17 +723,17 @@ function doPhysics(obj, t, isPlayer) {
         prevTextDisp = [];
       }
     }
-    if (isPlayer && editor?.invincible) shouldHaveDied = obj.isDead;
-    if (tempObj.invincible || (isPlayer && editor?.invincible)) {
+    if (obj.isPlayer && editor?.invincible) shouldHaveDied = obj.isDead;
+    if (tempObj.invincible || (obj.isPlayer && editor?.invincible)) {
       obj.isDead = false;
-      if (isPlayer) {
+      if (obj.isPlayer) {
         obj.currentJump = 1;
         obj.currentDash = 1;
       }
     }
     // dashing
     if (
-      isPlayer &&
+      obj.isPlayer &&
       control.dash &&
       tempObj.currentDash > 0 &&
       player.dashTimer === 0 &&
@@ -802,7 +760,7 @@ function doPhysics(obj, t, isPlayer) {
       }
     }
     // jumping
-    if (isPlayer && player.dashTimer === 0) {
+    if (obj.isPlayer && player.dashTimer === 0) {
       let jumpEvent = function () {
         player.jumpOn = !player.jumpOn;
         runEvent(globalEvents.onJump);
@@ -868,7 +826,7 @@ function doPhysics(obj, t, isPlayer) {
     if (obj.size !== tempObj.targetSize) {
       let newSize =
         (obj.size * (1 / t / 10 - 1) + tempObj.targetSize) / (1 / t / 10);
-      if (isPlayer) {
+      if (obj.isPlayer) {
         obj.x -= (newSize - obj.size) / 2;
         obj.y -= (newSize - obj.size) / 2;
         obj.size = newSize;
@@ -911,7 +869,7 @@ function doPhysics(obj, t, isPlayer) {
     let yFric = true;
     if (tempObj.xg) {
       obj.xa = gravityPower * tempObj.g;
-      if (isPlayer) {
+      if (obj.isPlayer) {
         let controlMultiplier = control.down - control.up;
         if (control.down && control.up) controlMultiplier = control.latestDir;
         let maxSpeed = tempObj.moveSpeed * moveSpeed;
@@ -923,7 +881,7 @@ function doPhysics(obj, t, isPlayer) {
       xFric = false;
     } else {
       obj.ya = gravityPower * tempObj.g;
-      if (isPlayer) {
+      if (obj.isPlayer) {
         let controlMultiplier = control.right - control.left;
         if (control.right && control.left) controlMultiplier = control.latestDir;
         let maxSpeed = tempObj.moveSpeed * moveSpeed;
@@ -936,16 +894,16 @@ function doPhysics(obj, t, isPlayer) {
     }
     if (tempObj.xg || gdyv !== 0) {
       let fricAcc = (-dyv * yFric * friction + gdyv) * 75;
-      if (isPlayer || !(dirBlock[2]?.yv > 0 || dirBlock[3]?.yv < 0))
+      if (obj.isPlayer || !(dirBlock[2]?.yv > 0 || dirBlock[3]?.yv < 0))
         obj.ya += fricAcc;
     }
     if (!tempObj.xg || gdxv !== 0) {
       let fricAcc = (-dxv * xFric * friction + gdxv) * 75;
-      if (isPlayer || !(dirBlock[0]?.xv > 0 || dirBlock[1]?.xv < 0))
+      if (obj.isPlayer || !(dirBlock[0]?.xv > 0 || dirBlock[1]?.xv < 0))
         obj.xa += fricAcc;
     }
     // change velocity
-    if (player.dashTimer === 0 || !isPlayer) {
+    if (player.dashTimer === 0 || !obj.isPlayer) {
       if (accelx) obj.xv += obj.xa * t;
       if (accely) obj.yv += obj.ya * t;
       // enforce terminal velocity
@@ -1011,7 +969,7 @@ function doPhysics(obj, t, isPlayer) {
       obj.yv * t + (obj.ya * t * t) / 2 + yWarp
     );
     if (rWarp !== undefined) {
-      if (isPlayer) {
+      if (obj.isPlayer) {
         toRoom(rWarp, false);
         runEvent(roomEvents[obj.currentRoom].onEnter, obj.currentRoom);
       } else {
@@ -1019,7 +977,7 @@ function doPhysics(obj, t, isPlayer) {
       }
     }
   } else {
-    if (isPlayer) {
+    if (obj.isPlayer) {
       deathTimer -= t * 1000;
       justDied = true;
       if (deathTimer < 0) respawn();

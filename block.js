@@ -1379,14 +1379,16 @@ new BlockType(
     (obj, block, tempObj, isPlayer) => {
       if (levels[block.newPos[0]] === undefined) return;
       let move = obj.currentRoom !== block.newPos[0];
-      obj.currentRoom = block.newPos[0];
       let nx = block.newPos[1] - obj.size / 2;
       let ny = block.newPos[2] - obj.size / 2;
       if (isPlayer) {
         obj.x = nx;
         obj.y = ny;
         if (move) toRoom(block.newPos[0]);
-      } else moveBlock(obj, nx - obj.x, ny - obj.y);
+      } else {
+        moveBlockRoom(obj, block.newPos[0], false);
+        moveBlock(obj, nx - obj.x, ny - obj.y);
+      }
     }
   ],
   (block, sprite = block.sprite) => {
