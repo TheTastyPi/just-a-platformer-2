@@ -929,3 +929,7 @@
 - Fixed a bug where a dynamic sub-block crossing a boundary warp crashes the game.
 - Fixed a bug where teleporting a dynamic block across rooms crashes the game.
 - Fixed a bug where the sprite of a block peeking out from another room remains even after it is teleported (either via a teleporter or a respawn) to another room.
+
+### 22 Jun. 2025
+
+- Fixed event priority being broken after last update 

@@ -239,8 +239,8 @@ function nextFrame(timeStamp) {
   if (page === "editor") editor.currentRoom = player.currentRoom;
   window.requestAnimationFrame(nextFrame);
 }
-function doCollision(obj, block, dirBlock, dirOffset, eventList, ignoreEventList, xOffset = 0, yOffset = 0) {
-  let topPriority = [0, 0, 0, 0, 0];
+function doCollision(obj, block, dirBlock, dirOffset, eventList, ignoreEventList, topPriority, xOffset = 0, yOffset = 0) {
+  
   let colliding = isColliding(obj, block, true, xOffset, yOffset);
   if ([15, 19].includes(block?.type)) {
     colliding = isColliding(obj, block, true, xOffset, yOffset, true);
@@ -430,7 +430,7 @@ function doCollision(obj, block, dirBlock, dirOffset, eventList, ignoreEventList
   }
   return true;
 };
-function doAllCollisions(levelName, obj, subObj, collided, dirBlock, dirOffset, eventList, ignoreEventList, xOff = 0, yOff = 0) {
+function doAllCollisions(levelName, obj, subObj, collided, dirBlock, dirOffset, eventList, ignoreEventList, topPriority, xOff = 0, yOff = 0) {
   let level = levels[levelName];
   for (let x = gridUnit(obj.x+xOff) - maxBlockSize / 50; x <= gridUnit(subObj.x+subObj.size+xOff); x++) {
     if (subObj.isDead) break;
@@ -501,6 +501,7 @@ function doPhysics(obj, t) {
   let collided = [];
   let eventList = [[], [], [], [], []];
   let ignoreEventList = [[], [], [], [], []];
+  let topPriority = [0, 0, 0, 0, 0];
   let gdxv = 0;
   let gdyv = 0;
   let subObj = obj;
@@ -518,7 +519,7 @@ function doPhysics(obj, t) {
     subObj.size = obj.size;
     subObj.index = obj.index;
   }
-  doAllCollisions(obj.currentRoom, obj, subObj, collided, dirBlock, dirOffset, eventList, ignoreEventList);
+  doAllCollisions(obj.currentRoom, obj, subObj, collided, dirBlock, dirOffset, eventList, ignoreEventList, topPriority);
   // room link
   let xWarp = 0;
   let yWarp = 0;
@@ -535,7 +536,7 @@ function doPhysics(obj, t) {
     let lvlOffsetted = neg > 0 ? newlvl : level;
     let xOff = hori ? neg * lvlOffsetted.length * 50 : dx;
     let yOff = !hori ? neg * lvlOffsetted[0].length * 50 : dy;
-    doAllCollisions(newlvlName, obj, subObj, collided, dirBlock, dirOffset, eventList, ignoreEventList, xOff, yOff);
+    doAllCollisions(newlvlName, obj, subObj, collided, dirBlock, dirOffset, eventList, ignoreEventList, topPriority, xOff, yOff);
     if (
       neg * (hori ? obj.x : obj.y) <
       neg *
