@@ -936,4 +936,4 @@
 
 ### 24 Jun. 2025
 
-- Fixed events being broken after last update (big oopsie)
+- Fixed touch events being broken after last update (big oopsie)
