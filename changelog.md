@@ -941,3 +941,4 @@
 ### 25 Jun. 2025
 
 - You can no longer buffer a normal jump after wall-jumping.
+- Fixed giveJump not working for non-solid blocks.
