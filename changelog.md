@@ -932,4 +932,8 @@
 
 ### 22 Jun. 2025
 
-- Fixed event priority being broken after last update 
+- Fixed event priority being broken after last update
+
+### 24 Jun. 2025
+
+- Fixed events being broken after last update (big oopsie)

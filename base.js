@@ -240,7 +240,6 @@ function nextFrame(timeStamp) {
   window.requestAnimationFrame(nextFrame);
 }
 function doCollision(obj, block, dirBlock, dirOffset, eventList, ignoreEventList, topPriority, xOffset = 0, yOffset = 0) {
-  
   let colliding = isColliding(obj, block, true, xOffset, yOffset);
   if ([15, 19].includes(block?.type)) {
     colliding = isColliding(obj, block, true, xOffset, yOffset, true);
@@ -454,7 +453,7 @@ function doAllCollisions(levelName, obj, subObj, collided, dirBlock, dirOffset, 
           continue;
         if (subObj.isPlayer && !subBlock.collidePlayer) continue;
         if (!subObj.isPlayer && !subBlock.collideBlock) continue;
-        if (doCollision(subObj, gridSpace[i], dirBlock, dirOffset, eventList, ignoreEventList, -xOff, -yOff)) {
+        if (doCollision(subObj, gridSpace[i], dirBlock, dirOffset, eventList, ignoreEventList, topPriority, -xOff, -yOff)) {
           collided.push(gridSpace[i]);
         }
       }
@@ -466,7 +465,7 @@ function doAllCollisions(levelName, obj, subObj, collided, dirBlock, dirOffset, 
     subObj.collidePlayer &&
     prevPlayer.currentRoom === levelName
   ) {
-    if (doCollision(subObj, prevPlayer, dirBlock, dirOffset, eventList, ignoreEventList, -xOff, -yOff)) {
+    if (doCollision(subObj, prevPlayer, dirBlock, dirOffset, eventList, ignoreEventList, topPriority, -xOff, -yOff)) {
       collided.push(prevPlayer);
     }
   }
@@ -477,7 +476,7 @@ function doAllCollisions(levelName, obj, subObj, collided, dirBlock, dirOffset, 
       if (subObj.isPlayer && !subBlock.collidePlayer) continue;
       if (!subObj.isPlayer && !subBlock.collideBlock) continue;
       if (block.currentRoom === levelName) {
-        if (doCollision(subObj, block, dirBlock, dirOffset, eventList, ignoreEventList, -xOff, -yOff)) {
+        if (doCollision(subObj, block, dirBlock, dirOffset, eventList, ignoreEventList, topPriority, -xOff, -yOff)) {
           collided.push(block);
         }
       }
