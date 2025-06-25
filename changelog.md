@@ -940,4 +940,4 @@
 
 ### 25 Jun. 2025
 
-- You no longer buffer a normal jump after wall-jumping.
+- You can no longer buffer a normal jump after wall-jumping.
