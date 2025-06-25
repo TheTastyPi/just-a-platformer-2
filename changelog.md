@@ -937,3 +937,7 @@
 ### 24 Jun. 2025
 
 - Fixed touch events being broken after last update (big oopsie)
+
+### 25 Jun. 2025
+
+- You no longer buffer a normal jump after wall-jumping.

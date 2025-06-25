@@ -762,6 +762,7 @@ function doPhysics(obj, t) {
     // jumping
     if (obj.isPlayer && player.dashTimer === 0) {
       let jumpEvent = function () {
+        canJump = false;
         player.jumpOn = !player.jumpOn;
         runEvent(globalEvents.onJump);
         runEvent(roomEvents[player.currentRoom].onJump, player.currentRoom);
@@ -817,7 +818,6 @@ function doPhysics(obj, t) {
         } else {
           obj.yv = Math.sign(tempObj.g) * -jumpPower + ((dirBlock[2]?.dynamic || dirBlock[2]?.moving)?(dirBlock[2]?.yv || 0):0) + ((dirBlock[3]?.dynamic || dirBlock[3]?.moving)?(dirBlock[3]?.yv || 0):0);
         }
-        canJump = false;
         obj.currentJump--;
         jumpEvent();
       }
