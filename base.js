@@ -465,7 +465,7 @@ function doAllCollisions(levelName, obj, subObj, collisionInfo, xOff = 0, yOff =
     subObj.collidePlayer &&
     prevPlayer.currentRoom === levelName
   ) {
-    if (doCollision(subObj, prevPlayer, collisionInfo.dirBlock, collisionInfo.dirOffset, collisionInfo.eventList, collisionInfo.ignoreEventList, collisionInfo.topPriority, -xOff, -yOff)) {
+    if (doCollision(subObj, prevPlayer, collisionInfo, -xOff, -yOff)) {
       collisionInfo.collided.push(prevPlayer);
     }
   }
@@ -476,7 +476,7 @@ function doAllCollisions(levelName, obj, subObj, collisionInfo, xOff = 0, yOff =
       if (subObj.isPlayer && !subBlock.collidePlayer) continue;
       if (!subObj.isPlayer && !subBlock.collideBlock) continue;
       if (block.currentRoom === levelName) {
-        if (doCollision(subObj, block, collisionInfo.dirBlock, collisionInfo.dirOffset, collisionInfo.eventList, collisionInfo.ignoreEventList, collisionInfo.topPriority, -xOff, -yOff)) {
+        if (doCollision(subObj, block, collisionInfo, -xOff, -yOff)) {
           collisionInfo.collided.push(block);
         }
       }
