@@ -139,6 +139,8 @@ const coyoteTime = interval*3;
 var coyoteTimer = coyoteTime;
 const dashDuration = 200;
 const dashSpeed = 500;
+const fricStrength = 75;
+const WJSlideSpeed = 75;
 var prevPlayer = null;
 var prevDynObjs = [];
 var prevTextDisp = [];
@@ -386,7 +388,7 @@ function doCollision(obj, block, collisionInfo, xOffset = 0, yOffset = 0) {
     let axis = dir < 2 ? "x" : "y";
     let sign = dir % 2 ? 1 : -1;
     if (!block.friction && obj.xg === dir < 2 && Math.sign(obj.g) === sign)
-      friction = false;
+      collisionInfo.doFriction = false;
     let border =
       dBlock?.[axis] + (dir % 2 ? 0 : dBlock?.size) + collisionInfo.dirOffset[dir];
     if (
@@ -410,10 +412,10 @@ function doCollision(obj, block, collisionInfo, xOffset = 0, yOffset = 0) {
     if (block.eventPriority === collisionInfo.topPriority[dir])
       collisionInfo.eventList[dir].push([block, data.touchEvent[dir]]);
   } else {
-    if (!block.friction) friction = false;
+    if (!block.friction) collisionInfo.doFriction = false;
     if (block.type === 12 && block.addVel) {
-      gdxv += block.newxv;
-      gdyv += block.newyv;
+      collisionInfo.envxv += block.newxv;
+      collisionInfo.envyv += block.newyv;
     }
     if (block.ignorePriority) {
       collisionInfo.ignoreEventList[4].push([block, data.touchEvent[4]]);
@@ -499,12 +501,12 @@ function doPhysics(obj, t) {
     ignoreEventList: [[], [], [], [], []],
     topPriority: [0, 0, 0, 0, 0],
     giveJump: false,
+    envxv: 0,
+    envyv: 0,
+    doFriction: true,
   }
-  let friction = true;
   obj.xa = 0;
   obj.ya = 0;
-  let gdxv = 0;
-  let gdyv = 0;
   let subObj = obj;
   accelx = true;
   accely = true;
@@ -667,7 +669,7 @@ function doPhysics(obj, t) {
     if (obj.isPlayer) effectiveMaxJump = tempObj.maxJump;
     if (obj.isPlayer) effectiveMaxDash = tempObj.maxDash;
     obj.lastCollided = collisionInfo.collided;
-    friction = tempObj.friction && friction;
+    collisionInfo.doFriction = tempObj.friction && collisionInfo.doFriction;
     if (obj.isPlayer) {
       if (
         collisionInfo.dirBlock.some(
@@ -709,15 +711,9 @@ function doPhysics(obj, t) {
             posY = camy;
           }
           style.left =
-            Math.max(
-              Math.min(x + posX + (s - w) / 2, window.innerWidth - w),
-              0
-            ) + "px";
+            Math.max(Math.min(x + posX + (s - w) / 2, window.innerWidth - w), 0) + "px";
           style.top =
-            Math.max(
-              Math.min(y + posY + (s - h) / 2, window.innerHeight - h),
-              0
-            ) + "px";
+            Math.max(Math.min(y + posY + (s - h) / 2, window.innerHeight - h), 0) + "px";
           prevTextDisp = [...tempObj.textDisp];
         }
       } else {
@@ -773,9 +769,9 @@ function doPhysics(obj, t) {
       };
       if (tempObj.canWallJump && canWJ) {
         if (tempObj.xg) {
-          obj.xv = Math[obj.g < 0 ? "max" : "min"](obj.xv, tempObj.g * 75);
+          obj.xv = Math[obj.g < 0 ? "max" : "min"](obj.xv, tempObj.g * WJSlideSpeed);
         } else
-          obj.yv = Math[obj.g < 0 ? "max" : "min"](obj.yv, tempObj.g * 75);
+          obj.yv = Math[obj.g < 0 ? "max" : "min"](obj.yv, tempObj.g * WJSlideSpeed);
         if (control.jump) {
           let maxSpeed = obj.moveSpeed * moveSpeed;
           switch (tempObj.wallJumpDir) {
@@ -844,65 +840,53 @@ function doPhysics(obj, t) {
       }
     }
     // change acceleration
-    let dv = [];
     for (let i in collisionInfo.dirBlock) {
       let sign = i % 2 ? 1 : -1;
       let hori = i < 2;
-      dv[i] =
-        tempObj.g * sign > 0 && (collisionInfo.dirBlock[i]?.dynamic || collisionInfo.dirBlock[i]?.moving)
-          ? collisionInfo.dirBlock[i]?.[hori ? "yv" : "xv"] ?? 0
-          : 0;
+      if (tempObj.g * sign > 0 && (collisionInfo.dirBlock[i]?.dynamic || collisionInfo.dirBlock[i]?.moving) && collisionInfo.dirBlock[i].friction) {
+        collisionInfo[hori ? "envyv" : "envxv"] += collisionInfo.dirBlock[i]?.[hori ? "yv" : "xv"] ?? 0;
+      }
       if (conveyorBlocks.includes(collisionInfo.dirBlock[i]?.type)) {
-        if (hori) {
-          gdyv += collisionInfo.dirBlock[i][dirWord[i ^ 1].toLowerCase() + "Speed"];
-        } else gdxv += collisionInfo.dirBlock[i][dirWord[i ^ 1].toLowerCase() + "Speed"];
+        collisionInfo[hori ? "envyv" : "envxv"] += collisionInfo.dirBlock[i][dirWord[i ^ 1].toLowerCase() + "Speed"];
       }
       if (conveyorBlocks.includes(subObj.type)) {
         if (collisionInfo.dirBlock[i]) {
-          if (hori) {
-            gdyv -= subObj[dirWord[i].toLowerCase() + "Speed"];
-          } else gdxv -= subObj[dirWord[i].toLowerCase() + "Speed"];
+          collisionInfo[hori ? "envyv" : "envxv"] -= subObj[dirWord[i].toLowerCase() + "Speed"];
         }
       }
     }
-    let dxv = obj.xv - dv[2] - dv[3];
-    let dyv = obj.yv - dv[0] - dv[1];
-    let xFric = true;
-    let yFric = true;
     if (tempObj.xg) {
       obj.xa = gravityPower * tempObj.g;
       if (obj.isPlayer) {
         let controlMultiplier = control.down - control.up;
-        if (control.down && control.up) controlMultiplier = control.latestDir;
+        if (control.up && control.down) controlMultiplier = control.latestDir;
         let maxSpeed = tempObj.moveSpeed * moveSpeed;
-        dyv -= controlMultiplier * maxSpeed;
-        if (control.up || control.down) friction = true;
-        if (control.up && player.yv < -maxSpeed) friction = false;
-        if (control.down && player.yv > maxSpeed) friction = false;
+        collisionInfo.envyv += controlMultiplier * maxSpeed;
+        if (control.up || control.down) collisionInfo.doFriction = true;
+        if (control.up && obj.yv < collisionInfo.envyv) collisionInfo.doFriction = false;
+        if (control.down && obj.yv > collisionInfo.envyv) collisionInfo.doFriction = false;
       }
-      xFric = false;
     } else {
       obj.ya = gravityPower * tempObj.g;
       if (obj.isPlayer) {
         let controlMultiplier = control.right - control.left;
-        if (control.right && control.left) controlMultiplier = control.latestDir;
+        if (control.left && control.right) controlMultiplier = control.latestDir;
         let maxSpeed = tempObj.moveSpeed * moveSpeed;
-        dxv -= controlMultiplier * maxSpeed;
-        if (control.right || control.left) friction = true;
-        if (control.left && player.xv < -maxSpeed) friction = false;
-        if (control.right && player.xv > maxSpeed) friction = false;
+        collisionInfo.envxv += controlMultiplier * maxSpeed;
+        if (control.left || control.right) collisionInfo.doFriction = true;
+        if (control.left && obj.xv < collisionInfo.envxv) collisionInfo.doFriction = false;
+        if (control.right && obj.xv > collisionInfo.envxv) collisionInfo.doFriction = false;
       }
-      yFric = false;
     }
-    if (tempObj.xg || gdyv !== 0) {
-      let fricAcc = (-dyv * yFric * friction + gdyv) * 75;
-      if (obj.isPlayer || !(collisionInfo.dirBlock[2]?.yv > 0 || collisionInfo.dirBlock[3]?.yv < 0))
-        obj.ya += fricAcc;
+    if (tempObj.xg || collisionInfo.envyv !== 0) {
+      if (collisionInfo.doFriction) {
+        obj.ya += (collisionInfo.envyv - obj.yv) * fricStrength;
+      }
     }
-    if (!tempObj.xg || gdxv !== 0) {
-      let fricAcc = (-dxv * xFric * friction + gdxv) * 75;
-      if (obj.isPlayer || !(collisionInfo.dirBlock[0]?.xv > 0 || collisionInfo.dirBlock[1]?.xv < 0))
-        obj.xa += fricAcc;
+    if (!tempObj.xg || collisionInfo.envxv !== 0) {
+      if (collisionInfo.doFriction) {
+        obj.xa += (collisionInfo.envxv - obj.xv) * fricStrength;
+      }
     }
     // change velocity
     if (player.dashTimer === 0 || !obj.isPlayer) {
@@ -911,15 +895,10 @@ function doPhysics(obj, t) {
       // enforce terminal velocity
       if (obj.xg && Math.abs(obj.xv) > Math.abs(obj.xa)
       && Math.sign(obj.xv) == Math.sign(obj.xa)) {
-        obj.xv = obj.xa
+        obj.xv = obj.xa;
       } else if (Math.abs(obj.yv) > Math.abs(obj.ya)
       && Math.sign(obj.yv) == Math.sign(obj.ya)) {
-        obj.yv = obj.ya ;
-      }
-      if (tempObj.xg) {
-        if (Math.abs(dyv - gdyv) < 0.1 && accely) obj.yv -= dyv - gdyv;
-      } else {
-        if (Math.abs(dxv - gdxv) < 0.1 && accelx) obj.xv -= dxv - gdxv;
+        obj.yv = obj.ya;
       }
       for (let i in collisionInfo.dirBlock) {
         let hori = i < 2;

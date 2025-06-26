@@ -146,7 +146,6 @@ const propData = {
   rightWall: ["bool", "rW"],
   topWall: ["bool", "tW"],
   bottomWall: ["bool", "bW"],
-  passOnPush: ["bool", "pOP"],
   newPos: ["pos", "nP"],
   newRoom: ["str", "nR"],
   id: ["int", "id"],
@@ -268,8 +267,6 @@ var blockEdit = new Vue({
         "Forces boundary warps to, when in a corner, point vertically.",
       addVel:
         "Changes the Force Field from\nsetting velocity to adding velocity.",
-      passOnPush:
-        "Allows a dynamic block/player to be pushed through the panel by another object."
     }
   }
 });

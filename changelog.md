@@ -942,3 +942,9 @@
 
 - You can no longer buffer a normal jump after wall-jumping.
 - Fixed giveJump not working for non-solid blocks.
+- Did a small rewrite of the movement system, fixing several issues.
+  - Fixed blocks with `friction=false` not functioning correctly.
+  - Fixed Conveyor Blocks giving too much speed to the player and blocks with `friction=false`.
+  - Fixed Force Fields with `addVel=true` crashing the game.
+  - Also made Conveyor Blocks/Panels and Force Fields with `addVel=true` be stronger when acting along the same axis as gravity.
+- Removed the `passOnPush` proprerty from all Panels.
