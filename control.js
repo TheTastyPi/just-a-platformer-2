@@ -14,10 +14,11 @@ document.addEventListener("keydown", function (event) {
   runEvent(roomEvents[player.currentRoom].onKeyDown, player.currentRoom, {
     key: key
   });
+  let c = options.controls;
+  if (c.Respawn.includes(key)) respawn(event.shiftKey && page === "editor");
   if ((event.shiftKey && key !== "ShiftLeft" && key !== "ShiftRight")
     || (event.ctrlKey && key !== "ControlLeft" && key !== "ControlRight")
     || (event.metaKey && key !== "MetaLeft" && key !== "MetaRight")) return;
-  let c = options.controls;
   if (c.Left.includes(key)) {
     control.left = true;
     if (!player.xg) control.latestDir = -1;
@@ -39,7 +40,6 @@ document.addEventListener("keydown", function (event) {
   } else if (c.Jump.includes(key)) control.jump = true;
   if (c.Dash.includes(key)) control.dash = true;
   if (c.Interact.includes(key)) control.interact = true;
-  if (c.Respawn.includes(key)) respawn(event.shiftKey && page === "editor");
 });
 document.addEventListener("keyup", function (event) {
   let key = event.code;

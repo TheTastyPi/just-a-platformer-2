@@ -948,3 +948,7 @@
   - Fixed Force Fields with `addVel=true` crashing the game.
   - Also made Conveyor Blocks/Panels and Force Fields with `addVel=true` be stronger when acting along the same axis as gravity.
 - Removed the `passOnPush` proprerty from all Panels.
+
+### 2 Jul. 2025
+
+- Fixed \[Shift]+Respawn not working.
