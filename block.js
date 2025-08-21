@@ -154,11 +154,7 @@ new BlockType(
             drawLevel();
           }
         } else if (!isColliding(saveState,block)) {
-          setSpawn(false,
-            block.x+block.size/2-player.size/2,
-            block.y+block.size-player.size,
-            true
-          );
+          setSpawn(false, true, block);
           updateBlock(getGridBlock(block));
           drawLevel();
         }

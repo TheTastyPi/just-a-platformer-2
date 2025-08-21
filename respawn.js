@@ -1,8 +1,24 @@
-function setSpawn(start = false, x = player.x, y = player.y, static = false) {
+function setSpawn(start = false, auto = false, block) {
   saveState = deepCopy(player);
-  saveState.x = x;
-  saveState.y = y;
-  if (static) {
+  if (auto) {
+    let x, y;
+    if (player.xg) {
+      y = block.y+block.size/2-player.size/2;
+      if (player.g > 0) {
+        x = block.x+block.size-player.size;
+      } else {
+        x = block.x;
+      }
+    } else {
+      x = block.x+block.size/2-player.size/2;
+      if (player.g > 0) {
+        y = block.y+block.size-player.size;
+      } else {
+        y = block.y;
+      }
+    }
+    saveState.x = x;
+    saveState.y = y;
     saveState.xv = 0;
     saveState.yv = 0;
     saveState.xa = 0;
