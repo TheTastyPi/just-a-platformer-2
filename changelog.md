@@ -952,3 +952,7 @@
 ### 2 Jul. 2025
 
 - Fixed \[Shift]+Respawn not working.
+
+### 20 Aug. 2025
+
+- Increased the move speed to match jap1.
