@@ -153,7 +153,7 @@ new BlockType(
             updateBlock(getGridBlock(block));
             drawLevel();
           }
-        } else if (!isColliding(saveState,block)) {
+        } else if (saveState.currentRoom != block.currentRoom || !isColliding(saveState,block)) {
           setSpawn(false, true, block);
           updateBlock(getGridBlock(block));
           drawLevel();
