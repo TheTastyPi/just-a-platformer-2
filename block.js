@@ -125,7 +125,7 @@ new BlockType(
 );
 new BlockType(
   "Check Point",
-  { ...new Block(2, 0, 0, 50, false, false, 3), color: "#00ffff" },
+  { ...new Block(2, 0, 0, 50, false, false, 3), color: "#00ffff", auto: true },
   (block, app = display) => {
     let g = new PIXI.Graphics();
     g.alpha = 0.5;
@@ -145,10 +145,20 @@ new BlockType(
     () => {},
     (obj, block, tempObj, isPlayer) => {
       if (isPlayer) {
-        tempObj.textDisp = [block.x, block.y, block.size, "Shift to use"];
-        if (control.interact && canInteract) {
-          setSpawn();
-          canInteract = false;
+        if (!block.auto) {
+          tempObj.textDisp = [block.x, block.y, block.size, "Shift to use"];
+          if (control.interact && canInteract) {
+            setSpawn();
+            canInteract = false;
+            updateBlock(getGridBlock(block));
+            drawLevel();
+          }
+        } else if (!isColliding(saveState,block)) {
+          setSpawn(false,
+            block.x+block.size/2-player.size/2,
+            block.y+block.size-player.size,
+            true
+          );
           updateBlock(getGridBlock(block));
           drawLevel();
         }
@@ -168,7 +178,8 @@ new BlockType(
         );
   },
   {
-    color: []
+    color: [],
+    auto: []
   }
 );
 new BlockType(

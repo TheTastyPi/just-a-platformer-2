@@ -956,3 +956,6 @@
 ### 20 Aug. 2025
 
 - Increased the move speed to match jap1.
+- Added the 'auto' property to Check Points, which is true by default.
+  - If true, the Check Point acts as it does in jap1, automatically setting spawn at the center-bottom of the block upon touc, setting velocity to 0.
+  - If false, it acts as prior in jap2, requiring the player to press \[Shift] to set spawn, preserving position and velocity information.

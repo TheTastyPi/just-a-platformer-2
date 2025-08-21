@@ -64,6 +64,10 @@ body::after {
   overflow-x: scroll;
   flex-grow: 1;
 }
+.blockEditBtn:active {
+  background-color: #88ff88;
+  background-blend-mode: multiply;
+}
 .noEditText {
   font-size: 50px;
   background: #ffffff88;

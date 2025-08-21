@@ -1,5 +1,13 @@
-function setSpawn(start = false) {
+function setSpawn(start = false, x = player.x, y = player.y, static = false) {
   saveState = deepCopy(player);
+  saveState.x = x;
+  saveState.y = y;
+  if (static) {
+    saveState.xv = 0;
+    saveState.yv = 0;
+    saveState.xa = 0;
+    saveState.ya = 0;
+  }
   saveState.isDead = false;
   for (let i in diffSave) {
     let diff = diffSave[i];

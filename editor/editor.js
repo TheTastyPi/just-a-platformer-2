@@ -163,7 +163,8 @@ const propData = {
   setValue: ["bool", "sV"],
   newDash: ["int", "nD"],
   infDash: ["bool", "iD"],
-  addedDash: ["int", "aD"]
+  addedDash: ["int", "aD"],
+  auto: ["bool","at"]
 };
 const propAliasReverse = {};
 const blockList = {
@@ -267,6 +268,8 @@ var blockEdit = new Vue({
         "Forces boundary warps to, when in a corner, point vertically.",
       addVel:
         "Changes the Force Field from\nsetting velocity to adding velocity.",
+      auto:
+        "Automatically set spawn at the center-bottom of the block, setting velocity to 0.\nIf false, sets spawn when you press [Shift], preserving position and velocity."
     }
   }
 });
