@@ -853,6 +853,7 @@
                   <li>Leave 'object' empty to access base variables.</li>
                   <li>If you attempt to alter a special variable (which are all read-only), then it’ll give a CANNOT_SET_READ_ONLY_VARIABLE_[propertyName] error.</li>
                   <li>If you attempt to alter a read-only property of the player/a block, then it’ll give a CANNOT_SET_READ_ONLY_PLAYER/BLOCK_PROPERTY_[propertyName] error.</li>
+                  <li>If you attempt to alter a property of the tempPlaer, then it’ll give a CANNOT_SET_TEMP_PLAYER_PROPERTY error.</li>
                   <li>If you attempt to alter an inherited property of an object/array (ie. “constructor”), then you’ll get a CANNOT_SET_INVALID_VARIABLE_[propertyName] error.</li>
                   <li>If you attempt to add a property to an object or array, then you will get a CANNOT_ADD_PROPERTY_TO_OBJECT error.</li>
                   <li>If you attempt to change a variable’s type, you will get an INVALID_ASSIGNMENT_TYPE error.</li>
@@ -971,7 +972,7 @@
             Note that some properties of certain variables may be omitted due to lack of possible use.
             <ul>
               <li>
-                player[obj]: The player object.
+                player[obj]: The player object. Note that temporary effects like temporary Gravity Fields are not visible here.
                 <ul>
                   <li>x[num]: The player’s x position.</li>
                   <li>y[num]: The player’s y position.</li>
@@ -986,13 +987,6 @@
                   <li>xg[bool]: Whether the player’s gravity is horizontal or not.</li>
                   <li>maxJump[num]: The player’s maximum jump amount.</li>
                   <li>currentJump[num]: The player’s current jump amount.</li>
-                  <li>canWallJump[bool][readOnly]: Whether the player is able to wall-jump.</li>
-                  <li>
-                    wallJumpDir[num][readOnly]: The direction of the wall the player can wall-jump off of.
-                    <ul>
-                      <li>0 for left, 1 for right, 2, for above, 3 for below.</li>
-                    </ul>
-                  </li>
                   <li>maxDash[num]: The player’s maximum dash amount.</li>
                   <li>currentDash[num]: The player’s current dash amount.</li>
                   <li>dashTimer[num]: Time left until dash ends in ms.
@@ -1021,6 +1015,18 @@
                   </li>
                   <li>coins[num]: Number of coins the player has.</li>
                   <li>jumpOn[bool]: State of jump blocks.</li>
+                </ul>
+              </li>
+              <li>
+                tempPlayer[obj][readOnly]: A copy of player, but with all temporary effects applied. Some extra properties are available to read only here.
+                <ul>
+                  <li>canWallJump[bool][readOnly]: Whether the player is able to wall-jump.</li>
+                  <li>
+                    wallJumpDir[num][readOnly]: The direction of the wall the player can wall-jump off of.
+                    <ul>
+                      <li>0 for left, 1 for right, 2, for above, 3 for below.</li>
+                    </ul>
+                  </li>
                 </ul>
               </li>
               <li>ran[bool]: Whether the event has ran at least once.</li>
@@ -1130,9 +1136,10 @@
               <li>INVALID_RHS_FOR_[operation]: Occurs when an operator that does not take objects or arrays is given an object or array on the right-hand side.</li>
               <li>INVALID_STRING: Occurs when the expression contains quotes that do not match any other quotes to for a string.</li>
               <li>UNDEFINED_[VARIABLE/PROPERTY]_[varName]: Occurs when you attempt to access a variable/property that does not exist</li>
-              <li>CANNOT_ACCESS_UNALLOWED_[PLAYER/BLOCK]_PROPERTY_[propertyName]: Occurs when you attempt to access a property of the player/a block that not listed in this documentation nor in the block edit menu.</li>
+              <li>CANNOT_ACCESS_UNALLOWED_[PLAYER/TEMP_PLAYER/BLOCK]_PROPERTY_[propertyName]: Occurs when you attempt to access a property of the player/tempPlayer/a block that not listed in this documentation nor in the block edit menu.</li>
               <li>CANNOT_SET_SPECIAL_VARIABLE_[propertyName]: Occurs when you attempt to alter a special variable.</li>
               <li>CANNOT_SET_READ_ONLY_[PLAYER/BLOCK]_PROPERTY_[propertyName]: Occurs when you attempt to alter a read-only property of the player/a block.</li>
+              <li>CANNOT_SET_TEMP_PLAYER_PROPERTY: Occurs when you attempt to alter a property of tempPlayer.</li>
               <li>CANNOT_SET_INVALID_VARIABLE_[propertyName]: Occurs when you attempt to alter an inherited property of an object/array.</li>
               <li>CANNOT_ADD_PROPERTY_TO_OBJECT: Occurs when you attempt to add a property to an object/array.</li>
               <li>INVALID_ASSIGNMENT_TYPE: Occurs when you attempt to change a variable’s type.</li>

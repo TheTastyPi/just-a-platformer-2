@@ -965,3 +965,5 @@
 - Fixed a bug where you can input non-numeric values for level size editing.
 - Made it so that only text inputs disables game/editor control instead of everything in the left bar.
 - Fixed a bug where using scripts commands (moveBlock, moveBlockTo, rotateBlock, or scaleBlock) to move dynamic blocks with t = 0 can crash the game.
+- Fixed a bug where read-only player properties can't actually be read in events.
+- Added `tempPlayer` as a read-only special variable in events, allowing access to temporary effects of the player, like temporary Gravity Fields, or whether the player can currently wall jump.

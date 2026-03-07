@@ -75,6 +75,9 @@ new CommandType(
   }
 );
 function setPropertyInEvent(vars,obj,prop,val) {
+  if (obj === tempPlayer) {
+    return "CANNOT_SET_TEMP_PLAYER_PROPERTY";
+  }
   if (obj === player && readOnlyPlayerProp.includes(prop)) {
     return "CANNOT_SET_READ_ONLY_PLAYER_PROPERTY_[" + prop + "]";
   }
@@ -123,9 +126,10 @@ new CommandType(
     let objIsBlockArray = Array.isArray(obj) && obj.find(x=>!x.isBlock) === undefined;
     if (objIsBlockArray) {
       for (let i in obj) {
-        setPropertyInEvent(vars,obj[i],prop,val);
+        let result = setPropertyInEvent(vars,obj[i],prop,val);
+        if (typeof result === "string") return result;
       }
-    } else setPropertyInEvent(vars,obj,prop,val);
+    } else return setPropertyInEvent(vars,obj,prop,val);
   }
 );
 new CommandType(

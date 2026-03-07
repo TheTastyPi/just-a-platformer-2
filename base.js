@@ -89,9 +89,11 @@ const allowedPlayerProp = [
 ]
 const readOnlyPlayerProp = [
   "isDead",
+  "isPlayer",
+];
+const tempOnlyPlayerProp = [
   "canWallJump",
   "wallJumpDir",
-  "isPlayer",
 ];
 const unallowedBlockProp = [
   "link",
@@ -185,6 +187,7 @@ function nextFrame(timeStamp) {
       runEvent(roomEvents[player.currentRoom].onTick, player.currentRoom);
       handleActions();
       handleEvents();
+      tempPlayer = {...player};
       for (let i = 0; i < simReruns; i++) {
         prevPlayer = deepCopy(player);
         prevDynObjs = deepCopy(dynamicObjs);
@@ -601,26 +604,6 @@ function doPhysics(obj, t) {
     let prevxg = subObj.xg;
     obj.roomLink = [];
     let tempObj = { ...subObj };
-    for (let i in collisionInfo.collided) {
-      let block = collisionInfo.collided[i];
-      if (block !== player) {
-        if (block.dynamic)
-          block = dynamicObjs[block.dIndex];
-        runEvent(block.events?.onTouch, block, { cause: obj });
-      }
-    }
-    for (let i in collisionInfo.dirBlock) {
-      let block = collisionInfo.dirBlock[i];
-      if (block) {
-        if (block !== player) {
-          if (block.dynamic)
-            block = dynamicObjs[block.dIndex];
-          runEvent(block.events?.["onTouch" + dirWord[i ^ 1]], block, {
-            cause: obj
-          });
-        }
-      }
-    }
     collisionInfo.eventList.map((x, i) => {
       x.splice(x.length, 0, ...collisionInfo.ignoreEventList[i]);
     });
@@ -657,6 +640,27 @@ function doPhysics(obj, t) {
         false,
         true
       );
+    }
+    if (obj === player) tempPlayer = {...tempObj};
+    for (let i in collisionInfo.collided) {
+      let block = collisionInfo.collided[i];
+      if (block !== player) {
+        if (block.dynamic)
+          block = dynamicObjs[block.dIndex];
+        runEvent(block.events?.onTouch, block, { cause: obj });
+      }
+    }
+    for (let i in collisionInfo.dirBlock) {
+      let block = collisionInfo.dirBlock[i];
+      if (block) {
+        if (block !== player) {
+          if (block.dynamic)
+            block = dynamicObjs[block.dIndex];
+          runEvent(block.events?.["onTouch" + dirWord[i ^ 1]], block, {
+            cause: obj
+          });
+        }
+      }
     }
     for (let i in collisionInfo.collided) {
       while (

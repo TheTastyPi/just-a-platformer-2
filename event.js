@@ -1,3 +1,4 @@
+var tempPlayer = {...player};
 function runEvent(event, source, extraContext = {}) {
   if (!event) return;
   if (editor && !editor.playMode) return;
@@ -13,6 +14,7 @@ function runEvent(event, source, extraContext = {}) {
     let copy = deepCopy(event, true);
     copy[0] = { ...event[0] };
     copy[0].player = player;
+    copy[0].tempPlayer = tempPlayer;
     copy[0].global = eventGlobalObject;
     copy[0]._controls = [];
     copy[0]._loops = [];
@@ -217,8 +219,10 @@ function evalExp(exp, context) {
       case ".":
         if (LHS[RHS]===undefined) return `ERROR:UNDEFINED_PROPERTY_[${RHS}];`;
         if (!Object.hasOwn(LHS,RHS)) return `ERROR:INVALID_PROPERTY_[${RHS}];`;
-        if (LHS === player && !allowedPlayerProp.includes(RHS))
+        if (LHS === player && !allowedPlayerProp.includes(RHS) && !readOnlyPlayerProp.includes(RHS))
           return "ERROR:CANNOT_ACCESS_UNALLOWED_PLAYER_PROPERTY_[" + RHS + "];";
+        if (LHS === tempPlayer && !allowedPlayerProp.includes(RHS) && !readOnlyPlayerProp.includes(RHS) && !tempOnlyPlayerProp.includes(RHS))
+          return "ERROR:CANNOT_ACCESS_UNALLOWED_TEMP_PLAYER_PROPERTY_[" + RHS + "];";
         if (LHS.isBlock && unallowedBlockProp.includes(RHS))
           return "ERROR:CANNOT_ACCESS_UNALLOWED_BLOCK_PROPERTY_[" + RHS + "];";
         result = LHS[RHS];
