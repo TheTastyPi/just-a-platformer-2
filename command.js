@@ -40,6 +40,10 @@ new CommandType(
     let moveX = posFuncX(ct + delt) - posFuncX(ct);
     let moveY = posFuncY(ct + delt) - posFuncY(ct);
     if (t === 0) {
+      xv0 = 0
+      yv0 = 0
+      xa = 0
+      ya = 0
       moveX = dx;
       moveY = dy;
     }
@@ -322,15 +326,21 @@ new CommandType(
       let dy = y[i];
       let dis = dist(0, 0, dx, dy);
       let dD = d ?? dis;
+      let cos = dx / dis;
+      let sin = dy / dis;
+      if (dis === 0) {
+        cos = 0;
+        sin = 0;
+      }
       if (v0 === undefined) v0 = dD / t;
       let a = (2 * (dD - v0 * t)) / t / t;
       let posFuncD = (t) => (a / 2) * t ** 2 + v0 * t;
       let moveD = posFuncD(ct + delt) - posFuncD(ct);
       if (t === 0) {
+        v0 = 0;
+        a = 0;
         moveD = dD;
       }
-      let cos = dx / dis;
-      let sin = dy / dis;
       moveBlock(block, cos * moveD, sin * moveD);
       block.moving = true;
       let v = a * ct + v0;
@@ -365,6 +375,8 @@ new CommandType(
     let thetaFunc = (t) => (alpha / 2) * t ** 2 + w0 * t;
     let movetheta = thetaFunc(ct + delt) - thetaFunc(ct);
     if (t === 0) {
+      w0 = 0;
+      alpha = 0;
       movetheta = dtheta;
     }
     for (let i in blocks) {
@@ -485,6 +497,8 @@ new CommandType(
     let posFuncS = (t) => (a / 2) * t ** 2 + v0 * t + 1;
     let moveS = posFuncS(ct + delt) / posFuncS(ct);
     if (t === 0) {
+      v0 = 0;
+      a = 0;
       moveS = factor;
     }
     for (let i in blocks) {
