@@ -177,7 +177,7 @@
           </div>
         </div>
       </div>
-      <div id="editOptions" class="editOptions" v-on:keydown.stop v-if="editor.showMenus && !editor.playMode">
+      <div id="editOptions" class="editOptions" v-if="editor.showMenus && !editor.playMode">
         <div>Building</div>
         Size:<input v-model="editor.buildSelect.size" onchange="updateBuildDisp()" style="width:100px"></input>px<br>
         <div>Grid & Snapping</div>
@@ -189,7 +189,7 @@
           v-on:mousemove="showTooltips('Toggle grid display')"
           v-on:mouseleave="hideTooltips"
         ></button><br>
-        Size:<input v-model="editor.gridSize" onchange="updateGrid()" style="width:100px"></input>px<br>
+        Size:<input v-model="editor.gridSize" v-on:keydown.stop onchange="updateGrid()" style="width:100px"></input>px<br>
         <button
           v-bind:class="{buttonOn:editor.snapOverride}"
           class="optionButton"
@@ -264,12 +264,13 @@
             {{layer}}
           </options>
         </select><br>
-        <input style="width:100px" v-model="editor.viewLayerAdd"></input>
+        <input style="width:100px" v-on:keydown.stop v-model="editor.viewLayerAdd"></input>
         <button v-on:click="addViewLayer(editor.viewLayerAdd)">Add Layer</button>
         <button v-on:click="removeViewLayer(editor.currentLayer)">Remove Selected Layer</button>
         <div>Level Size</div>
         {{width+"x"+height}}<br>
-        {{editor.invertExpand?'Retract':'Expand'}} level by <input v-model="editor.expandAmt" onchange="editor.expandAmt = Math.round(editor.expandAmt)" style="width:100px"></input><br>
+        {{editor.invertExpand?'Retract':'Expand'}} level by
+        <input v-model="editor.expandAmt" v-on:keydown.stop onchange="editor.expandAmt = Math.round(editor.expandAmt); editor.expandAmt = isNaN(editor.expandAmt) ? 1 : editor.expandAmt" style="width:100px"></input><br>
         <button
           class="optionButton"
           onclick="changeLevelSize('up',editor.expandAmt*(editor.invertExpand?-1:1))"

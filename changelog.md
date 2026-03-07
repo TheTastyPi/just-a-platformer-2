@@ -959,3 +959,8 @@
 - Added the 'auto' property to Check Points, which is true by default.
   - If true, the Check Point acts as it does in jap1, automatically setting spawn at the center-bottom of the block upon touc, setting velocity to 0.
   - If false, it acts as prior in jap2, requiring the player to press \[Shift] to set spawn, preserving position and velocity information.
+
+#### 6 Mar. 2026
+
+- Fixed a bug where you can input non-numeric values for level size editing.
+- Made it so that only text inputs disables game/editor control instead of everything in the left bar.
