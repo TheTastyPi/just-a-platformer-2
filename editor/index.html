@@ -818,15 +818,15 @@
               <li>
                 for(varName[str], start[num], end[num], step[num])
                 <ul>
-                  <li>Repeatedly run following commands, setting base variable ‘varName’ to ‘start’ initially, and add ‘step’ to varName until it is equal or greater (or lesser, when step is negative) than ‘end’.</li>
+                  <li>Repeatedly run following commands, setting local variable ‘varName’ to ‘start’ initially, and add ‘step’ to varName until it is equal or greater (or lesser, when step is negative) than ‘end’.</li>
                   <li>If ‘step’ is 0, then it will give an INVALID_STEP_FOR_FOR error.</li>
                 </ul>
               </li>
               <li>
                 forEach(array[array], itemName[str], indexName[str][optional])
                 <ul>
-                  <li>Repeatedly run following commands for each item of ‘array’, setting base variable 'itemName' to each item.</li>
-                  <li>If 'indexName' is filled, then the index of each item will be stored in base variable ‘indexName’.</li>
+                  <li>Repeatedly run following commands for each item of ‘array’, setting local variable 'itemName' to each item.</li>
+                  <li>If 'indexName' is filled, then the index of each item will be stored in local variable ‘indexName’.</li>
                 </ul>
               </li>
               <li>
@@ -850,7 +850,7 @@
                 set(object[obj OR blockRef][optional],property[str],value[any])
                 <ul>
                   <li>Sets ‘object[property]’ to ‘value’.</li>
-                  <li>Leave 'object' empty to access base variables.</li>
+                  <li>Leave 'object' empty to access local variables.</li>
                   <li>If you attempt to alter a special variable (which are all read-only), then it’ll give a CANNOT_SET_READ_ONLY_VARIABLE_[propertyName] error.</li>
                   <li>If you attempt to alter a read-only property of the player/a block, then it’ll give a CANNOT_SET_READ_ONLY_PLAYER/BLOCK_PROPERTY_[propertyName] error.</li>
                   <li>If you attempt to alter a property of the tempPlaer, then it’ll give a CANNOT_SET_TEMP_PLAYER_PROPERTY error.</li>
@@ -865,7 +865,7 @@
                 <ul>
                   <li>Toggles 'object[property]'.</li>
                   <li>‘object[property]’ must be of type [bool], otherwise, it will give a NON_BOOL_IN_TOGGLE error.</li>
-                  <li>Leave 'object' empty to access base variables.</li>
+                  <li>Leave 'object' empty to access local variables.</li>
                 </ul>
               </li>
               <li>
@@ -930,7 +930,7 @@
                 addBlock(blocks[block], var[str][optional])
                 <ul>
                   <li>Add 'blocks' to the level.</li>
-                  <li>If 'var' is filled, then set base variable 'var' to added blocks.</li>
+                  <li>If 'var' is filled, then set local variable 'var' to added blocks.</li>
                 </ul>
               </li>
               <li>
@@ -1046,7 +1046,6 @@
                 </ul>
               </li>
             </ul>
-            Additionally, all blocks have all the properties visible in the edit menu available to access and manipulate.
             <h3>Special Variables Exclusive to Certain Event Types</h3>
             <ul>
               <li>

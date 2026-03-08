@@ -120,7 +120,7 @@ new CommandType(
   "set",
   ["obj", "var", "any"],
   ["", "", ""],
-  "set(object,property,value)\nSets 'object[property]' to 'value'. Leave 'object' empty to access base variables.",
+  "set(object,property,value)\nSets 'object[property]' to 'value'. Leave 'object' empty to access local variables.",
   ({ vars, args }) => {
     let [obj, prop, val] = args;
     let objIsBlockArray = Array.isArray(obj) && obj.find(x=>!x.isBlock) === undefined;
@@ -453,7 +453,7 @@ new CommandType(
   "toggle",
   ["obj", "var"],
   ["", ""],
-  "toggle(object,property)\nToggles 'object[property]'. Boolean only. Leave 'object' empty to access base variables.",
+  "toggle(object,property)\nToggles 'object[property]'. Boolean only. Leave 'object' empty to access local variables.",
   ({ vars, args }) => {
     let [obj, prop] = args;
     if (!Array.isArray(obj)) obj = [obj];
@@ -469,10 +469,10 @@ new CommandType(
   }
 );
 new CommandType(
-  "setSingleBlock (DEPRECATED)",
+  "setSingleBlock",
   ["obj", "var", "blockRef"],
   ["", "", []],
-  "setSingleBlock(object,property,block)\nSet 'object[property]' to a single block not in an array. Will use index 0 when given an array of blocks. Leave 'object' empty to access base variables.",
+  "setSingleBlock(object,property,block)\nSet 'object[property]' to a single block not in an array. Will use index 0 when given an array of blocks. Leave 'object' empty to access local variables.",
   ({ vars, args }) => {
     let [obj, prop, blocks] = args;
     let err = commandData[2].eventFunc({

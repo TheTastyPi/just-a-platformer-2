@@ -972,3 +972,4 @@
 
 - Made camera scale around cursor position.
 - Made camera scale reset around the center of the screen.
+- Added command `setSingleBlock` back in.
