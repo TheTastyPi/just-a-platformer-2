@@ -284,8 +284,12 @@ id("display").addEventListener("mousedown", function (event) {
     case 1: // middle
       event.preventDefault();
       if (event.shiftKey && (event.ctrlKey || event.metaKey)) {
+        const camScaleFactor = 1/cams;
+        camx = (camx - window.innerWidth/2) * camScaleFactor + window.innerWidth/2;
+        camy = (camy - window.innerHeight/2) * camScaleFactor + window.innerHeight/2;
         cams = 1;
         adjustLevelSize();
+        adjustScreen(true);
         updateBuildLocation(xPos, yPos);
         return;
       }
@@ -440,15 +444,17 @@ id("display").addEventListener("contextmenu", function (event) {
   event.preventDefault();
 });
 id("display").addEventListener("wheel", function (event) {
+  event.preventDefault();
   let xPos = (event.clientX - camx) / cams;
   let yPos = (event.clientY - camy) / cams;
   let delta = event.deltaY;
   if (delta === 0) delta = event.deltaX;
-  event.preventDefault();
-  let factor = event.shiftKey ? 2 : 1.1;
-  factor **= Math.sign(-delta);
   if (event.shiftKey && (event.ctrlKey || event.metaKey)) {
-    cams *= 1.1 ** Math.sign(-delta);
+    const camScaleFactor = 1.1 ** Math.sign(-delta);
+    camx = (camx - event.clientX) * camScaleFactor + event.clientX;
+    camy = (camy - event.clientY) * camScaleFactor + event.clientY;
+    cams *= camScaleFactor;
+    adjustScreen(true);
     adjustLevelSize();
     updateBuildLocation(
       (event.clientX - camx) / cams,
@@ -457,6 +463,8 @@ id("display").addEventListener("wheel", function (event) {
     return;
   }
   if (editor.editMode) {
+    let factor = event.shiftKey ? 2 : 1.1;
+    factor **= Math.sign(-delta);
     if (editor.selectBox.maxs * factor > maxBlockSize)
       factor = maxBlockSize / editor.selectBox.maxs;
     if (editor.selectBox.mins * factor < 6.25)
