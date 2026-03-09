@@ -22,7 +22,7 @@ new CommandType(
   "moveBlock",
   ["blockRef", "num", "num", "num", "!num", "!num"],
   [[], "0", "0", "0", "", ""],
-  "moveBlock(blocks,dx,dy,t,xv0,yv0)\nMove 'blocks' a distance of dx and dy units, in 't' seconds, starting at a velocity of 'xv0' and 'yv0' units/s. Leave xv0/yv0 blank for constant speed.",
+  "moveBlock(blocks, dx, dy, t, xv0, yv0)\nMove 'blocks' a distance of dx and dy units, in 't' seconds, starting at a velocity of 'xv0' and 'yv0' units/s. Leave xv0/yv0 blank for constant speed.",
   ({ vars, args, command }) => {
     args.push(0);
     runAction(args, vars, command);
@@ -120,7 +120,7 @@ new CommandType(
   "set",
   ["obj", "var", "any"],
   ["", "", ""],
-  "set(object,property,value)\nSets 'object[property]' to 'value'. Leave 'object' empty to access local variables.",
+  "set(object, property, value)\nSets 'object[property]' to 'value'. Leave 'object' empty to access local variables.",
   ({ vars, args }) => {
     let [obj, prop, val] = args;
     let objIsBlockArray = Array.isArray(obj) && obj.find(x=>!x.isBlock) === undefined;
@@ -264,7 +264,7 @@ new CommandType(
   "for",
   ["var", "num", "num", "num"],
   ["", "", "", ""],
-  "for(varName,start,end,step)\nRun following commands up to a corresponding end() command repeatedly, setting 'varName' to 'start' and adding 'step' each loop until it equals or passes 'end'.",
+  "for(varName, start, end, step)\nRun following commands up to a corresponding end() command repeatedly, setting 'varName' to 'start' and adding 'step' each loop until it equals or passes 'end'.",
   ({ vars, args }) => {
     let [varName, start, end, step] = args;
     if (step === 0) return "INVALID_STEP_FOR_FOR";
@@ -284,7 +284,7 @@ new CommandType(
   "forEach",
   ["array", "var", "!var"],
   ["", "", ""],
-  "for(array,itemName,indexName)\nRun following commands up to a corresponding end() command repeatedly, setting 'itemName' to each item of 'array' until all items have been cycled through. If 'indexName' is filled, then the index of each item will also be stored in indexName.",
+  "forEach(array, itemName, indexName)\nRun following commands up to a corresponding end() command repeatedly, setting 'itemName' to each item of 'array' until all items have been cycled through. If 'indexName' is filled, then the index of each item will also be stored in indexName.",
   ({ vars, args }) => {
     let [array, itemName, indexName] = args;
     let err = commandData[2].eventFunc({
@@ -309,7 +309,7 @@ new CommandType(
   "moveBlockTo",
   ["blockRef", "num", "num", "!num", "num", "!num"],
   [[], "0", "0", "", "0", ""],
-  "moveBlockTo(blocks,x,y,d,t,v0)\nMove 'blocks' towards the coordinates (x,y) a distance of 'd' units, in 't' seconds, starting at a velocity of 'v0' units/s towards the target. Leave d blank to move directly to (x,y). Leave v0 blank for constant speed.",
+  "moveBlockTo(blocks, x, y, d, t, v0)\nMove 'blocks' towards the coordinates (x,y) a distance of 'd' units, in 't' seconds, starting at a velocity of 'v0' units/s towards the target. Leave d blank to move directly to (x,y). Leave v0 blank for constant speed.",
   ({ args, vars, command }) => {
     args.push(0);
     runAction(args, vars, command);
@@ -365,7 +365,7 @@ new CommandType(
   "rotateBlock",
   ["blockRef", "num", "num", "num", "num", "!num"],
   [[], "0", "0", "0", "0", ""],
-  "rotateBlock(blocks,x,y,dθ,t,ω0)\nRotate 'blocks' about coordinates (x,y) 'dθ' degrees clockwise (negative for counter-clockwise), in 't' seconds, starting at an angular velocity of 'ω0' degrees/s. Leave ω0 blank for constant angular speed.",
+  "rotateBlock(blocks, x, y, dθ, t, ω0)\nRotate 'blocks' about coordinates (x,y) 'dθ' degrees clockwise (negative for counter-clockwise), in 't' seconds, starting at an angular velocity of 'ω0' degrees/s. Leave ω0 blank for constant angular speed.",
   ({ args, vars, command }) => {
     args.push(0);
     runAction(args, vars, command);
@@ -453,7 +453,7 @@ new CommandType(
   "toggle",
   ["obj", "var"],
   ["", ""],
-  "toggle(object,property)\nToggles 'object[property]'. Boolean only. Leave 'object' empty to access local variables.",
+  "toggle(object, property)\nToggles 'object[property]'. Boolean only. Leave 'object' empty to access local variables.",
   ({ vars, args }) => {
     let [obj, prop] = args;
     if (!Array.isArray(obj)) obj = [obj];
@@ -472,7 +472,7 @@ new CommandType(
   "setSingleBlock",
   ["obj", "var", "blockRef"],
   ["", "", []],
-  "setSingleBlock(object,property,block)\nSet 'object[property]' to a single block not in an array. Will use index 0 when given an array of blocks. Leave 'object' empty to access local variables.",
+  "setSingleBlock(object, property, block)\nSet 'object[property]' to a single block not in an array. Will use index 0 when given an array of blocks. Leave 'object' empty to access local variables.",
   ({ vars, args }) => {
     let [obj, prop, blocks] = args;
     let err = commandData[2].eventFunc({
@@ -486,7 +486,7 @@ new CommandType(
   "scaleBlock",
   ["blockRef", "num", "num", "num", "num", "!num"],
   [[], "1", "0", "0", "0", ""],
-  "scaleBlock(blocks,factor,x,y,t,v0)\nScale 'blocks' by a factor of 'factor' with the focus at coordinates (x,y), in 't' seconds, starting at a scaling rate of 'v0' block size/s. Leave v0 blank for constant rate.",
+  "scaleBlock(blocks, factor, x, y, t, v0)\nScale 'blocks' by a factor of 'factor' with the focus at coordinates (x,y), in 't' seconds, starting at a scaling rate of 'v0' block size/s. Leave v0 blank for constant rate.",
   ({ args, vars, command }) => {
     args.push(0);
     runAction(args, vars, command);
@@ -595,7 +595,7 @@ new CommandType(
   "gradient",
   ["obj","var","any","num", "!num"],
   ["","","","",""],
-  "gradient(obj,prop,target, t, v0)\nGradually changes obj[prop] to target value in 't' second starting at 'v0' units per second.\nLeave v0 blank for constant rate.\nTarget value must the of the same type as initial value, and be either numerical, or a color.",
+  "gradient(obj, prop, target, t, v0)\nGradually changes obj[prop] to target value in 't' second starting at 'v0' units per second.\nLeave v0 blank for constant rate.\nTarget value must the of the same type as initial value, and be either numerical, or a color.",
   ({ args, vars, command }) => {
     let [obj, prop, target, t, v0] = args;
     if (!Array.isArray(obj)) {
