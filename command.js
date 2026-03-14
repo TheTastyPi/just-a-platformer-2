@@ -120,6 +120,7 @@ function setPropertyInEvent(vars,obj,prop,val) {
       obj.y = y;
       obj.size = size;
       obj.currentRoom = currentRoom;
+      obj.events = events;
       updateTexture = true;
     } else if (prop === "texture") updateTexture = true;
     updateBlock(obj, updateTexture);
