@@ -99,6 +99,7 @@ function rollBackBlock(block, start) {
   Object.assign(block, {
     ...start,
     index: block.index,
+    events: block.events,
     sprite: block.sprite,
     dupSprite: block.dupSprite
   });
@@ -115,7 +116,6 @@ function rollBack(start) {
     if (init === end) continue;
     if (init?.ran !== undefined) {
       Object.assign(end, init);
-      if (end._scope === "block") end.source.events[end._eventType][0] = end
     } else if (!init) {
       removeBlock(end, false);
       diff[2] = undefined;
