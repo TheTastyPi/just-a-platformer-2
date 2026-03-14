@@ -851,6 +851,8 @@
                 <ul>
                   <li>Sets ‘object[property]’ to ‘value’.</li>
                   <li>Leave 'object' empty to access local variables.</li>
+                  <li>If you alter the type of a block, it will set the block to the default of that type.</li>
+                  <li>If you alter the preset of a block, it will set the block to the default of that preset.</li>
                   <li>If you attempt to alter a special variable (which are all read-only), then it’ll give a CANNOT_SET_READ_ONLY_VARIABLE_[propertyName] error.</li>
                   <li>If you attempt to alter a read-only property of the player/a block, then it’ll give a CANNOT_SET_READ_ONLY_PLAYER/BLOCK_PROPERTY_[propertyName] error.</li>
                   <li>If you attempt to alter a property of the tempPlaer, then it’ll give a CANNOT_SET_TEMP_PLAYER_PROPERTY error.</li>

@@ -973,3 +973,8 @@
 - Made camera scale around cursor position.
 - Made camera scale reset around the center of the screen.
 - Added command `setSingleBlock` back in.
+
+### 13 Mar. 2026
+
+- Made it so that editing the type or preset of a block via an event updates the block to the default values of the type/preset, like with normal property editing.
+- Made it so that editing the texture of a block via an event correctly updates the texture.

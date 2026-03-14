@@ -104,6 +104,23 @@ function setPropertyInEvent(vars,obj,prop,val) {
   obj[prop] = val;
   if (obj.isBlock) {
     let updateTexture = blockData[obj.type].textureFactor.includes(prop);
+    if (prop === "preset") {
+      let { x, y, size, currentRoom } = obj;
+      Object.assign(obj, editor.presets[val]);
+      obj.x = x;
+      obj.y = y;
+      obj.size = size;
+      obj.currentRoom = currentRoom;
+      updateTexture = true;
+    } else if (prop === "type") {
+      let { x, y, size, currentRoom } = obj;
+      Object.assign(obj, blockData[val].defaultBlock);
+      obj.x = x;
+      obj.y = y;
+      obj.size = size;
+      obj.currentRoom = currentRoom;
+      updateTexture = true;
+    } else if (prop === "texture") updateTexture = true;
     updateBlock(obj, updateTexture);
     updateBlockState(obj);
   }
