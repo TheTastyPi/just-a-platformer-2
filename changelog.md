@@ -982,3 +982,4 @@
 ### 19 Mar. 2026
 
 - Added the special variable `control` to all events, allowing access to currently pressed controls, respecting custom keybinds.
+- Changed water physics.

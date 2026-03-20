@@ -343,6 +343,7 @@ new BlockType(
       if (isExiting) return;
       obj.xv = Math.min(Math.max(obj.xv, -block.maxSpeed), block.maxSpeed);
       obj.yv = Math.min(Math.max(obj.yv, -block.maxSpeed), block.maxSpeed);
+      tempObj.g = obj.g/2;
     }
   ],
   (block, sprite = block.sprite) => {
