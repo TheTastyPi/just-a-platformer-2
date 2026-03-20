@@ -15,6 +15,7 @@ function runEvent(event, source, extraContext = {}) {
     copy[0] = { ...event[0] };
     copy[0].player = player;
     copy[0].tempPlayer = tempPlayer;
+    copy[0].control = control;
     copy[0].global = eventGlobalObject;
     copy[0]._controls = [];
     copy[0]._loops = [];

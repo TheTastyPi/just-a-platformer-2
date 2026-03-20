@@ -978,3 +978,7 @@
 
 - Made it so that editing the type or preset of a block via an event updates the block to the default values of the type/preset, like with normal property editing.
 - Made it so that editing the texture of a block via an event correctly updates the texture.
+
+### 19 Mar. 2026
+
+- Added the special variable `control` to all events, allowing access to currently pressed controls, respecting custom keybinds.
