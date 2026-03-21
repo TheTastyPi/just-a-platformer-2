@@ -983,3 +983,7 @@
 
 - Added the special variable `control` to all events, allowing access to currently pressed controls, respecting custom keybinds.
 - Changed water physics.
+
+### 20 Mar. 2025
+
+- Made space characters finally work in event expressions. I have no clue why I didn't realize this sooner.

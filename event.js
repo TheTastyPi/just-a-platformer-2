@@ -25,7 +25,6 @@ function runEvent(event, source, extraContext = {}) {
   event[0].ran = true;
 }
 function tokenize(exp) {
-  exp = exp.replace(" ","");
   let tokenArray = [];
   let unaryToken = [
     [/^!/,"not"],
@@ -61,6 +60,7 @@ function tokenize(exp) {
     [/^\(/,"open_round"],
     [/^\)/,"close_round"],
     [/^\]/,"close_square"],
+    [/^\s+/,"space"],
   ].map(x=>[...x,"any"]);
   let expectVal = genToken
           .concat(valToken)
@@ -109,7 +109,9 @@ function tokenize(exp) {
     }
     if (specificType === "negative") {
       tokenArray.push(["~", specificType]);
-    } else tokenArray.push([token, specificType]);
+    } else if (specificType !== "space") {
+      tokenArray.push([token, specificType]);
+    }
   }
   return tokenArray;
 }
