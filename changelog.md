@@ -986,4 +986,4 @@
 
 ### 20 Mar. 2025
 
-- Made space characters finally work in event expressions. I have no clue why I didn't realize this sooner.
+- Made whitespace finally work in event expressions. I have no clue why I didn't realize this sooner.
