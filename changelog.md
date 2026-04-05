@@ -991,3 +991,4 @@
 ### 4 Apr. 2026
 
 - Added the ability to export/import levels as files. Shift click the import/export buttons to do so.
+- Fixed you being able to dash once midair after disabling god mode, regardless of current max dash amount.

@@ -670,8 +670,6 @@ function doPhysics(obj, t) {
         collisionInfo.collided.splice(i, 1);
       }
     }
-    if (obj.isPlayer) effectiveMaxJump = tempObj.maxJump;
-    if (obj.isPlayer) effectiveMaxDash = tempObj.maxDash;
     obj.lastCollided = collisionInfo.collided;
     collisionInfo.doFriction = tempObj.friction && collisionInfo.doFriction;
     if (obj.isPlayer) {
@@ -733,11 +731,15 @@ function doPhysics(obj, t) {
         obj.currentDash = 1;
       }
     }
+    if (obj.isPlayer && !editor?.invincible) {
+      if (obj.currentJump > tempObj.maxJump) obj.currentJump = tempObj.maxJump;
+      if (obj.currentDash > tempObj.maxDash) obj.currentDash = tempObj.maxDash;
+    }
     // dashing
     if (
       obj.isPlayer &&
       control.dash &&
-      tempObj.currentDash > 0 &&
+      obj.currentDash > 0 &&
       player.dashTimer === 0 &&
       canDash
     ) {
