@@ -1140,10 +1140,26 @@ new BlockType(
     if (block.bottomWall) g.drawRect(0, 45, 50, 5);
     g.endFill();
     g.beginFill(0x000000);
-    if (block.leftWall) g.drawPolygon(5, 10, 0, 15, 0, 35, 5, 40);
-    if (block.rightWall) g.drawPolygon(45, 40, 50, 35, 50, 15, 45, 10);
-    if (block.topWall) g.drawPolygon(10, 5, 15, 0, 35, 0, 40, 5);
-    if (block.bottomWall) g.drawPolygon(40, 45, 35, 50, 15, 50, 10, 45);
+    if (block.leftWall) {
+      g.drawPolygon(5, 10, 0, 15, 0, 20, 5, 15);
+      g.drawPolygon(5, 35, 0, 30, 0, 35, 5, 40);
+      g.drawPolygon(5, 20, 0, 25, 5, 30);
+    }
+    if (block.rightWall) {
+      g.drawPolygon(45, 40, 50, 35, 50, 30, 45, 35);
+      g.drawPolygon(45, 15, 50, 20, 50, 15, 45, 10);
+      g.drawPolygon(45, 30, 50, 25, 45, 20);
+    }
+    if (block.topWall) {
+      g.drawPolygon(10, 5, 15, 0, 20, 0, 15, 5);
+      g.drawPolygon(35, 5, 30, 0, 35, 0, 40, 5);
+      g.drawPolygon(20, 5, 25, 0, 30, 5);
+    }
+    if (block.bottomWall) {
+      g.drawPolygon(40, 45, 35, 50, 30, 50, 35, 45);
+      g.drawPolygon(15, 45, 20, 50, 15, 50, 10, 45);
+      g.drawPolygon(30, 45, 25, 50, 20, 45);
+    }
     g.endFill();
     return app.renderer.generateTexture(
       g,
