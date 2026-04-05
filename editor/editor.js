@@ -372,11 +372,19 @@ function showTooltips(text) {
   if (editor.showTooltips) {
     id("tooltip").textContent = text;
     id("tooltip").style.display = "block";
-    id("tooltip").style.left =
-      Math.min(
-        event.clientX + 5,
-        window.innerWidth - id("tooltip").clientWidth
-      ) + "px";
+    if (event.clientX < window.innerWidth/2) {
+      id("tooltip").style.left =
+        Math.min(
+          event.clientX + 5,
+          window.innerWidth - id("tooltip").clientWidth
+        ) + "px";
+    } else {
+      id("tooltip").style.left =
+        Math.min(
+          event.clientX - 5 - id("tooltip").clientWidth,
+          window.innerWidth - id("tooltip").clientWidth
+        ) + "px";
+    }
     id("tooltip").style.top =
       Math.max(event.clientY - id("tooltip").clientHeight - 5, 0) + "px";
   }
@@ -441,6 +449,16 @@ function init() {
   player.currentRoom = "default";
   forAllBlock((b) => {
     b.currentRoom = "default";
+  });
+  id("fileExport").addEventListener("change", function (e) {
+    let files = e.target.files
+    for (let i = 0; i < files.length; i++) {
+      let reader = new FileReader();
+      reader.onload = () => {
+        importSave(reader.result);
+      };
+      reader.readAsText(files[i]);
+    }
   });
   assignIndex();
   drawLevel(true);

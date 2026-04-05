@@ -388,9 +388,9 @@
           ></button><br>
           <button
             class="optionButton"
-            onclick="importSave()"
+            onclick="event.shiftKey?importSaveAsFile():importSave()"
             style="background-image: url(../pics/importSave.png);"
-            v-on:mousemove="showTooltips('Import save')"
+            v-on:mousemove="showTooltips('Import save\nShift click to import file')"
             v-on:mouseleave="hideTooltips"
           ></button>
           <button
@@ -430,9 +430,9 @@
               ></button>
               <button
                 class="optionButton"
-                v-on:click="exportSave(name)"
+                v-on:click="event.shiftKey?exportSaveAsFile(name):exportSave(name)"
                 style="background-image: url(../pics/exportSave.png);"
-                v-on:mousemove="showTooltips('Export')"
+                v-on:mousemove="showTooltips('Export\nShift click to export file')"
                 v-on:mouseleave="hideTooltips"
               ></button><br>
               <button
@@ -1239,6 +1239,7 @@
           pointer-events: none;
         "
       ></div>
+      <input type="file" id="fileExport" accept=".txt" multiple style="display: none;" />
     </div>
   </body>
   <script>const page = 'editor';</script>

@@ -447,9 +447,9 @@ function exportSave(name) {
     ()=>{alert("Export failed. Please try again.")}
   );
 }
-function importSave() {
-  let exportData = JSON.parse(prompt("Please input export data."));
+function importSave(exportData = prompt("Please input export data.")) {
   if (exportData === null) return;
+  exportData = JSON.parse(exportData);
   let name = exportData.pop();
   while (
     editor.saveOrder.includes(name) &&
@@ -462,6 +462,20 @@ function importSave() {
   if (!editor.saveOrder.includes(name)) editor.saveOrder.push(name);
   load(name);
   storeSave();
+}
+function exportSaveAsFile(name) {
+  let exportData = [...editor.saves[name], name];
+  let text = JSON.stringify(exportData);
+  let blob = new Blob([text], {type: "text/plain"});
+  let link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `${name}.txt`;
+  link.click();
+  link.remove();
+}
+function importSaveAsFile() {
+  let input = id("fileExport");
+  input.click();
 }
 function deleteSave(name) {
   if (!confirm(`Are you sure you want to delete ${name}?`)) return;

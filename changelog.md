@@ -984,6 +984,10 @@
 - Added the special variable `control` to all events, allowing access to currently pressed controls, respecting custom keybinds.
 - Changed water physics.
 
-### 20 Mar. 2025
+### 20 Mar. 2026
 
 - Made whitespace finally work in event expressions. I have no clue why I didn't realize this sooner.
+
+### 4 Apr. 2026
+
+- Added the ability to export/import levels as files. Shift click the import/export buttons to do so.
