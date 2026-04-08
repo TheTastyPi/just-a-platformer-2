@@ -271,10 +271,14 @@ function str2pState(str) {
   return pState;
 }
 function storeSave() {
-  localStorage.setItem(
-    "just-an-editor-save-2",
-    JSON.stringify([editor.saves, editor.saveOrder])
-  );
+  try {
+    localStorage.setItem(
+      "just-an-editor-save-2",
+      JSON.stringify([editor.saves, editor.saveOrder])
+    );
+  } catch {
+    alert("Error: Storage quota exceeded! Either delete some levels, or increase your browser's storage quota.");
+  }
 }
 function addSave() {
   let name = prompt("Please input save name.");
