@@ -46,6 +46,8 @@ function moveBlock(block, dx, dy, draw = true, log = true) {
   let sprite = block.sprite;
   block.x += dx;
   block.y += dy;
+  block.x = Math.round(block.x * 100) / 100;
+  block.y = Math.round(block.y * 100) / 100;
   updateDupSprite(block);
   if (block === player) return;
   if (block.currentRoom === player.currentRoom && draw) {
@@ -87,6 +89,7 @@ function moveBlockRoom(block, room, log = true) {
 function scaleBlock(block, factor, focusX, focusY, draw = true, log = true) {
   if (log && block !== player) logChange(block);
   block.size = Math.max(Math.min(block.size * factor, maxBlockSize), 6.25);
+  block.size = Math.round(block.size * 100) / 100;
   if (focusX !== undefined) {
     let dx = focusX - block.x;
     let dy = focusY - block.y;
