@@ -996,6 +996,9 @@
 
 #### 8 Apr. 2026
 
-Editor
 - Added an error message for when a save action exceeds the brower storage quota.
 - Block position and size are now restricted to two decimal digits. (Except for direct property editing)
+
+### 12 May 2026
+
+- Added properties 'color' and 'color2' to Conveyor Blocks and Panels, for coloring the block, and the belt.

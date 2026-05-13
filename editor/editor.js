@@ -164,7 +164,8 @@ const propData = {
   newDash: ["int", "nD"],
   infDash: ["bool", "iD"],
   addedDash: ["int", "aD"],
-  auto: ["bool","at"]
+  auto: ["bool","at"],
+  color2: ["color","c2"]
 };
 const propAliasReverse = {};
 const blockList = {

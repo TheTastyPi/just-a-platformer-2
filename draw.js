@@ -409,12 +409,12 @@ function updateBlock(block, updateTexture = false) {
 var convTex = createConveyorTexture();
 function createConveyorTexture(app = display) {
   let vert = new PIXI.Graphics();
-  vert.beginFill(0xff0000);
+  vert.beginFill(0xffffff);
   for (let i = 0; i <= 50; i += 10) {
     vert.drawRect(0, i, 5, 4);
   }
   let hori = new PIXI.Graphics();
-  hori.beginFill(0xff0000);
+  hori.beginFill(0xffffff);
   for (let i = 0; i <= 50; i += 10) {
     hori.drawRect(i, 0, 4, 5);
   }

@@ -358,11 +358,13 @@ new BlockType(
     leftSpeed: -100,
     rightSpeed: 100,
     topSpeed: 100,
-    bottomSpeed: -100
+    bottomSpeed: -100,
+    color: "#000000",
+    color2: "#FF0000"
   },
   (block, app = display) => {
     let g = new PIXI.Graphics();
-    g.beginFill(0x000000);
+    g.beginFill(PIXI.utils.string2hex("#ffffff"));
     g.drawRect(0, 0, 50, 50);
     g.endFill();
     return app.renderer.generateTexture(g);
@@ -392,7 +394,7 @@ new BlockType(
       if (block.topSpeed !== 0) sprite.addChild(top);
       if (block.bottomSpeed !== 0) sprite.addChild(bottom);
       let m = new PIXI.Graphics();
-      m.beginFill(0xff0000);
+      m.beginFill(PIXI.utils.string2hex(0xffffff));
       m.drawRect(0, 0, 50, 50);
       m.endFill();
       sprite.mask = m;
@@ -402,24 +404,32 @@ new BlockType(
     let i = 0;
     if (block.leftSpeed !== 0) {
       sprite.children[i].y = ((((t * block.leftSpeed) % 10) + 10) % 10) - 4;
+      sprite.children[i].tint = PIXI.utils.string2hex(block.color2);
       i++;
     }
     if (block.rightSpeed !== 0) {
       sprite.children[i].y = ((((t * block.rightSpeed) % 10) + 10) % 10) - 4;
+      sprite.children[i].tint = PIXI.utils.string2hex(block.color2);
       i++;
     }
     if (block.topSpeed !== 0) {
       sprite.children[i].x = ((((t * block.topSpeed) % 10) + 10) % 10) - 4;
+      sprite.children[i].tint = PIXI.utils.string2hex(block.color2);
       i++;
     }
-    if (block.bottomSpeed !== 0)
+    if (block.bottomSpeed !== 0) {
       sprite.children[i].x = ((((t * block.bottomSpeed) % 10) + 10) % 10) - 4;
+      sprite.children[i].tint = PIXI.utils.string2hex(block.color2);
+    }
+    sprite.tint = PIXI.utils.string2hex(block.color);
   },
   {
     leftSpeed: [() => -2000, () => 2000],
     rightSpeed: [() => -2000, () => 2000],
     topSpeed: [() => -2000, () => 2000],
-    bottomSpeed: [() => -2000, () => 2000]
+    bottomSpeed: [() => -2000, () => 2000],
+    color: [],
+    color2: []
   }
 );
 const tempFadeUpdtFn = (block, sprite = block.sprite, app) => {
@@ -1280,11 +1290,13 @@ new BlockType(
     leftSpeed: -100,
     rightSpeed: 100,
     topSpeed: 100,
-    bottomSpeed: -100
+    bottomSpeed: -100,
+    color: "#000000",
+    color2: "#FF0000"
   },
   (block, app = display) => {
     let g = new PIXI.Graphics();
-    g.beginFill(0x000000);
+    g.beginFill(PIXI.utils.string2hex(block.color));
     if (block.leftWall) g.drawRect(0, 0, 5, 50);
     if (block.rightWall) g.drawRect(45, 0, 5, 50);
     if (block.topWall) g.drawRect(0, 0, 50, 5);
@@ -1339,18 +1351,23 @@ new BlockType(
     let i = 0;
     if (block.leftWall && block.leftSpeed !== 0) {
       sprite.children[i].y = ((((t * block.leftSpeed) % 10) + 10) % 10) - 4;
+      sprite.children[i].tint = PIXI.utils.string2hex(block.color2);
       i++;
     }
     if (block.rightWall && block.rightSpeed !== 0) {
       sprite.children[i].y = ((((t * block.rightSpeed) % 10) + 10) % 10) - 4;
+      sprite.children[i].tint = PIXI.utils.string2hex(block.color2);
       i++;
     }
     if (block.topWall && block.topSpeed !== 0) {
       sprite.children[i].x = ((((t * block.topSpeed) % 10) + 10) % 10) - 4;
+      sprite.children[i].tint = PIXI.utils.string2hex(block.color2);
       i++;
     }
-    if (block.bottomWall && block.bottomSpeed !== 0)
+    if (block.bottomWall && block.bottomSpeed !== 0) {
       sprite.children[i].x = ((((t * block.bottomSpeed) % 10) + 10) % 10) - 4;
+      sprite.children[i].tint = PIXI.utils.string2hex(block.color2);
+    }
   },
   {
     leftWall: [],
@@ -1360,9 +1377,11 @@ new BlockType(
     leftSpeed: [() => -2000, () => 2000],
     rightSpeed: [() => -2000, () => 2000],
     topSpeed: [() => -2000, () => 2000],
-    bottomSpeed: [() => -2000, () => 2000]
+    bottomSpeed: [() => -2000, () => 2000],
+    color: [],
+    color2: []
   },
-  ["leftWall", "rightWall", "topWall", "bottomWall"]
+  ["leftWall", "rightWall", "topWall", "bottomWall", "color"]
 );
 new BlockType(
   "Teleporter",
