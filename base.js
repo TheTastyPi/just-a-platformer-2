@@ -780,6 +780,7 @@ function doPhysics(obj, t) {
           obj.yv = Math[obj.g < 0 ? "max" : "min"](obj.yv, tempObj.g * WJSlideSpeed);
         if (control.jump) {
           let maxSpeed = obj.moveSpeed * moveSpeed;
+          const wjExtraSpeed = 100;
           switch (tempObj.wallJumpDir) {
             case 0:
               if (control.right) {
@@ -815,6 +816,7 @@ function doPhysics(obj, t) {
               break;
             default:
           }
+          if (!canWJ) control.latestDir = 0;
         }
       } else if (obj.currentJump > 0 && control.jump && canJump) {
         if (tempObj.xg) {
@@ -879,9 +881,9 @@ function doPhysics(obj, t) {
         if (control.left && control.right) controlMultiplier = control.latestDir;
         let maxSpeed = tempObj.moveSpeed * moveSpeed;
         collisionInfo.envxv += controlMultiplier * maxSpeed;
-        if (control.left || control.right) collisionInfo.doFriction = true;
-        if (control.left && obj.xv < collisionInfo.envxv) collisionInfo.doFriction = false;
-        if (control.right && obj.xv > collisionInfo.envxv) collisionInfo.doFriction = false;
+        if (controlMultiplier != 0) collisionInfo.doFriction = true;
+        if (controlMultiplier < 0 && obj.xv < collisionInfo.envxv) collisionInfo.doFriction = false;
+        if (controlMultiplier > 0 && obj.xv > collisionInfo.envxv) collisionInfo.doFriction = false;
       }
     }
     if (tempObj.xg || collisionInfo.envyv !== 0) {

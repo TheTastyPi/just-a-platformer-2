@@ -1002,3 +1002,8 @@
 ### 12 May 2026
 
 - Added properties 'color' and 'color2' to Conveyor Blocks and Panels, for coloring the block, and the belt.
+
+### 12 Jun. 2026
+
+- Pressing two direction keys at the same time will now properly move the player in the latest pressed direction.
+- Walljumping now temporarily disables directional input priority. This means that if you hold both movement keys while walljumping, the player stays still until you release a key.

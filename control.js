@@ -9,6 +9,7 @@ const control = {
   latestDir: 0
 };
 document.addEventListener("keydown", function (event) {
+  if (event.repeat) return;
   let key = event.code;
   runEvent(globalEvents.onKeyDown, undefined, { key: key });
   runEvent(roomEvents[player.currentRoom].onKeyDown, player.currentRoom, {
@@ -26,6 +27,7 @@ document.addEventListener("keydown", function (event) {
   if (c.Right.includes(key)) {
     control.right = true;
     if (!player.xg) control.latestDir = 1;
+    console.log("right")
   }
   if (c.Up.includes(key)) {
     control.up = true;
