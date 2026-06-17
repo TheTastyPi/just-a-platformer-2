@@ -783,7 +783,7 @@ function doPhysics(obj, t) {
           const wjExtraSpeed = 100;
           switch (tempObj.wallJumpDir) {
             case 0:
-              if (control.right) {
+              if (control.right && control.latestDir == 1) {
                 obj.yv = Math.sign(tempObj.g) * -jumpPower;
                 obj.xv = maxSpeed + ((collisionInfo.dirBlock[0]?.dynamic || collisionInfo.dirBlock[0]?.moving)?(collisionInfo.dirBlock[0]?.xv || 0):0);
                 canWJ = false;
@@ -791,7 +791,7 @@ function doPhysics(obj, t) {
               }
               break;
             case 1:
-              if (control.left) {
+              if (control.left && control.latestDir == -1) {
                 obj.yv = Math.sign(tempObj.g) * -jumpPower;
                 obj.xv = -maxSpeed + ((collisionInfo.dirBlock[1]?.dynamic || collisionInfo.dirBlock[1]?.moving)?(collisionInfo.dirBlock[1]?.xv || 0):0);
                 canWJ = false;
@@ -799,7 +799,7 @@ function doPhysics(obj, t) {
               }
               break;
             case 2:
-              if (control.down) {
+              if (control.down && control.latestDir == 1) {
                 obj.xv = Math.sign(tempObj.g) * -jumpPower;
                 obj.yv = maxSpeed + ((collisionInfo.dirBlock[2]?.dynamic || collisionInfo.dirBlock[2]?.moving)?(collisionInfo.dirBlock[2]?.yv || 0):0);
                 canWJ = false;
@@ -807,7 +807,7 @@ function doPhysics(obj, t) {
               }
               break;
             case 3:
-              if (control.up) {
+              if (control.up && control.latestDir == -1) {
                 obj.xv = Math.sign(tempObj.g) * -jumpPower;
                 obj.yv = -maxSpeed + ((collisionInfo.dirBlock[3]?.dynamic || collisionInfo.dirBlock[3]?.moving)?(collisionInfo.dirBlock[3]?.yv || 0):0);
                 canWJ = false;
@@ -816,7 +816,6 @@ function doPhysics(obj, t) {
               break;
             default:
           }
-          if (!canWJ) control.latestDir = 0;
         }
       } else if (obj.currentJump > 0 && control.jump && canJump) {
         if (tempObj.xg) {

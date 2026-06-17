@@ -1007,3 +1007,7 @@
 
 - Pressing two direction keys at the same time will now properly move the player in the latest pressed direction.
 - Walljumping now temporarily disables directional input priority. This means that if you hold both movement keys while walljumping, the player stays still until you release a key.
+
+#### 17 Jun. 2026
+
+- Reverted the walljumping change from last update, but made it so that you may only walljump in your last pressed direction key.
