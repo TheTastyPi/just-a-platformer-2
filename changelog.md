@@ -1017,3 +1017,4 @@
 - Added new property 'giveDash'. Any block with giveDash = true will restore the player to max dash on touch.
   - This effect was original bundled with giveJump, but now has been seperated. All blocks that used to have giveJump = true by default will also have giveDash = true by default
   - Additionally, Jump Fields / Dash Fields now have giveJump = true / giveDash = true by default, respectively.
+- Fixed remaining jump / dash count visual
