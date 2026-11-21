@@ -431,6 +431,7 @@ function doCollision(obj, block, collisionInfo, xOffset = 0, yOffset = 0) {
     if (block.eventPriority === collisionInfo.topPriority[4])
       collisionInfo.eventList[4].push([block, data.touchEvent[4]]);
     if (obj.isPlayer && block.giveJump) collisionInfo.giveJump = true;
+    if (obj.isPlayer && block.giveDash) collisionInfo.giveDash = true;
   }
   return true;
 };
@@ -504,6 +505,7 @@ function doPhysics(obj, t) {
     ignoreEventList: [[], [], [], [], []],
     topPriority: [0, 0, 0, 0, 0],
     giveJump: false,
+    giveDash: false,
     envxv: 0,
     envyv: 0,
     doFriction: true,
@@ -683,7 +685,6 @@ function doPhysics(obj, t) {
         collisionInfo.giveJump
       ) {
         obj.currentJump = tempObj.maxJump;
-        if (player.dashTimer === 0) obj.currentDash = tempObj.maxDash;
         coyoteTimer = coyoteTime;
       } else {
         if (prevg !== tempObj.g || prevxg !== tempObj.xg) coyoteTimer = -1;
@@ -695,6 +696,17 @@ function doPhysics(obj, t) {
           );
           coyoteTimer = 0;
         }
+      }
+      if (
+        collisionInfo.dirBlock.some(
+          (b, i) =>
+            b?.giveDash &&
+            (i > 1) ^ tempObj.xg &&
+            (i % 2 ? 1 : -1) * tempObj.g > 0
+        ) ||
+        collisionInfo.giveDash
+      ) {
+        if (player.dashTimer === 0) obj.currentDash = tempObj.maxDash;
       }
       let style = id("textBlockText").style;
       if (tempObj.textDisp) {

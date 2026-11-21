@@ -10,6 +10,7 @@ class Block {
     this.collidePlayer = true;
     this.collideBlock = true;
     this.giveJump = giveJump;
+    this.giveDash = giveJump;
     this.eventPriority = eventPriority;
     this.ignorePriority = false;
     this.zLayer = "";
@@ -787,7 +788,8 @@ new BlockType(
     ...new Block(13, 0, 0, 50, false, false, 3),
     newJump: 1,
     infJump: false,
-    temporary: false
+    temporary: false,
+    giveJump: true
   },
   (block, app = display) => {
     let g = new PIXI.Graphics();
@@ -2165,7 +2167,8 @@ new BlockType(
     ...new Block(32, 0, 0, 50, false, false, 3),
     newDash: 1,
     infDash: false,
-    temporary: false
+    temporary: false,
+    giveDash: true
   },
   (block, app = display) => {
     let g = new PIXI.Graphics();
