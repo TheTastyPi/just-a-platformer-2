@@ -27,7 +27,6 @@ document.addEventListener("keydown", function (event) {
   if (c.Right.includes(key)) {
     control.right = true;
     if (!player.xg) control.latestDir = 1;
-    console.log("right")
   }
   if (c.Up.includes(key)) {
     control.up = true;
